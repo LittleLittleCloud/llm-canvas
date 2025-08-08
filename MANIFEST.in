@@ -1,0 +1,7 @@
+recursive-include llm_canvas/static *
+include README.md
+include LICENSE
+global-exclude *.pyc
+global-exclude __pycache__
+prune web_ui/node_modules
+prune web_ui/dist
