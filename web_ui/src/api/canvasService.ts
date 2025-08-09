@@ -34,7 +34,7 @@ class CanvasService {
     if (!canvasId) {
       throw new Error("Canvas ID is required");
     }
-    const endpoint = `/api/v1/canvas?id=${canvasId}`;
+    const endpoint = `/api/v1/canvas?canvas_id=${canvasId}`;
     const response = await this.apiCall(endpoint);
     return response.json();
   }

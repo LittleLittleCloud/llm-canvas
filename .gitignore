@@ -86,7 +86,6 @@ web_ui/npm-debug.log*
 web_ui/yarn-debug.log*
 web_ui/yarn-error.log*
 
-# Static files (generated during build)
 llm_canvas/static/
 !llm_canvas/static/.gitkeep
 

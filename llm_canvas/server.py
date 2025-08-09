@@ -11,29 +11,26 @@ from __future__ import annotations
 
 import argparse
 import logging
-import time
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, List
+from typing import TYPE_CHECKING, Any
 
+from ._api import setup_api_routes
+from ._local_server import create_local_server
 from ._mockData import MOCK_CANVASES
 from .canvas import Canvas
 from .canvasRegistry import CanvasRegistry
 
 try:  # pragma: no cover - optional dependency
-    from fastapi import FastAPI, HTTPException, Query
+    from fastapi import FastAPI
     from fastapi.middleware.cors import CORSMiddleware
-    from fastapi.responses import JSONResponse, StreamingResponse
     from fastapi.staticfiles import StaticFiles
 except ImportError:  # pragma: no cover
-    FastAPI = None  # type: ignore
+    FastAPI = None  # type: ignore[assignment]
 
 if TYPE_CHECKING:  # Only for type checkers
     from fastapi import FastAPI as _FastAPI  # noqa: F401
 
-    from .canvas import CanvasSummary
-
 logger = logging.getLogger(__name__)
-API_PREFIX = "/api/v1"
 
 
 # ---- App Factory ----
@@ -41,9 +38,8 @@ API_PREFIX = "/api/v1"
 
 def _base_app() -> Any:
     if FastAPI is None:  # pragma: no cover
-        raise RuntimeError(
-            "FastAPI not installed. Install extra: uv add 'llm-canvas[server]'"
-        )
+        error_msg = "FastAPI not installed. Install extra: uv add 'llm-canvas[server]'"
+        raise RuntimeError(error_msg)
     app = FastAPI(title="llm_canvas", version="0.1.0")
     app.add_middleware(
         CORSMiddleware,
@@ -61,73 +57,21 @@ def _base_app() -> Any:
 def create_app_registry(registry: CanvasRegistry) -> Any:
     app = _base_app()
 
-    # ---- API Endpoints ----
-    @app.get(f"{API_PREFIX}/canvas/list")
-    def list_canvases() -> dict:
-        items: List[CanvasSummary] = []
-        for c in registry.list():
-            items.append(
-                {
-                    "canvas_id": c.canvas_id,
-                    "created_at": c.created_at,
-                    "root_ids": list(c._roots),  # internal but fine for summary
-                    "node_count": len(c._nodes),
-                    "meta": {"last_updated": registry.last_updated(c.canvas_id)},
-                    "title": c.title,
-                    "description": c.description,
-                }
-            )
-        return {"canvases": items}
-
-    @app.get(f"{API_PREFIX}/canvas")
-    def get_canvas(id: str = Query(..., description="Canvas UUID")) -> JSONResponse:
-        logger.info(f"Fetching canvas {id}")
-        c = registry.get(id)
-        if not c:
-            raise HTTPException(
-                status_code=404,
-                detail={"error": "canvas_not_found", "message": "Canvas not found"},
-            )
-        return JSONResponse(c.to_canvas_data())
-
-    # ---- (Future) Streaming SSE placeholder for spec alignment ----
-    @app.get(f"{API_PREFIX}/canvas/stream")
-    def stream(id: str = Query(..., description="Canvas UUID")):
-        c = registry.get(id)
-        if not c:
-            raise HTTPException(
-                status_code=404,
-                detail={"error": "canvas_not_found", "message": "Canvas not found"},
-            )
-
-        def event_stream():  # simple snapshot for now
-            import json
-
-            yield f"event: snapshot\ndata: {json.dumps(c.to_canvas_data())}\n\n"
-
-        return StreamingResponse(event_stream(), media_type="text/event-stream")
+    # Set up API routes
+    setup_api_routes(app, registry)
 
     # ---- Static Frontend Serving ----
     static_dir = Path(__file__).parent / "static"
     if static_dir.exists():
-        app.mount(
-            "/assets", StaticFiles(directory=static_dir / "assets"), name="assets"
-        )
+        app.mount("/assets", StaticFiles(directory=static_dir / "assets"), name="assets")
 
         @app.get("/")
-        def serve_index():
+        def serve_index() -> Any:
             from fastapi.responses import FileResponse
 
             return FileResponse(static_dir / "index.html")
 
     return app
-
-
-def create_app_single(canvas: Canvas) -> Any:
-    """Create a FastAPI app for a single canvas instance."""
-    registry = CanvasRegistry()
-    registry.add(canvas)
-    return create_app_registry(registry)
 
 
 # ---- CLI ----
@@ -137,43 +81,45 @@ def main() -> None:  # pragma: no cover - CLI utility
     parser = argparse.ArgumentParser(description="Serve llm_canvas API / UI")
     parser.add_argument("--host", default="127.0.0.1", help="Host to serve on")
     parser.add_argument("--port", type=int, default=8000, help="Port to serve on")
+    parser.add_argument("--local", action="store_true", help="Start as local server with session-based storage (default)")
+    parser.add_argument("--log-level", default="info", choices=["debug", "info", "warning", "error"], help="Set logging level")
     args = parser.parse_args()
 
-    registry = CanvasRegistry()
+    # Configure logging
+    logging.basicConfig(
+        level=getattr(logging, args.log_level.upper()), format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    )
 
-    # Load mock canvases for development/testing
-    for canvas_id, canvas_data in MOCK_CANVASES.items():
-        # Create canvas manually from data since we removed from_dict
-        c = Canvas(
-            canvas_id=canvas_data["canvas_id"],
-            title=canvas_data.get("title"),
-            description=canvas_data.get("description"),
-        )
-        c.created_at = canvas_data.get("created_at", time.time())
+    # Use local server by default or when explicitly requested
+    if True:  # Default to local server for now
+        logger.info("Starting LLM Canvas Local Server (Free & Open Source)")
+        logger.warning("⚠️  LOCAL SERVER LIMITATION: No data persistence")
+        logger.warning("   • Data is lost when server restarts")
+        logger.warning("   • No backup or recovery mechanisms")
+        logger.warning("   • Session-based storage only")
+        logger.info("   For permanent storage, consider cloud plans")
 
-        # Manually populate nodes
-        for nid, node_data in canvas_data.get("nodes", {}).items():
-            c._nodes[nid] = {
-                "id": node_data.get("id", nid),
-                "content": node_data.get("content", {}),
-                "parent_id": node_data.get("parent_id"),
-                "child_ids": node_data.get("child_ids", []),
-                "meta": node_data.get("meta", {}),
-            }
-        c._roots = list(canvas_data.get("root_ids", []))
+        app = create_local_server()
+    else:
+        # Fallback to original app creation method
+        registry = CanvasRegistry()
 
-        registry.add(c)
-        print(f"Loaded mock canvas: {canvas_id} - {c.title}")
+        # Load mock canvases for development/testing
+        for canvas_id, canvas_data in MOCK_CANVASES.items():
+            c = Canvas.from_canvas_data(canvas_data)
+            registry.add(c)
+            logger.info(f"Loaded mock canvas: {canvas_id} - {c.title}")
 
-    app = create_app_registry(registry)
+        app = create_app_registry(registry)
 
     try:
         import uvicorn
 
-        print(f"Starting server at http://{args.host}:{args.port}")
-        uvicorn.run(app, host=args.host, port=args.port)
+        logger.info(f"Server starting at http://{args.host}:{args.port}")
+        logger.info("Open your browser to start visualizing LLM conversations!")
+        uvicorn.run(app, host=args.host, port=args.port, log_level=args.log_level)
     except ImportError:
-        print("uvicorn not installed. Install with: uv add 'llm-canvas[server]'")
+        logger.exception("uvicorn not installed. Install with: uv add 'llm-canvas[server]'")
 
 
 if __name__ == "__main__":  # pragma: no cover

@@ -373,3 +373,23 @@ class Canvas:
             "description": self.description,
             "last_updated": time.time(),
         }
+
+    @classmethod
+    def from_canvas_data(cls, data: CanvasData) -> Canvas:
+        """Create a Canvas instance from CanvasData."""
+        canvas = cls(
+            canvas_id=data["canvas_id"],
+            title=data.get("title"),
+            description=data.get("description"),
+        )
+
+        # Set the creation time from the data
+        canvas.created_at = data["created_at"]
+
+        # Load all nodes
+        canvas._nodes = dict(data["nodes"])
+
+        # Set root node IDs
+        canvas._roots = list(data["root_ids"])
+
+        return canvas

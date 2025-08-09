@@ -1,6 +1,6 @@
 [project]
 name = "llm-canvas"
-version = "0.1.0"
+version = "0.1.1"
 description = "Visualize LLM conversations as a navigable canvas"
 authors = [ { name = "LittleLittleCloud" } ]
 readme = "README.md"
@@ -27,14 +27,36 @@ server = ["uvicorn[standard]>=0.29.0"]
 dev = ["pytest>=7.0", "black", "ruff", "mypy",]
 
 [project.scripts]
-llm-canvas-serve = "llm_canvas.server:main"
+llm-canvas = "llm_canvas.cli:main"
 
 [build-system]
-requires = ["hatchling"]
+requires = ["hatchling<1.19", "hatch-vcs"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["llm_canvas"]
+artifacts = [
+    "llm_canvas/static"
+]
+
+[tool.hatch.build.targets.wheel.force-include]
+"web_ui/dist" = "llm_canvas/static"
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "llm_canvas/",
+    "web_ui/dist/",
+    "README.md",
+    "LICENSE",
+]
+exclude = [
+    "*.pyc",
+    "__pycache__/",
+    "web_ui/node_modules/",
+]
+
+[tool.hatch.build.targets.sdist.force-include]
+"web_ui/dist" = "llm_canvas/static"
 
 [tool.ruff]
 line-length = 128
@@ -116,6 +138,7 @@ ignore = [
     "FIX002",  # Line contains TODO, consider resolving the issue
     "G004",    # Logging statement uses f-string
     "T201",    # `print` found
+    "TRY003",  # Avoid specifying long messages outside the exception class
 ]
 
 [tool.ruff.lint.per-file-ignores]
