@@ -143,10 +143,7 @@ class CanvasClient:
         try:
             from .server import create_app_registry
         except Exception as e:
-            msg = (
-                "Server components not available. "
-                "Install extras: uv add 'llm-canvas[server]'"
-            )
+            msg = "Server components not available. Install extras: uv add 'llm-canvas[server]'"
             raise RuntimeError(msg) from e
 
         app = create_app_registry(self.registry)
@@ -185,9 +182,7 @@ class CanvasClient:
         to keep the main thread alive. Call this after run_server(background=True).
         """
         if self._server_thread is None:
-            print(
-                "No background server running. Use run_server(background=True) first."
-            )
+            print("No background server running. Use run_server(background=True) first.")
             return
 
         try:

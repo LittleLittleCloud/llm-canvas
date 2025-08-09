@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 import logging
+import threading
 import time
 import uuid
-from typing import TYPE_CHECKING, Any, Literal, TypedDict
+from typing import TYPE_CHECKING, Any, Callable, Literal, TypedDict
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
@@ -53,6 +54,13 @@ class CanvasData(TypedDict):
     nodes: dict[str, MessageNode]
 
 
+class CanvasEvent(TypedDict):
+    event_type: Literal["message_added", "message_updated", "canvas_updated"]
+    canvas_id: str
+    timestamp: float
+    data: dict[str, Any]
+
+
 class Canvas:
     """Represents a DAG of message nodes (LLM conversation branches)."""
 
@@ -70,6 +78,33 @@ class Canvas:
         self._roots: list[str] = []
         self._server_thread = None
         self._server_running = False
+
+        # Event system
+        self._event_listeners: list[Callable[[CanvasEvent], None]] = []
+        self._event_lock = threading.Lock()
+
+    # ---- Event System ----
+    def add_event_listener(self, listener: Callable[[CanvasEvent], None]) -> None:
+        """Add an event listener that will be called when canvas events occur."""
+        with self._event_lock:
+            self._event_listeners.append(listener)
+
+    def remove_event_listener(self, listener: Callable[[CanvasEvent], None]) -> None:
+        """Remove an event listener."""
+        with self._event_lock:
+            if listener in self._event_listeners:
+                self._event_listeners.remove(listener)
+
+    def _emit_event(self, event: CanvasEvent) -> None:
+        """Emit an event to all registered listeners."""
+        with self._event_lock:
+            listeners = list(self._event_listeners)  # Create a copy for thread safety
+
+        for listener in listeners:
+            try:
+                listener(event)
+            except Exception as e:
+                logger.exception(f"Error in event listener: {e}")
 
     # ---- Public API ----
     def add_message(
@@ -93,6 +128,16 @@ class Canvas:
             parent_node["child_ids"].append(node_id)
         else:
             self._roots.append(node_id)
+
+        # Emit SSE event
+        event: CanvasEvent = {
+            "event_type": "message_added",
+            "canvas_id": self.canvas_id,
+            "timestamp": time.time(),
+            "data": {"node": node, "canvas_data": self.to_canvas_data()},
+        }
+        self._emit_event(event)
+
         return node
 
     def get_node(self, node_id: str) -> MessageNode | None:

@@ -80,7 +80,7 @@ def create_app_registry(registry: CanvasRegistry) -> Any:
         return {"canvases": items}
 
     @app.get(f"{API_PREFIX}/canvas")
-    def get_canvas(id: str = Query(..., description="Canvas UUID")):
+    def get_canvas(id: str = Query(..., description="Canvas UUID")) -> JSONResponse:
         logger.info(f"Fetching canvas {id}")
         c = registry.get(id)
         if not c:

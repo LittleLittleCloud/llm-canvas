@@ -37,7 +37,7 @@ build-backend = "hatchling.build"
 packages = ["llm_canvas"]
 
 [tool.ruff]
-line-length = 88
+line-length = 128
 target-version = "py39"
 
 [tool.ruff.lint]
