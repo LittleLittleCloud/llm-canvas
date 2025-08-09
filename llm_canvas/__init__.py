@@ -12,16 +12,20 @@ from .canvas import (
 from .canvasClient import CanvasClient
 from .canvasRegistry import CanvasRegistry
 
+# Default canvas client instance for convenience
+canvas_client = CanvasClient()
+
 __all__ = [
     "Canvas",
     "CanvasClient",
     "CanvasData",
     "CanvasRegistry",
     "CanvasSummary",
-    "MessageNode",
     "Message",
     "MessageBlock",
+    "MessageNode",
     "TextBlockParam",
-    "ToolUseBlockParam",
     "ToolResultBlockParam",
+    "ToolUseBlockParam",
+    "canvas_client",  # Default instance
 ]

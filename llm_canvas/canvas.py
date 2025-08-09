@@ -28,7 +28,7 @@ class Message(TypedDict):
 
 class MessageNode(TypedDict):
     id: str
-    content: Message
+    message: Message
     parent_id: str | None
     child_ids: list[str]
     meta: dict[str, Any] | None
@@ -54,11 +54,38 @@ class CanvasData(TypedDict):
     nodes: dict[str, MessageNode]
 
 
-class CanvasEvent(TypedDict):
-    event_type: Literal["message_added", "message_updated", "canvas_updated"]
+type CanvasEventType = Literal["commit_message", "update_message", "delete_message"]
+
+
+class CanvasCommitMessageEvent(TypedDict):
+    event_type: Literal["commit_message"]
     canvas_id: str
     timestamp: float
-    data: dict[str, Any]
+    data: MessageNode
+
+
+class CanvasUpdateMessageEvent(TypedDict):
+    event_type: Literal["update_message"]
+    canvas_id: str
+    timestamp: float
+    data: MessageNode
+
+
+class CanvasDeleteMessageEvent(TypedDict):
+    event_type: Literal["delete_message"]
+    canvas_id: str
+    timestamp: float
+    data: str  # Node ID that was deleted
+
+
+type CanvasEvent = CanvasCommitMessageEvent | CanvasUpdateMessageEvent | CanvasDeleteMessageEvent
+
+
+class BranchInfo(TypedDict):
+    name: str
+    description: str | None
+    head_node_id: str | None
+    created_at: float
 
 
 class Canvas:
@@ -76,12 +103,24 @@ class Canvas:
         self.created_at = time.time()
         self._nodes: dict[str, MessageNode] = {}
         self._roots: list[str] = []
-        self._server_thread = None
-        self._server_running = False
+
+        # Branch management
+        self._branches: dict[str, BranchInfo] = {}
+        self._current_branch = "main"
+        self._initialize_main_branch()
 
         # Event system
         self._event_listeners: list[Callable[[CanvasEvent], None]] = []
         self._event_lock = threading.Lock()
+
+    def _initialize_main_branch(self) -> None:
+        """Initialize the main branch."""
+        self._branches["main"] = {
+            "name": "main",
+            "description": "Main conversation thread",
+            "head_node_id": None,
+            "created_at": self.created_at,
+        }
 
     # ---- Event System ----
     def add_event_listener(self, listener: Callable[[CanvasEvent], None]) -> None:
@@ -107,7 +146,125 @@ class Canvas:
                 logger.exception(f"Error in event listener: {e}")
 
     # ---- Public API ----
-    def add_message(
+    def commit_message(self, message: Message, meta: dict[str, Any] | None = None) -> MessageNode:
+        """
+        Commit a message to the current branch HEAD.
+
+        Args:
+            message: The message to commit
+            meta: Optional metadata for the message
+
+        Returns:
+            The created MessageNode
+        """
+        current_branch = self._branches[self._current_branch]
+        parent_node = None
+
+        # Get the current HEAD node if it exists
+        if current_branch["head_node_id"]:
+            parent_node = self._nodes[current_branch["head_node_id"]]
+
+        # Add the message using the existing add_message method
+        node = self._add_message(message, parent_node, meta)
+
+        # Update the current branch HEAD
+        current_branch["head_node_id"] = node["id"]
+
+        return node
+
+    def checkout(
+        self,
+        name: str,
+        description: str | None = None,
+        create_if_not_exists: bool = False,
+        commit_message: MessageNode | None = None,
+    ) -> None:
+        """
+        Switch to a branch, optionally creating it if it doesn't exist.
+
+        Args:
+            name: Branch name to switch to
+            description: Description for new branch (if creating)
+            create_if_not_exists: Whether to create the branch if it doesn't exist
+            commit_message: Starting point for new branch (defaults to current HEAD)
+        """
+        if name not in self._branches:
+            if not create_if_not_exists:
+                raise ValueError(f"Branch '{name}' does not exist")
+
+            # Determine the starting point for the new branch
+            head_node_id = None
+            if commit_message:
+                head_node_id = commit_message["id"]
+            elif self._current_branch in self._branches:
+                head_node_id = self._branches[self._current_branch]["head_node_id"]
+
+            # Create the new branch
+            self._branches[name] = {
+                "name": name,
+                "description": description or f"Branch {name}",
+                "head_node_id": head_node_id,
+                "created_at": time.time(),
+            }
+
+        # Switch to the branch
+        self._current_branch = name
+
+    def list_branches(self) -> list[BranchInfo]:
+        """
+        List all branches with their latest commit information.
+
+        Returns:
+            List of branch information including name and latest commit
+        """
+        branches = []
+        for branch in self._branches.values():
+            branches.append(branch)
+
+        return branches
+
+    def delete_branch(self, name: str) -> None:
+        """
+        Delete a branch.
+
+        Args:
+            name: Name of the branch to delete
+
+        Raises:
+            ValueError: If trying to delete the main branch or current branch
+        """
+        if name == self._current_branch:
+            raise ValueError("Cannot delete the current branch. Switch to another branch first.")
+
+        if name not in self._branches:
+            raise ValueError(f"Branch '{name}' does not exist")
+
+        del self._branches[name]
+
+    def get_current_branch(self) -> str:
+        """Get the name of the current branch."""
+        return self._current_branch
+
+    def get_head_node(self, branch_name: str | None = None) -> MessageNode | None:
+        """
+        Get the HEAD node of a branch.
+
+        Args:
+            branch_name: Branch name (defaults to current branch)
+
+        Returns:
+            The HEAD MessageNode or None if no HEAD exists
+        """
+        branch_name = branch_name or self._current_branch
+        if branch_name not in self._branches:
+            raise ValueError(f"Branch '{branch_name}' does not exist")
+
+        branch = self._branches[branch_name]
+        if branch["head_node_id"]:
+            return self._nodes.get(branch["head_node_id"])
+        return None
+
+    def _add_message(
         self,
         message: Message,
         parent_node: MessageNode | None = None,
@@ -115,13 +272,16 @@ class Canvas:
         node_id: str | None = None,
     ) -> MessageNode:
         node_id = node_id or str(uuid.uuid4())
+        _meta = {"timestamp": time.time()}
 
+        if meta is not None:
+            _meta.update(meta)
         node: MessageNode = {
             "id": node_id,
-            "content": message,
+            "message": message,
             "parent_id": parent_node["id"] if parent_node else None,
             "child_ids": [],
-            "meta": meta or {"timestamp": time.time()},
+            "meta": _meta,
         }
         self._nodes[node_id] = node
         if parent_node:
@@ -130,11 +290,54 @@ class Canvas:
             self._roots.append(node_id)
 
         # Emit SSE event
-        event: CanvasEvent = {
-            "event_type": "message_added",
+        event: CanvasCommitMessageEvent = {
+            "event_type": "commit_message",
             "canvas_id": self.canvas_id,
             "timestamp": time.time(),
-            "data": {"node": node, "canvas_data": self.to_canvas_data()},
+            "data": node,
+        }
+        self._emit_event(event)
+
+        return node
+
+    def update_message(self, node_id: str, message: Message, meta: dict[str, Any] | None = None) -> MessageNode:
+        """
+        Update an existing message in the canvas.
+
+        Args:
+            node_id: The ID of the message node to update
+            message: The new message content
+            meta: Optional metadata to update (will be merged with existing meta)
+
+        Returns:
+            The updated MessageNode
+
+        Raises:
+            ValueError: If the node with the given ID doesn't exist
+        """
+        if node_id not in self._nodes:
+            raise ValueError(f"Node with ID '{node_id}' does not exist")
+
+        node = self._nodes[node_id]
+
+        # Update the message content
+        node["message"] = message
+        if node["meta"] is None:
+            node["meta"] = {}
+        assert isinstance(node["meta"], dict), "Node meta must be a dictionary"
+        node["meta"]["last_updated"] = time.time()
+
+        if meta is not None:
+            node["meta"].update(meta)
+
+        # Update the timestamp in metadata to track when it was last modified
+
+        # Emit update event
+        event: CanvasUpdateMessageEvent = {
+            "event_type": "update_message",
+            "canvas_id": self.canvas_id,
+            "timestamp": time.time(),
+            "data": node,
         }
         self._emit_event(event)
 
@@ -170,70 +373,3 @@ class Canvas:
             "description": self.description,
             "last_updated": time.time(),
         }
-
-    def run(
-        self, host: str = "127.0.0.1", port: int = 8000, background: bool = False
-    ) -> None:
-        """Start the web UI / API server for this canvas.
-
-        The FastAPI application has been moved to llm_canvas.server. This method now
-        creates a single-canvas registry and launches the server.
-        """
-        try:
-            from .server import create_app_single  # Lazy import
-        except Exception as e:  # pragma: no cover
-            raise RuntimeError(
-                "Server components not available. Install extras: uv add 'llm-canvas[server]'"
-            ) from e
-
-        app = create_app_single(self)
-
-        if background:
-            import threading
-            import time as _t
-
-            def run_server() -> None:
-                try:
-                    import uvicorn
-
-                    self._server_running = True
-                    uvicorn.run(app, host=host, port=port, log_level="warning")
-                except ImportError:
-                    logger.warning("uvicorn not available - server not started")
-                finally:
-                    self._server_running = False
-
-            self._server_thread = threading.Thread(target=run_server, daemon=True)
-            self._server_thread.start()
-            logger.info(
-                "🚀 Web UI/API started in background at http://%s:%s", host, port
-            )
-            _t.sleep(1)  # Give server time to start
-        else:
-            try:
-                import uvicorn
-
-                logger.info("🚀 Starting Web UI/API at http://%s:%s", host, port)
-                uvicorn.run(app, host=host, port=port)
-            except ImportError:
-                logger.exception("uvicorn not available - install with: uv add uvicorn")
-
-    def wait_for_server(self) -> None:
-        """Block execution until the background server stops.
-
-        This is useful when running the server in background mode and you want
-        to keep the main thread alive. Call this after canvas.run(background=True).
-        """
-        if self._server_thread is None:
-            logger.warning(
-                "No background server running. Use canvas.run(background=True) first."
-            )
-            return
-
-        try:
-            logger.info("Server running in background. Press Ctrl+C to stop.")
-            while self._server_running and self._server_thread.is_alive():
-                time.sleep(0.1)
-        except KeyboardInterrupt:
-            logger.info("Shutting down server...")
-            self._server_running = False

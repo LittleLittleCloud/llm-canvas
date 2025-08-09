@@ -18,9 +18,7 @@ if TYPE_CHECKING:
 from llm_canvas import CanvasClient
 
 anthropic_client = Anthropic(
-    api_key=os.environ.get(
-        "ANTHROPIC_API_KEY"
-    ),  # This is the default and can be omitted
+    api_key=os.environ.get("ANTHROPIC_API_KEY"),  # This is the default and can be omitted
 )
 
 
@@ -29,18 +27,14 @@ def main() -> None:
     client = CanvasClient()
 
     # Create multiple canvases
-    chat_canvas = client.create_canvas(
-        title="AI Assistant Chat", description="A conversation with an AI assistant"
-    )
+    chat_canvas = client.create_canvas(title="AI Assistant Chat", description="A conversation with an AI assistant")
     # Run the server in background
     print("\n🚀 Starting server...")
 
     print("\n✅ Server is running at http://127.0.0.1:8000")
     print("   - View all canvases: http://127.0.0.1:8000")
     print("   - API endpoint: http://127.0.0.1:8000/api/v1/canvas/list")
-    print(
-        f"   - Specific canvas: http://127.0.0.1:8000/api/v1/canvas?id={chat_canvas.canvas_id}"
-    )
+    print(f"   - Specific canvas: http://127.0.0.1:8000/api/v1/canvas?id={chat_canvas.canvas_id}")
     client.run_server(background=True)
     parent_node = None
     chat_history: list[MessageParam] = []
@@ -48,9 +42,7 @@ def main() -> None:
         user_input = input("You: ")
         chat_history.append({"role": "user", "content": user_input})
         # Add user message to chat canvas
-        parent_node = chat_canvas.add_message(
-            {"role": "user", "content": user_input}, parent_node
-        )
+        parent_node = chat_canvas._add_message({"role": "user", "content": user_input}, parent_node)
 
         if user_input.lower() in ["exit", "quit"]:
             break
@@ -61,7 +53,7 @@ def main() -> None:
             messages=chat_history,
         )
 
-        parent_node = chat_canvas.add_message(
+        parent_node = chat_canvas._add_message(
             response.to_dict(),
             parent_node,
         )

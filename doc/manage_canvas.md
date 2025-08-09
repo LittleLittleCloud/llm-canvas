@@ -18,14 +18,14 @@ Canvas management is inspired by Git version control, so if you're familiar with
 
 ### 1. Creating a New Canvas
 
-To start working with LLM Canvas, create a new canvas using the `create_canvas` method from `canvasClient`:
+To start working with LLM Canvas, create a new canvas using the `create_canvas` method from `canvas_client`:
 
 ```python
-from llm_canvas import canvasClient
+from llm_canvas import canvas_client
 
-# Create a canvas with name and description
-canvas = canvasClient.create_canvas(
-    name="My First Canvas",
+# Create a canvas with title and description
+canvas = canvas_client.create_canvas(
+    title="My First Canvas",
     description="A canvas for exploring LLM interactions"
 )
 ```
@@ -48,7 +48,17 @@ assistant_message = canvas.commit_message({
 })
 ```
 
-> **Important:** The `commit_message` method always adds messages after the current HEAD of the canvas. The newly committed message becomes the new HEAD.
+### 3. Updating Existing Message in Your Canvas
+
+You can update an existing message by using the `update_message` method. This allows you to modify the content or metadata of a message.
+
+````python
+# Update the user message
+canvas.update_message(user_message["id"], {
+    "content": "Hello, world! (updated)",
+    "role": "user"
+})
+
 
 ## Working with Branches
 
@@ -78,7 +88,7 @@ canvas.commit_message({
     "content": "Hello, alternative branch!",
     "role": "user"
 })
-```
+````
 
 ### Branching from Specific Messages
 
@@ -121,7 +131,7 @@ branches = canvas.list_branches()
 
 for branch in branches:
     print(f"Branch: {branch['name']}")
-    print(f"Latest message: {branch['latest_commit']['content']}")
+    print(f"Latest message: {branch['latest_commit_message']['content']}")
     print("---")
 ```
 

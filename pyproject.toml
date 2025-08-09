@@ -144,4 +144,5 @@ disallow_incomplete_defs = true
 [dependency-groups]
 dev = [
     "mypy>=1.17.1",
+    "pytest>=8.4.1",
 ]
