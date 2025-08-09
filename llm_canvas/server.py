@@ -13,10 +13,11 @@ import argparse
 import logging
 import time
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, List, Optional
+from typing import TYPE_CHECKING, Any, List
 
 from ._mockData import MOCK_CANVASES
-from .canvas import Canvas, CanvasSummary
+from .canvas import Canvas
+from .canvasRegistry import CanvasRegistry
 
 try:  # pragma: no cover - optional dependency
     from fastapi import FastAPI, HTTPException, Query
@@ -29,32 +30,10 @@ except ImportError:  # pragma: no cover
 if TYPE_CHECKING:  # Only for type checkers
     from fastapi import FastAPI as _FastAPI  # noqa: F401
 
+    from .canvas import CanvasSummary
+
 logger = logging.getLogger(__name__)
 API_PREFIX = "/api/v1"
-
-
-# ---- Canvas Registry (simple in-memory) ----
-class CanvasRegistry:
-    def __init__(self):
-        self._canvases: Dict[str, Canvas] = {}
-        self._last_updated: Dict[str, float] = {}
-
-    def add(self, canvas: Canvas):
-        self._canvases[canvas.canvas_id] = canvas
-        self._last_updated[canvas.canvas_id] = time.time()
-
-    def get(self, canvas_id: str) -> Optional[Canvas]:
-        return self._canvases.get(canvas_id)
-
-    def list(self) -> List[Canvas]:
-        return list(self._canvases.values())
-
-    def touch(self, canvas_id: str):
-        if canvas_id in self._last_updated:
-            self._last_updated[canvas_id] = time.time()
-
-    def last_updated(self, canvas_id: str) -> Optional[float]:
-        return self._last_updated.get(canvas_id)
 
 
 # ---- App Factory ----
@@ -84,7 +63,7 @@ def create_app_registry(registry: CanvasRegistry) -> Any:
 
     # ---- API Endpoints ----
     @app.get(f"{API_PREFIX}/canvas/list")
-    def list_canvases():
+    def list_canvases() -> dict:
         items: List[CanvasSummary] = []
         for c in registry.list():
             items.append(
@@ -109,7 +88,7 @@ def create_app_registry(registry: CanvasRegistry) -> Any:
                 status_code=404,
                 detail={"error": "canvas_not_found", "message": "Canvas not found"},
             )
-        return JSONResponse(c.to_dict())
+        return JSONResponse(c.to_canvas_data())
 
     # ---- (Future) Streaming SSE placeholder for spec alignment ----
     @app.get(f"{API_PREFIX}/canvas/stream")
@@ -122,7 +101,9 @@ def create_app_registry(registry: CanvasRegistry) -> Any:
             )
 
         def event_stream():  # simple snapshot for now
-            yield f"event: snapshot\ndata: {c.to_json()}\n\n"
+            import json
+
+            yield f"event: snapshot\ndata: {json.dumps(c.to_canvas_data())}\n\n"
 
         return StreamingResponse(event_stream(), media_type="text/event-stream")
 
@@ -142,10 +123,17 @@ def create_app_registry(registry: CanvasRegistry) -> Any:
     return app
 
 
+def create_app_single(canvas: Canvas) -> Any:
+    """Create a FastAPI app for a single canvas instance."""
+    registry = CanvasRegistry()
+    registry.add(canvas)
+    return create_app_registry(registry)
+
+
 # ---- CLI ----
 
 
-def main():  # pragma: no cover - CLI utility
+def main() -> None:  # pragma: no cover - CLI utility
     parser = argparse.ArgumentParser(description="Serve llm_canvas API / UI")
     parser.add_argument("--host", default="127.0.0.1", help="Host to serve on")
     parser.add_argument("--port", type=int, default=8000, help="Port to serve on")
@@ -155,7 +143,25 @@ def main():  # pragma: no cover - CLI utility
 
     # Load mock canvases for development/testing
     for canvas_id, canvas_data in MOCK_CANVASES.items():
-        c = Canvas.from_dict(canvas_data)
+        # Create canvas manually from data since we removed from_dict
+        c = Canvas(
+            canvas_id=canvas_data["canvas_id"],
+            title=canvas_data.get("title"),
+            description=canvas_data.get("description"),
+        )
+        c.created_at = canvas_data.get("created_at", time.time())
+
+        # Manually populate nodes
+        for nid, node_data in canvas_data.get("nodes", {}).items():
+            c._nodes[nid] = {
+                "id": node_data.get("id", nid),
+                "content": node_data.get("content", {}),
+                "parent_id": node_data.get("parent_id"),
+                "child_ids": node_data.get("child_ids", []),
+                "meta": node_data.get("meta", {}),
+            }
+        c._roots = list(canvas_data.get("root_ids", []))
+
         registry.add(c)
         print(f"Loaded mock canvas: {canvas_id} - {c.title}")
 

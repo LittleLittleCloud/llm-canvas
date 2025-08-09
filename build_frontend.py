@@ -9,7 +9,7 @@ from hatchling.builders.hooks.plugin.interface import BuildHookInterface
 class CustomBuildHook(BuildHookInterface):
     PLUGIN_NAME = "custom"
 
-    def initialize(self, version, build_data):
+    def initialize(self, version, build_data) -> None:
         """Build frontend and copy static files."""
         if self.target_name != "wheel":
             return

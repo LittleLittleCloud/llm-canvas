@@ -21,9 +21,9 @@ export const MessageNodeComponent: React.FC<Props> = ({ node }) => {
         {typeof content === "string" && (
           <div className="whitespace-pre-wrap text-sm">{content}</div>
         )}
-        {blocks && (
+        {Array.isArray(content) && (
           <div className="space-y-1">
-            {blocks.map((b, i) => (
+            {content.map((b, i) => (
               <MessageBlockView key={i} block={b} index={i} />
             ))}
           </div>

@@ -5,9 +5,10 @@ import shutil
 import subprocess
 import sys
 from pathlib import Path
+from typing import Optional
 
 
-def build_frontend():
+def build_frontend() -> Optional[bool]:
     """Build the React frontend."""
     root_dir = Path(__file__).parent
     web_ui_dir = root_dir / "web_ui"
@@ -39,7 +40,7 @@ def build_frontend():
     return True
 
 
-def build_package():
+def build_package() -> Optional[bool]:
     """Build the Python package."""
     print("Building Python package...")
     try:

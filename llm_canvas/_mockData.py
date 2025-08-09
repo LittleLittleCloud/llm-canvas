@@ -7,15 +7,17 @@ conversations.
 
 import json
 import time
-from typing import Any, Dict
+from typing import Any
+
+from llm_canvas.canvas import CanvasData
 
 # Current timestamp for consistent mock data
 _current_time = time.time()
 
 
 def _create_canvas_data(
-    canvas_id: str, title: str, root_ids: list, nodes: Dict[str, Any]
-) -> Dict[str, Any]:
+    canvas_id: str, title: str, root_ids: list, nodes: dict[str, Any]
+) -> CanvasData:
     """Helper to create canvas data structure."""
     return {
         "canvas_id": canvas_id,
@@ -864,13 +866,3 @@ MOCK_CANVASES = {
     "branched-canvas": branched_canvas,
     "branched-tool-canvas": branched_tool_canvas,
 }
-
-
-def get_mock_canvas(canvas_id: str) -> Dict[str, Any] | None:
-    """Get a mock canvas by ID."""
-    return MOCK_CANVASES.get(canvas_id)
-
-
-def get_all_mock_canvases() -> Dict[str, Dict[str, Any]]:
-    """Get all mock canvases."""
-    return MOCK_CANVASES

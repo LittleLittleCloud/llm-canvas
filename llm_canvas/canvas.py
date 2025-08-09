@@ -1,10 +1,12 @@
 from __future__ import annotations
 
-import json
 import logging
 import time
 import uuid
-from typing import Any, Dict, Iterable, List, Literal, Optional, TypedDict, Union
+from typing import TYPE_CHECKING, Any, Literal, TypedDict
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
 
 from anthropic.types import TextBlockParam, ToolResultBlockParam, ToolUseBlockParam
 
@@ -13,32 +15,42 @@ logger = logging.getLogger(__name__)
 
 # ---- Data Models ----
 
-
+type UnSupportedBlockParam = Any  # Placeholder for unsupported block types
 # Union type for message blocks matching TypeScript
-MessageBlock = Union[TextBlockParam, ToolUseBlockParam, ToolResultBlockParam]
+MessageBlock = TextBlockParam | ToolUseBlockParam | ToolResultBlockParam | Any
 
 
 class Message(TypedDict):
-    content: Union[str, List[MessageBlock]]
+    content: str | Iterable[MessageBlock]
     role: Literal["user", "assistant", "system"]
 
 
 class MessageNode(TypedDict):
     id: str
     content: Message
-    parent_id: Optional[str]
-    child_ids: List[str]
-    meta: Optional[Dict[str, Any]]
+    parent_id: str | None
+    child_ids: list[str]
+    meta: dict[str, Any] | None
 
 
 class CanvasSummary(TypedDict):
     canvas_id: str
     created_at: float
-    root_ids: List[str]
+    root_ids: list[str]
     node_count: int
-    title: Optional[str]
-    description: Optional[str]
-    meta: Dict[str, Any]
+    title: str | None
+    description: str | None
+    meta: dict[str, Any]
+
+
+class CanvasData(TypedDict):
+    title: str | None
+    last_updated: float | None
+    description: str | None
+    canvas_id: str
+    created_at: float
+    root_ids: list[str]
+    nodes: dict[str, MessageNode]
 
 
 class Canvas:
@@ -46,35 +58,28 @@ class Canvas:
 
     def __init__(
         self,
-        canvas_id: Optional[str] = None,
-        title: Optional[str] = None,
-        description: Optional[str] = None,
-    ):
+        canvas_id: str | None = None,
+        title: str | None = None,
+        description: str | None = None,
+    ) -> None:
         self.canvas_id = canvas_id or str(uuid.uuid4())
         self.title = title
         self.description = description
         self.created_at = time.time()
-        self._nodes: Dict[str, MessageNode] = {}
-        self._roots: List[str] = []
+        self._nodes: dict[str, MessageNode] = {}
+        self._roots: list[str] = []
         self._server_thread = None
         self._server_running = False
 
     # ---- Public API ----
     def add_message(
         self,
-        content: Any,
-        role: Literal["user", "assistant", "system"] = "user",
-        parent_node: Optional[MessageNode] = None,
-        meta: Optional[Dict[str, Any]] = None,
-        id: Optional[str] = None,
+        message: Message,
+        parent_node: MessageNode | None = None,
+        meta: dict[str, Any] | None = None,
+        node_id: str | None = None,
     ) -> MessageNode:
-        node_id = id or str(uuid.uuid4())
-
-        # Create the Message object
-        message: Message = {
-            "content": content if isinstance(content, (str, list)) else str(content),
-            "role": role,
-        }
+        node_id = node_id or str(uuid.uuid4())
 
         node: MessageNode = {
             "id": node_id,
@@ -90,7 +95,7 @@ class Canvas:
             self._roots.append(node_id)
         return node
 
-    def get_node(self, node_id: str) -> Optional[MessageNode]:
+    def get_node(self, node_id: str) -> MessageNode | None:
         return self._nodes.get(node_id)
 
     def iter_nodes(self) -> Iterable[MessageNode]:
@@ -108,56 +113,18 @@ class Canvas:
             "meta": {"last_updated": time.time()},
         }
 
-    def to_dict(self) -> Dict[str, Any]:
-        result = {
+    def to_canvas_data(self) -> CanvasData:
+        """Convert the canvas to CanvasData format."""
+
+        return {
             "canvas_id": self.canvas_id,
             "created_at": self.created_at,
             "root_ids": list(self._roots),
-            "nodes": {nid: dict(n) for nid, n in self._nodes.items()},
+            "nodes": dict(self._nodes),
+            "title": self.title,
+            "description": self.description,
+            "last_updated": time.time(),
         }
-        if self.title is not None:
-            result["title"] = self.title
-        if self.description is not None:
-            result["description"] = self.description
-        return result
-
-    def to_json(self, **json_kwargs) -> str:
-        return json.dumps(self.to_dict(), **json_kwargs)
-
-    @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "Canvas":
-        canvas = cls(
-            canvas_id=data["canvas_id"],
-            title=data.get("title"),
-            description=data.get("description"),
-        )
-        canvas.created_at = data.get("created_at", time.time())
-        for nid, nd in data.get("nodes", {}).items():
-            # Ensure the node has all required fields with defaults
-            node: MessageNode = {
-                "id": nd.get("id", nid),
-                "role": nd.get("role", "user"),
-                "content": nd.get("content", []),
-                "parent_id": nd.get("parent_id"),
-                "child_ids": nd.get("child_ids", []),
-                "meta": nd.get("meta", {}),
-            }
-            canvas._nodes[nid] = node
-        canvas._roots = list(data.get("root_ids", []))
-        return canvas
-
-    @classmethod
-    def from_json(cls, raw: str) -> "Canvas":
-        return cls.from_dict(json.loads(raw))
-
-    def save(self, path: str) -> None:
-        with open(path, "w", encoding="utf-8") as f:
-            json.dump(self.to_dict(), f, ensure_ascii=False, indent=2)
-
-    @classmethod
-    def load(cls, path: str) -> "Canvas":
-        with open(path, "r", encoding="utf-8") as f:
-            return cls.from_dict(json.load(f))
 
     def run(
         self, host: str = "127.0.0.1", port: int = 8000, background: bool = False
@@ -180,29 +147,31 @@ class Canvas:
             import threading
             import time as _t
 
-            def run_server():
+            def run_server() -> None:
                 try:
                     import uvicorn
 
                     self._server_running = True
                     uvicorn.run(app, host=host, port=port, log_level="warning")
                 except ImportError:
-                    print("uvicorn not available - server not started")
+                    logger.warning("uvicorn not available - server not started")
                 finally:
                     self._server_running = False
 
             self._server_thread = threading.Thread(target=run_server, daemon=True)
             self._server_thread.start()
-            print(f"🚀 Web UI/API started in background at http://{host}:{port}")
+            logger.info(
+                "🚀 Web UI/API started in background at http://%s:%s", host, port
+            )
             _t.sleep(1)  # Give server time to start
         else:
             try:
                 import uvicorn
 
-                print(f"🚀 Starting Web UI/API at http://{host}:{port}")
+                logger.info("🚀 Starting Web UI/API at http://%s:%s", host, port)
                 uvicorn.run(app, host=host, port=port)
             except ImportError:
-                print("uvicorn not available - install with: uv add uvicorn")
+                logger.exception("uvicorn not available - install with: uv add uvicorn")
 
     def wait_for_server(self) -> None:
         """Block execution until the background server stops.
@@ -211,29 +180,15 @@ class Canvas:
         to keep the main thread alive. Call this after canvas.run(background=True).
         """
         if self._server_thread is None:
-            print(
+            logger.warning(
                 "No background server running. Use canvas.run(background=True) first."
             )
             return
 
         try:
-            print("Server running in background. Press Ctrl+C to stop.")
+            logger.info("Server running in background. Press Ctrl+C to stop.")
             while self._server_running and self._server_thread.is_alive():
                 time.sleep(0.1)
         except KeyboardInterrupt:
-            print("\nShutting down server...")
+            logger.info("Shutting down server...")
             self._server_running = False
-
-    # ---- Internal helpers ----
-    def _normalize_content(self, content: Any) -> List[Dict[str, Any]]:
-        # Basic normalization; can expand later for multi-part
-        if isinstance(content, list):
-            # assume already list of blocks
-            return content
-        if isinstance(content, str):
-            return [{"type": "text", "text": content}]
-        # Fallback to repr
-        return [{"type": "text", "text": repr(content)}]
-
-
-# Server (FastAPI) implementation moved to llm_canvas.server
