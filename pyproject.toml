@@ -13,8 +13,10 @@ classifiers = [
   "Intended Audience :: Developers"
 ]
 dependencies = [
+    "anthropic>=0.62.0",
     "fastapi>=0.110.0",
- "uvicorn[standard]>=0.29.0",
+    "openai>=1.99.5",
+    "uvicorn[standard]>=0.29.0",
 ]
 
 [project.urls]

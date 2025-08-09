@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { devtools } from "zustand/middleware";
-import { config } from "../config";
+import { canvasService } from "../api/canvasService";
 import { CanvasData, Message, MessageNode } from "../types";
 
 export interface CanvasState {
@@ -26,7 +26,7 @@ export interface CanvasState {
   removeMessage: (nodeId: string) => void;
 
   // Data fetching
-  fetchCanvas: () => Promise<void>;
+  fetchCanvas: (canvasId?: string) => Promise<void>;
   refreshCanvas: () => Promise<void>;
 
   // Utilities
@@ -50,33 +50,6 @@ const normalizeContent = (
     throw new Error("Content must be a string or an array of messages");
   }
   return content;
-};
-
-// API base URL configuration
-const getApiBaseUrl = () => {
-  return config.api.baseUrl;
-};
-
-const apiCall = async (endpoint: string, options?: RequestInit) => {
-  const baseUrl = getApiBaseUrl();
-  const url = `${baseUrl}${endpoint}`;
-
-  const response = await fetch(url, {
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      ...options?.headers,
-    },
-    method: "GET",
-  });
-
-  if (!response.ok) {
-    throw new Error(
-      `API call failed: ${response.status} ${response.statusText}`
-    );
-  }
-
-  return response;
 };
 
 export const useCanvasStore = create<CanvasState>()(
@@ -203,11 +176,10 @@ export const useCanvasStore = create<CanvasState>()(
       },
 
       // Data fetching
-      fetchCanvas: async () => {
+      fetchCanvas: async (canvasId?: string) => {
         set({ isLoading: true, error: null });
         try {
-          const response = await apiCall("/canvas");
-          const canvas = await response.json();
+          const canvas = await canvasService.fetchCanvas(canvasId);
           set({ canvas, isLoading: false });
         } catch (error) {
           set({
@@ -221,7 +193,7 @@ export const useCanvasStore = create<CanvasState>()(
       refreshCanvas: async () => {
         const state = get();
         if (state.canvas) {
-          await state.fetchCanvas();
+          await state.fetchCanvas(state.canvas.canvas_id);
         }
       },
 

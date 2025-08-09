@@ -1,20 +1,20 @@
 // Configuration for different environments
 
 // Check if we're in development mode
-const isDevelopment = window.location.hostname === 'localhost' || window.location.port === '5173';
+const isDevelopment = import.meta.env.VITE_DEV_MODE === "true";
 
 export const config = {
   // API configuration
   api: {
-    // Default to port 8000 for FastAPI in development
-    baseUrl: isDevelopment ? 'http://127.0.0.1:8000' : '',
+    // Read from environment variable first, fallback to localhost in development
+    baseUrl: import.meta.env.VITE_BASE_URL || "",
   },
-  
-  // WebSocket/SSE configuration  
+
+  // WebSocket/SSE configuration
   sse: {
-    endpoint: '/stream',
+    endpoint: "/stream",
   },
-  
+
   // Development flags
   dev: {
     enableDevTools: isDevelopment,

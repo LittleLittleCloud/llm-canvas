@@ -38,7 +38,7 @@ Notes:
 - `node_count` is a lightweight count (avoid shipping all nodes in list call).
 - `meta.last_updated` optional (server may compute based on latest node timestamp).
 
-### GET `/api/v1/canvas/get`
+### GET `/api/v1/canvas/`
 
 Retrieve a full canvas by id.
 

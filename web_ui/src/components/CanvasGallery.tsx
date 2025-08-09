@@ -1,8 +1,8 @@
 import React from "react";
-import { CanvasData } from "../types";
+import { CanvasSummary } from "../types";
 
 interface Props {
-  canvases: CanvasData[];
+  canvasSummaries: CanvasSummary[];
   onOpen: (id: string) => void;
 }
 
@@ -15,8 +15,8 @@ const formatTs = (ts: number) => {
   }
 };
 
-export const CanvasGallery: React.FC<Props> = ({ canvases, onOpen }) => {
-  if (!canvases.length) {
+export const CanvasGallery: React.FC<Props> = ({ canvasSummaries, onOpen }) => {
+  if (!canvasSummaries.length) {
     return (
       <div className="p-8 text-center text-gray-500 text-sm">
         No canvases available.
@@ -26,7 +26,7 @@ export const CanvasGallery: React.FC<Props> = ({ canvases, onOpen }) => {
 
   return (
     <div className="p-6 max-w-5xl mx-auto grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-      {canvases.map(c => (
+      {canvasSummaries.map(c => (
         <button
           key={c.canvas_id}
           onClick={() => onOpen(c.canvas_id)}
@@ -47,7 +47,7 @@ export const CanvasGallery: React.FC<Props> = ({ canvases, onOpen }) => {
           )}
           <div className="mt-auto flex items-center justify-between text-[10px] text-gray-400 pt-2 border-t">
             <span>{formatTs(c.created_at)}</span>
-            <span className="italic">{Object.keys(c.nodes).length} nodes</span>
+            <span className="italic">{c.node_count} nodes</span>
           </div>
         </button>
       ))}

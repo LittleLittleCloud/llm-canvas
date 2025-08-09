@@ -4,8 +4,9 @@ import json
 import logging
 import time
 import uuid
-from dataclasses import asdict, dataclass, field
-from typing import Any, Dict, Iterable, List, Optional
+from typing import Any, Dict, Iterable, List, Literal, Optional, TypedDict, Union
+
+from anthropic.types import TextBlockParam, ToolResultBlockParam, ToolUseBlockParam
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -13,24 +14,45 @@ logger = logging.getLogger(__name__)
 # ---- Data Models ----
 
 
-@dataclass
-class MessageNode:
-    id: str
-    role: str
-    content: List[Dict[str, Any]]
-    parent_id: Optional[str] = None
-    child_ids: List[str] = field(default_factory=list)
-    meta: Dict[str, Any] = field(default_factory=dict)
+# Union type for message blocks matching TypeScript
+MessageBlock = Union[TextBlockParam, ToolUseBlockParam, ToolResultBlockParam]
 
-    def to_dict(self) -> Dict[str, Any]:
-        return asdict(self)
+
+class Message(TypedDict):
+    content: Union[str, List[MessageBlock]]
+    role: Literal["user", "assistant", "system"]
+
+
+class MessageNode(TypedDict):
+    id: str
+    content: Message
+    parent_id: Optional[str]
+    child_ids: List[str]
+    meta: Optional[Dict[str, Any]]
+
+
+class CanvasSummary(TypedDict):
+    canvas_id: str
+    created_at: float
+    root_ids: List[str]
+    node_count: int
+    title: Optional[str]
+    description: Optional[str]
+    meta: Dict[str, Any]
 
 
 class Canvas:
     """Represents a DAG of message nodes (LLM conversation branches)."""
 
-    def __init__(self, canvas_id: Optional[str] = None):
+    def __init__(
+        self,
+        canvas_id: Optional[str] = None,
+        title: Optional[str] = None,
+        description: Optional[str] = None,
+    ):
         self.canvas_id = canvas_id or str(uuid.uuid4())
+        self.title = title
+        self.description = description
         self.created_at = time.time()
         self._nodes: Dict[str, MessageNode] = {}
         self._roots: List[str] = []
@@ -41,23 +63,29 @@ class Canvas:
     def add_message(
         self,
         content: Any,
-        role: str = "user",
+        role: Literal["user", "assistant", "system"] = "user",
         parent_node: Optional[MessageNode] = None,
         meta: Optional[Dict[str, Any]] = None,
         id: Optional[str] = None,
     ) -> MessageNode:
         node_id = id or str(uuid.uuid4())
-        normalized_content = self._normalize_content(content)
-        node = MessageNode(
-            id=node_id,
-            role=role,
-            content=normalized_content,
-            parent_id=parent_node.id if parent_node else None,
-            meta=meta or {"timestamp": time.time()},
-        )
+
+        # Create the Message object
+        message: Message = {
+            "content": content if isinstance(content, (str, list)) else str(content),
+            "role": role,
+        }
+
+        node: MessageNode = {
+            "id": node_id,
+            "content": message,
+            "parent_id": parent_node["id"] if parent_node else None,
+            "child_ids": [],
+            "meta": meta or {"timestamp": time.time()},
+        }
         self._nodes[node_id] = node
         if parent_node:
-            parent_node.child_ids.append(node_id)
+            parent_node["child_ids"].append(node_id)
         else:
             self._roots.append(node_id)
         return node
@@ -68,23 +96,52 @@ class Canvas:
     def iter_nodes(self) -> Iterable[MessageNode]:
         return self._nodes.values()
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_summary(self) -> CanvasSummary:
+        """Create a summary representation of the canvas."""
         return {
             "canvas_id": self.canvas_id,
             "created_at": self.created_at,
             "root_ids": list(self._roots),
-            "nodes": {nid: n.to_dict() for nid, n in self._nodes.items()},
+            "node_count": len(self._nodes),
+            "title": self.title,
+            "description": self.description,
+            "meta": {"last_updated": time.time()},
         }
+
+    def to_dict(self) -> Dict[str, Any]:
+        result = {
+            "canvas_id": self.canvas_id,
+            "created_at": self.created_at,
+            "root_ids": list(self._roots),
+            "nodes": {nid: dict(n) for nid, n in self._nodes.items()},
+        }
+        if self.title is not None:
+            result["title"] = self.title
+        if self.description is not None:
+            result["description"] = self.description
+        return result
 
     def to_json(self, **json_kwargs) -> str:
         return json.dumps(self.to_dict(), **json_kwargs)
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "Canvas":
-        canvas = cls(canvas_id=data["canvas_id"])
+        canvas = cls(
+            canvas_id=data["canvas_id"],
+            title=data.get("title"),
+            description=data.get("description"),
+        )
         canvas.created_at = data.get("created_at", time.time())
         for nid, nd in data.get("nodes", {}).items():
-            node = MessageNode(**nd)
+            # Ensure the node has all required fields with defaults
+            node: MessageNode = {
+                "id": nd.get("id", nid),
+                "role": nd.get("role", "user"),
+                "content": nd.get("content", []),
+                "parent_id": nd.get("parent_id"),
+                "child_ids": nd.get("child_ids", []),
+                "meta": nd.get("meta", {}),
+            }
             canvas._nodes[nid] = node
         canvas._roots = list(data.get("root_ids", []))
         return canvas

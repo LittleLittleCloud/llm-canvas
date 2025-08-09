@@ -31,3 +31,19 @@ export interface CanvasData {
   root_ids: string[];
   nodes: Record<string, MessageNode>;
 }
+
+export interface CanvasSummary {
+  canvas_id: string;
+  created_at: number;
+  root_ids: string[];
+  node_count: number;
+  title?: string;
+  description?: string;
+  meta: {
+    last_updated?: number;
+  };
+}
+
+export interface CanvasListResponse {
+  canvases: CanvasSummary[];
+}

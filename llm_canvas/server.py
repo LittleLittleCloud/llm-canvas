@@ -10,11 +10,13 @@ Also serves the single-page web UI (if built) from the package static directory.
 from __future__ import annotations
 
 import argparse
+import logging
 import time
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
-from .canvas import Canvas
+from ._mockData import MOCK_CANVASES
+from .canvas import Canvas, CanvasSummary
 
 try:  # pragma: no cover - optional dependency
     from fastapi import FastAPI, HTTPException, Query
@@ -27,13 +29,12 @@ except ImportError:  # pragma: no cover
 if TYPE_CHECKING:  # Only for type checkers
     from fastapi import FastAPI as _FastAPI  # noqa: F401
 
+logger = logging.getLogger(__name__)
 API_PREFIX = "/api/v1"
 
 
 # ---- Canvas Registry (simple in-memory) ----
 class CanvasRegistry:
-    """Stores canvases in-memory. Placeholder for future persistence layer."""
-
     def __init__(self):
         self._canvases: Dict[str, Canvas] = {}
         self._last_updated: Dict[str, float] = {}
@@ -78,20 +79,13 @@ def _base_app() -> Any:
     return app
 
 
-def create_app_single(canvas: Canvas) -> Any:
-    """Create an app exposing API for a single canvas (legacy behavior)."""
-    registry = CanvasRegistry()
-    registry.add(canvas)
-    return create_app_registry(registry)
-
-
 def create_app_registry(registry: CanvasRegistry) -> Any:
     app = _base_app()
 
     # ---- API Endpoints ----
     @app.get(f"{API_PREFIX}/canvas/list")
     def list_canvases():
-        items = []
+        items: List[CanvasSummary] = []
         for c in registry.list():
             items.append(
                 {
@@ -100,12 +94,15 @@ def create_app_registry(registry: CanvasRegistry) -> Any:
                     "root_ids": list(c._roots),  # internal but fine for summary
                     "node_count": len(c._nodes),
                     "meta": {"last_updated": registry.last_updated(c.canvas_id)},
+                    "title": c.title,
+                    "description": c.description,
                 }
             )
         return {"canvases": items}
 
-    @app.get(f"{API_PREFIX}/canvas/get")
+    @app.get(f"{API_PREFIX}/canvas")
     def get_canvas(id: str = Query(..., description="Canvas UUID")):
+        logger.info(f"Fetching canvas {id}")
         c = registry.get(id)
         if not c:
             raise HTTPException(
@@ -150,28 +147,17 @@ def create_app_registry(registry: CanvasRegistry) -> Any:
 
 def main():  # pragma: no cover - CLI utility
     parser = argparse.ArgumentParser(description="Serve llm_canvas API / UI")
-    parser.add_argument(
-        "--canvas", action="append", help="Path to canvas JSON file (can be repeated)"
-    )
     parser.add_argument("--host", default="127.0.0.1", help="Host to serve on")
     parser.add_argument("--port", type=int, default=8000, help="Port to serve on")
     args = parser.parse_args()
 
     registry = CanvasRegistry()
-    if args.canvas:
-        for path in args.canvas:
-            p = Path(path)
-            if p.exists():
-                c = Canvas.load(str(p))
-                registry.add(c)
-                print(f"Loaded canvas {c.canvas_id} from {path}")
-            else:
-                print(f"File not found: {path} - skipping")
-    else:
-        # Provide a fresh empty canvas for convenience
-        c = Canvas()
+
+    # Load mock canvases for development/testing
+    for canvas_id, canvas_data in MOCK_CANVASES.items():
+        c = Canvas.from_dict(canvas_data)
         registry.add(c)
-        print(f"Created new canvas {c.canvas_id}")
+        print(f"Loaded mock canvas: {canvas_id} - {c.title}")
 
     app = create_app_registry(registry)
 

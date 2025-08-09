@@ -1,21 +1,8 @@
 import React, { useEffect } from "react";
-import { Navigate, useParams } from "react-router-dom";
-import {
-  branchedCanvas,
-  branchedToolCanvas,
-  helloCanvas,
-  weatherCanvas,
-} from "../api/mockData";
+import { useParams } from "react-router-dom";
+import canvasService from "../api/canvasService";
 import { CanvasView } from "../components/CanvasView";
 import { useCanvasStore } from "../store/canvasStore";
-import { CanvasData } from "../types";
-
-const CANVAS_REGISTRY: Record<string, CanvasData> = {
-  [helloCanvas.canvas_id]: helloCanvas,
-  [weatherCanvas.canvas_id]: weatherCanvas,
-  [branchedCanvas.canvas_id]: branchedCanvas,
-  [branchedToolCanvas.canvas_id]: branchedToolCanvas,
-};
 
 export const CanvasPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -26,19 +13,19 @@ export const CanvasPage: React.FC = () => {
 
   useEffect(() => {
     if (id) {
-      const data = CANVAS_REGISTRY[id];
-      if (data) {
-        setCanvas(data);
-      } else {
-        clear();
-      }
+      canvasService
+        .fetchCanvas(id)
+        .then(data => {
+          setCanvas(data);
+        })
+        .catch(err => {
+          console.error("Failed to fetch canvas:", err);
+          clear();
+        });
+    } else {
+      clear();
     }
   }, [id, setCanvas, clear]);
-
-  if (!id) {
-    return <Navigate to="/" replace />;
-  }
-
   if (isLoading) {
     return (
       <div className="flex-1 flex items-center justify-center text-gray-500">
@@ -55,7 +42,7 @@ export const CanvasPage: React.FC = () => {
     );
   }
 
-  if (!canvas || !CANVAS_REGISTRY[id]) {
+  if (!canvas) {
     return (
       <div className="flex-1 flex items-center justify-center text-gray-500">
         Canvas not found
@@ -63,5 +50,5 @@ export const CanvasPage: React.FC = () => {
     );
   }
 
-  return <CanvasView data={canvas} />;
+  return <CanvasView />;
 };

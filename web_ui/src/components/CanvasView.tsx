@@ -1,5 +1,5 @@
 import dagre from "dagre";
-import React, { useCallback, useEffect, useMemo, useRef } from "react";
+import React, { useCallback, useEffect, useRef } from "react";
 import ReactFlow, {
   Background,
   ConnectionMode,
@@ -18,12 +18,9 @@ import ReactFlow, {
   useReactFlow,
 } from "reactflow";
 import "reactflow/dist/style.css";
-import { CanvasData, MessageNode } from "../types";
+import { useCanvasStore } from "../store/canvasStore";
+import { MessageNode } from "../types";
 import { MessageNodeComponent } from "./MessageNode";
-
-interface Props {
-  data: CanvasData;
-}
 
 // Custom node component for React Flow
 const CustomMessageNode = ({
@@ -113,9 +110,6 @@ const getLayoutedElements = (
 
   // Function to get node dimensions with fallbacks
   const getNodeDimensions = (node: Node) => {
-    const baseWidth = 320;
-    const baseHeight = 150;
-
     // Try to use existing width/height from node
     if (node.width && node.height && node.width > 0 && node.height > 0) {
       return {
@@ -130,48 +124,21 @@ const getLayoutedElements = (
       const rect = nodeElement.getBoundingClientRect();
       if (rect.width > 0 && rect.height > 0) {
         return {
-          width: Math.max(rect.width, baseWidth),
-          height: Math.max(rect.height, baseHeight),
+          width: rect.width,
+          height: rect.height,
         };
       }
     }
 
-    // Fallback: estimate based on content
-    const messageNode = dataNodes[node.id];
-    if (messageNode) {
-      const content = messageNode.content.content;
-      let contentLength = 0;
-
-      if (typeof content === "string") {
-        contentLength = content.length;
-      } else if (Array.isArray(content)) {
-        contentLength = content.reduce((total, block) => {
-          if ("text" in block && typeof block.text === "string") {
-            return total + block.text.length;
-          }
-          return total + JSON.stringify(block).length;
-        }, 0);
-      }
-
-      const lines = Math.ceil(contentLength / 80);
-      const estimatedHeight = Math.max(baseHeight, 120 + lines * 20);
-
-      return {
-        width: baseWidth,
-        height: Math.min(estimatedHeight, 400),
-      };
-    }
-
-    // Final fallback
-    return { width: baseWidth, height: baseHeight };
+    throw new Error(`Node ${node.id} has no valid dimensions`);
   };
 
   dagreGraph.setGraph({
     rankdir: direction,
     nodesep: 50,
     ranksep: 100,
-    marginx: 50,
-    marginy: 50,
+    marginx: 10,
+    marginy: 10,
   });
 
   // Set nodes with calculated dimensions
@@ -225,19 +192,28 @@ const getLayoutedElements = (
   return { nodes, edges: updatedEdges };
 };
 
-export const CanvasView: React.FC<Props> = ({ data }) => {
+export const CanvasView: React.FC = () => {
   return (
     <div className="h-full w-full">
       <ReactFlowProvider>
-        <CanvasViewInner data={data} />
+        <CanvasViewInner />
       </ReactFlowProvider>
     </div>
   );
 };
 
-const CanvasViewInner: React.FC<Props> = ({ data }) => {
+const CanvasViewInner: React.FC = () => {
+  const data = useCanvasStore(s => s.canvas);
   const reactFlowInstance = useReactFlow();
-  const { nodes: initialNodes, edges: initialEdges } = useMemo(() => {
+  const [nodes, setNodes, onNodesChange] = useNodesState([]);
+  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+
+  useEffect(() => {
+    if (!data) {
+      setNodes([]);
+      setEdges([]);
+      return;
+    }
     const nodes: Node[] = [];
     const edges: Edge[] = [];
 
@@ -247,7 +223,7 @@ const CanvasViewInner: React.FC<Props> = ({ data }) => {
       const hasChildren = node.child_ids.length > 0;
 
       nodes.push({
-        id: nodeId,
+        id: `${nodeId}`,
         type: "messageNode",
         position: { x: 0, y: 0 }, // Will be set by layout
         data: {
@@ -285,12 +261,39 @@ const CanvasViewInner: React.FC<Props> = ({ data }) => {
       });
     });
 
-    // Apply automatic layout
-    return getLayoutedElements(nodes, edges, "TB", data.nodes);
-  }, [data]);
+    setNodes(nodes);
+    setEdges(edges);
+  }, [data, setNodes, setEdges]);
 
-  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+  // Separate effect to trigger re-layout after nodes are set
+  useEffect(() => {
+    if (nodes.length > 0 && data) {
+      // Use setTimeout to ensure nodes are rendered before layout
+      const timeoutId = setTimeout(() => {
+        // Get current direction from the first node, default to TB
+        const currentDirection = nodes[0]?.data?.direction || "TB";
+        const { nodes: layoutedNodes, edges: layoutedEdges } =
+          getLayoutedElements(nodes, edges, currentDirection, data.nodes);
+
+        setNodes([...layoutedNodes]);
+        setEdges([...layoutedEdges]);
+
+        // Center the view on the root node
+        const rootNodeId = data.root_ids[0];
+        const rootNode = layoutedNodes.find(node => node.id === rootNodeId);
+        if (rootNode) {
+          const x = rootNode.position.x + (rootNode.width || 300) / 2;
+          const y = rootNode.position.y + (rootNode.height || 150) / 2;
+          reactFlowInstance.setCenter(x, y, {
+            zoom: reactFlowInstance.getZoom(),
+            duration: 800,
+          });
+        }
+      }, 100);
+
+      return () => clearTimeout(timeoutId);
+    }
+  }, [nodes.length, data]); // Only trigger when nodes.length changes and we have data
 
   // Node navigation functions
   const shakeNode = useCallback((nodeId: string) => {
@@ -527,6 +530,8 @@ const CanvasViewInner: React.FC<Props> = ({ data }) => {
   // Enhanced layout function that can use React Flow's getNodes for actual dimensions
   const onLayout = useCallback(
     (direction: string) => {
+      if (!data) return;
+
       // Update nodes with new direction information
       const updatedNodes = nodes.map(node => ({
         ...node,
@@ -542,7 +547,7 @@ const CanvasViewInner: React.FC<Props> = ({ data }) => {
       setNodes([...layoutedNodes]);
       setEdges([...layoutedEdges]);
     },
-    [nodes, edges, setNodes, setEdges, data.nodes]
+    [nodes, edges, setNodes, setEdges, data]
   );
 
   const onReLayout = useCallback(() => {
@@ -590,10 +595,10 @@ const CanvasViewInner: React.FC<Props> = ({ data }) => {
         className="bg-white p-3 rounded-lg shadow text-sm space-y-2"
       >
         <div className="font-semibold text-gray-800">
-          {data.title || "Canvas"}
+          {data?.title || "Canvas"}
         </div>
         <div className="text-gray-500">
-          {Object.keys(data.nodes).length} messages
+          {data ? Object.keys(data.nodes).length : 0} messages
         </div>
         <div className="text-xs text-gray-400 mb-2">
           Use ↑↓←→ arrow keys to navigate between nodes
