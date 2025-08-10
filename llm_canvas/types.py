@@ -151,22 +151,6 @@ class UpdateCanvasRequest(TypedDict, total=False):
     description: str | None
 
 
-class CreateMessageRequest(TypedDict):
-    """Request type for POST /api/v1/canvas/{canvas_id}/messages (future endpoint)"""
-
-    content: str
-    role: str
-    parent_id: str | None
-    meta: dict[str, Any] | None
-
-
-class UpdateMessageRequest(TypedDict, total=False):
-    """Request type for PUT /api/v1/canvas/{canvas_id}/messages/{message_id} (future endpoint)"""
-
-    content: str
-    meta: dict[str, Any] | None
-
-
 # ---- API Response TypedDict Definitions for future endpoints ----
 
 
@@ -214,7 +198,6 @@ if TYPE_CHECKING:
         "CanvasUpdateMessageEvent",
         "CreateCanvasRequest",
         "CreateCanvasResponse",
-        "CreateMessageRequest",
         "CreateMessageResponse",
         "DeleteCanvasResponse",
         "DeleteMessageResponse",
@@ -229,5 +212,4 @@ if TYPE_CHECKING:
         "ToolUseBlockParam",
         "UnSupportedBlockParam",
         "UpdateCanvasRequest",
-        "UpdateMessageRequest",
     ]
