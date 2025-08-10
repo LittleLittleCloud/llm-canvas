@@ -139,6 +139,8 @@ ignore = [
     "G004",    # Logging statement uses f-string
     "T201",    # `print` found
     "TRY003",  # Avoid specifying long messages outside the exception class
+    "PLR0915",  # too-many-statements
+    "TC001",
 ]
 
 [tool.ruff.lint.per-file-ignores]

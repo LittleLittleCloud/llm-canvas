@@ -14,9 +14,8 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from ._api import setup_api_routes
-from ._mockData import MOCK_CANVASES
-from .canvas import Canvas
-from .canvasRegistry import CanvasRegistry
+from .canvas_registry import CanvasRegistry
+from .types import HealthCheckResponse
 
 try:  # pragma: no cover - optional dependency
     from fastapi import FastAPI
@@ -66,35 +65,17 @@ def create_local_server() -> Any:
     # Create in-memory registry for session-based storage
     registry = CanvasRegistry()
 
-    # Load mock canvases for development/testing
-    for canvas_id, canvas_data in MOCK_CANVASES.items():
-        c = Canvas.from_canvas_data(canvas_data)
-        registry.add(c)
-        logger.info(f"Loaded mock canvas: {canvas_id} - {c.title}")
-
     # Set up API routes
     setup_api_routes(app, registry)
 
-    # Add a warning endpoint about data persistence
-    @app.get("/api/v1/server/info")
-    def server_info() -> dict[str, Any]:
-        """Provide information about the local server capabilities and limitations."""
+    # Add a health check endpoint
+    @app.get("/api/v1/health")
+    def health_check() -> HealthCheckResponse:
+        """Health check endpoint to verify server is running."""
         return {
+            "status": "healthy",
             "server_type": "local",
-            "version": "0.1.0",
-            "features": {
-                "real_time_visualization": True,
-                "conversation_branches": True,
-                "tool_call_display": True,
-                "multi_format_support": True,
-                "api_integration": True,
-            },
-            "limitations": {"data_persistence": False, "cross_session_storage": False, "backup_recovery": False},
-            "warnings": ["Data is lost when server restarts", "No backup or recovery mechanisms", "Session-based storage only"],
-            "upgrade_info": {
-                "cloud_plans_available": True,
-                "cloud_features": ["permanent data storage", "cross-device access", "team collaboration"],
-            },
+            "timestamp": None,  # Could add timestamp if needed
         }
 
     # ---- Static Frontend Serving ----

@@ -4,88 +4,24 @@ import logging
 import threading
 import time
 import uuid
-from typing import TYPE_CHECKING, Any, Callable, Literal, TypedDict
+from typing import TYPE_CHECKING, Any, Callable
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
 
-from anthropic.types import TextBlockParam, ToolResultBlockParam, ToolUseBlockParam
+from .types import (
+    BranchInfo,
+    CanvasCommitMessageEvent,
+    CanvasData,
+    CanvasEvent,
+    CanvasSummary,
+    CanvasUpdateMessageEvent,
+    Message,
+    MessageNode,
+)
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
-# ---- Data Models ----
-
-type UnSupportedBlockParam = Any  # Placeholder for unsupported block types
-# Union type for message blocks matching TypeScript
-MessageBlock = TextBlockParam | ToolUseBlockParam | ToolResultBlockParam | Any
-
-
-class Message(TypedDict):
-    content: str | Iterable[MessageBlock]
-    role: Literal["user", "assistant", "system"]
-
-
-class MessageNode(TypedDict):
-    id: str
-    message: Message
-    parent_id: str | None
-    child_ids: list[str]
-    meta: dict[str, Any] | None
-
-
-class CanvasSummary(TypedDict):
-    canvas_id: str
-    created_at: float
-    root_ids: list[str]
-    node_count: int
-    title: str | None
-    description: str | None
-    meta: dict[str, Any]
-
-
-class CanvasData(TypedDict):
-    title: str | None
-    last_updated: float | None
-    description: str | None
-    canvas_id: str
-    created_at: float
-    root_ids: list[str]
-    nodes: dict[str, MessageNode]
-
-
-type CanvasEventType = Literal["commit_message", "update_message", "delete_message"]
-
-
-class CanvasCommitMessageEvent(TypedDict):
-    event_type: Literal["commit_message"]
-    canvas_id: str
-    timestamp: float
-    data: MessageNode
-
-
-class CanvasUpdateMessageEvent(TypedDict):
-    event_type: Literal["update_message"]
-    canvas_id: str
-    timestamp: float
-    data: MessageNode
-
-
-class CanvasDeleteMessageEvent(TypedDict):
-    event_type: Literal["delete_message"]
-    canvas_id: str
-    timestamp: float
-    data: str  # Node ID that was deleted
-
-
-type CanvasEvent = CanvasCommitMessageEvent | CanvasUpdateMessageEvent | CanvasDeleteMessageEvent
-
-
-class BranchInfo(TypedDict):
-    name: str
-    description: str | None
-    head_node_id: str | None
-    created_at: float
 
 
 class Canvas:

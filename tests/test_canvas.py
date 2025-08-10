@@ -1,8 +1,9 @@
 """Tests for Canvas API implementation."""
 
+import uuid
+
 import pytest
 
-from llm_canvas import canvas_client
 from llm_canvas.canvas import Canvas
 
 
@@ -12,7 +13,8 @@ class TestCanvasAPI:
     @pytest.fixture
     def canvas(self) -> Canvas:
         """Create a test canvas."""
-        return canvas_client.create_canvas(title="Test Canvas", description="A canvas for testing the API")
+        canvas_id = str(uuid.uuid4())
+        return Canvas(canvas_id=canvas_id, title="Test Canvas", description="A canvas for testing the API")
 
     def test_create_canvas(self, canvas: Canvas) -> None:
         """Test canvas creation."""

@@ -1,16 +1,36 @@
-from .canvas import (
-    Canvas,
+# Core classes and utilities
+from .canvas import Canvas
+from .canvas_client import CanvasClient
+from .canvas_registry import CanvasRegistry
+
+# All type definitions
+from .types import (
+    BranchInfo,
+    CanvasCommitMessageEvent,
     CanvasData,
+    CanvasDeleteMessageEvent,
+    CanvasEvent,
+    CanvasListResponse,
     CanvasSummary,
+    CanvasUpdateMessageEvent,
+    CreateCanvasRequest,
+    CreateCanvasResponse,
+    CreateMessageRequest,
+    CreateMessageResponse,
+    DeleteCanvasResponse,
+    DeleteMessageResponse,
+    ErrorResponse,
+    HealthCheckResponse,
     Message,
     MessageBlock,
     MessageNode,
+    StreamEventData,
     TextBlockParam,
     ToolResultBlockParam,
     ToolUseBlockParam,
+    UpdateCanvasRequest,
+    UpdateMessageRequest,
 )
-from .canvasClient import CanvasClient
-from .canvasRegistry import CanvasRegistry
 
 # Server functions (optional dependency)
 try:
@@ -22,17 +42,34 @@ except ImportError:
 canvas_client = CanvasClient()
 
 __all__ = [
+    "BranchInfo",
     "Canvas",
     "CanvasClient",
+    "CanvasCommitMessageEvent",
     "CanvasData",
+    "CanvasDeleteMessageEvent",
+    "CanvasEvent",
+    "CanvasListResponse",
     "CanvasRegistry",
     "CanvasSummary",
+    "CanvasUpdateMessageEvent",
+    "CreateCanvasRequest",
+    "CreateCanvasResponse",
+    "CreateMessageRequest",
+    "CreateMessageResponse",
+    "DeleteCanvasResponse",
+    "DeleteMessageResponse",
+    "ErrorResponse",
+    "HealthCheckResponse",
     "Message",
     "MessageBlock",
     "MessageNode",
+    "StreamEventData",
     "TextBlockParam",
     "ToolResultBlockParam",
     "ToolUseBlockParam",
-    "canvas_client",  # Default instance
-    "start_local_server",  # Local server function
+    "UpdateCanvasRequest",
+    "UpdateMessageRequest",
+    "canvas_client",
+    "start_local_server",
 ]

@@ -14,12 +14,14 @@ import threading
 import time
 from typing import TYPE_CHECKING
 
+from llm_canvas.types import HealthCheckResponse
+
 from .canvas import Canvas
 
 if TYPE_CHECKING:
     from .canvas import CanvasData, CanvasSummary
 
-from .canvasRegistry import CanvasRegistry
+from .canvas_registry import CanvasRegistry
 
 logger = logging.getLogger(__name__)
 
@@ -39,10 +41,63 @@ class CanvasClient:
         client.run_server(background=True)
     """
 
-    def __init__(self) -> None:
+    def __init__(self, server_host: str = "127.0.0.1", server_port: int = 8000) -> None:
         self.registry = CanvasRegistry()
         self._server_thread: threading.Thread | None = None
         self._server_running = False
+        self.server_host = server_host
+        self.server_port = server_port
+
+        if not self.check_server_health():
+            self._prompt_user_to_start_server()
+
+    def check_server_health(self) -> bool:
+        """Check if the server is running and healthy.
+
+        Returns:
+            True if server is running and healthy, False otherwise
+        """
+        try:
+            from urllib.error import URLError
+            from urllib.request import urlopen
+
+            url = f"http://{self.server_host}:{self.server_port}/api/v1/health"
+            # Security: Ensure we only allow http/https schemes
+            if not url.startswith(("http://", "https://")):
+                return False
+
+            with urlopen(url, timeout=2) as response:
+                if response.status == 200:  # noqa: PLR2004
+                    import json
+
+                    data: HealthCheckResponse = json.loads(response.read().decode())
+                    return data["status"] == "healthy"
+                return False
+
+        except (URLError, OSError, TimeoutError):
+            # Any exception means server is not reachable
+            return False
+
+    def _prompt_user_to_start_server(self) -> None:
+        """Prompt user to start the server manually."""
+        print("❌ Canvas server is not running!")
+        print("\n📋 To start the local canvas server, run one of these commands:")
+        print(f"   llm-canvas server --host {self.server_host} --port {self.server_port}")
+        print("   llm-canvas server  # (uses default host and port)")
+        print("\n📖 For more information, see: doc/start_canvas_server.md")
+        print(f"\n🌐 Once started, the server will be available at: http://{self.server_host}:{self.server_port}")
+
+    def _ensure_server_running(self) -> bool:
+        """Ensure server is running, prompt user if not.
+
+        Returns:
+            True if server is running, False if user needs to start it manually
+        """
+        if self.check_server_health():
+            return True
+
+        self._prompt_user_to_start_server()
+        return False
 
     def create_canvas(
         self,
@@ -59,7 +114,14 @@ class CanvasClient:
 
         Returns:
             The created Canvas instance
+
+        Raises:
+            RuntimeError: If server is not running and user needs to start it manually
         """
+        if not self._ensure_server_running():
+            error_msg = "Canvas server is not running. Please start the server manually using 'llm-canvas server'."
+            raise RuntimeError(error_msg)
+
         canvas = Canvas(canvas_id=canvas_id, title=title, description=description)
         self.registry.add(canvas)
         logger.info("Created canvas: %s - %s", canvas.canvas_id, canvas.title)
