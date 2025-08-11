@@ -101,7 +101,7 @@ class Canvas:
             parent_node = self._nodes[current_branch["head_node_id"]]
 
         # Add the message using the existing add_message method
-        node = self._add_message(message, parent_node, meta)
+        node = self._add_message(message, parent_node["id"] if parent_node else None, meta)
 
         # Update the current branch HEAD
         current_branch["head_node_id"] = node["id"]
@@ -203,7 +203,7 @@ class Canvas:
     def _add_message(
         self,
         message: Message,
-        parent_node: MessageNode | None = None,
+        parent_node_id: str | None = None,
         meta: dict[str, Any] | None = None,
         node_id: str | None = None,
     ) -> MessageNode:
@@ -215,13 +215,14 @@ class Canvas:
         node: MessageNode = {
             "id": node_id,
             "message": message,
-            "parent_id": parent_node["id"] if parent_node else None,
+            "parent_id": parent_node_id if parent_node_id else None,
             "child_ids": [],
             "meta": _meta,
         }
         self._nodes[node_id] = node
-        if parent_node:
-            parent_node["child_ids"].append(node_id)
+        if parent_node_id:
+            self._nodes[parent_node_id]["child_ids"].append(node_id)
+            self.update_message(parent_node_id, self._nodes[parent_node_id])
         else:
             self._roots.append(node_id)
 
@@ -236,7 +237,7 @@ class Canvas:
 
         return node
 
-    def update_message(self, node_id: str, message: Message, meta: dict[str, Any] | None = None) -> MessageNode:
+    def update_message(self, node_id: str, updated_message_node: MessageNode) -> MessageNode:
         """
         Update an existing message in the canvas.
 
@@ -254,30 +255,23 @@ class Canvas:
         if node_id not in self._nodes:
             raise ValueError(f"Node with ID '{node_id}' does not exist")
 
-        node = self._nodes[node_id]
-
-        # Update the message content
-        node["message"] = message
-        if node["meta"] is None:
-            node["meta"] = {}
-        assert isinstance(node["meta"], dict), "Node meta must be a dictionary"
-        node["meta"]["last_updated"] = time.time()
-
-        if meta is not None:
-            node["meta"].update(meta)
-
-        # Update the timestamp in metadata to track when it was last modified
+        self._nodes[node_id] = updated_message_node
 
         # Emit update event
         event: CanvasUpdateMessageEvent = {
             "event_type": "update_message",
             "canvas_id": self.canvas_id,
             "timestamp": time.time(),
-            "data": node,
+            "data": self._nodes[node_id],
         }
         self._emit_event(event)
 
-        return node
+        return self._nodes[node_id]
+
+    @property
+    def nodes(self) -> dict[str, MessageNode]:
+        """Get all nodes in the canvas."""
+        return self._nodes
 
     def get_node(self, node_id: str) -> MessageNode | None:
         return self._nodes.get(node_id)

@@ -16,7 +16,8 @@ from typing import TYPE_CHECKING
 from urllib.error import URLError
 from urllib.request import Request, urlopen
 
-from llm_canvas.types import CanvasCommitMessageEvent, CanvasUpdateMessageEvent, HealthCheckResponse
+from llm_canvas._api import CommitMessageRequest, UpdateMessageRequest
+from llm_canvas.types import CanvasCommitMessageEvent, CanvasUpdateMessageEvent
 
 from .canvas import Canvas
 
@@ -74,14 +75,12 @@ class CanvasClient:
         canvas_id = event["canvas_id"]
 
         url = f"http://{self.server_host}:{self.server_port}/api/v1/canvas/{canvas_id}/messages"
-
+        request = CommitMessageRequest(data=event)
         try:
-            # Use the event data directly as the request body
-            json_data = json.dumps(event).encode()
+            json_data = request.model_dump_json().encode()
 
             # Create the request
-            req = Request(url, data=json_data, headers={"Content-Type": "application/json"})
-            req.get_method = lambda: "POST"
+            req = Request(url, data=json_data, headers={"Content-Type": "application/json"}, method="POST")
 
             with urlopen(req, timeout=10) as response:
                 if response.status == 200:
@@ -98,10 +97,9 @@ class CanvasClient:
         message_id = event["data"]["id"]
 
         url = f"http://{self.server_host}:{self.server_port}/api/v1/canvas/{canvas_id}/messages/{message_id}"
-
+        request = UpdateMessageRequest(data=event)
         try:
-            # Use the event data directly as the request body
-            json_data = json.dumps(event).encode()
+            json_data = request.model_dump_json().encode()
 
             # Create the request
             req = Request(url, data=json_data, headers={"Content-Type": "application/json"})
@@ -139,7 +137,7 @@ class CanvasClient:
                 if response.status == 200:  # noqa: PLR2004
                     import json
 
-                    data: HealthCheckResponse = json.loads(response.read().decode())
+                    data = json.loads(response.read().decode())
                     return data["status"] == "healthy"
                 return False
 

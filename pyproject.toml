@@ -141,6 +141,7 @@ ignore = [
     "TRY003",  # Avoid specifying long messages outside the exception class
     "PLR0915",  # too-many-statements
     "TC001",
+    "TC003",
 ]
 
 [tool.ruff.lint.per-file-ignores]

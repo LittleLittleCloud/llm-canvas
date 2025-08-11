@@ -59,8 +59,7 @@ def run_all_examples() -> None:
 
     # Keep the script running so server stays active
     try:
-        client = get_canvas_client()
-        client.wait_for_server()
+        get_canvas_client()
     except KeyboardInterrupt:
         print("\n👋 Shutting down...")
 

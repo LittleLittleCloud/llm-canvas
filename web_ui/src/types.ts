@@ -16,7 +16,7 @@ export type Message = {
 
 export interface MessageNode {
   id: string;
-  content: Message;
+  message: Message;
   parent_id?: string | null;
   child_ids: string[];
   meta?: Record<string, any>;

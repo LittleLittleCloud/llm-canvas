@@ -13,9 +13,7 @@ import logging
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-from ._api import setup_api_routes
-from .canvas_registry import CanvasRegistry
-from .types import HealthCheckResponse
+from ._api import v1_router
 
 try:  # pragma: no cover - optional dependency
     from fastapi import FastAPI
@@ -62,21 +60,8 @@ def create_local_server() -> Any:
         allow_headers=["*"],
     )
 
-    # Create in-memory registry for session-based storage
-    registry = CanvasRegistry()
-
     # Set up API routes
-    setup_api_routes(app, registry)
-
-    # Add a health check endpoint
-    @app.get("/api/v1/health")
-    def health_check() -> HealthCheckResponse:
-        """Health check endpoint to verify server is running."""
-        return {
-            "status": "healthy",
-            "server_type": "local",
-            "timestamp": None,  # Could add timestamp if needed
-        }
+    app.include_router(v1_router)
 
     # ---- Static Frontend Serving ----
     static_dir = Path(__file__).parent / "static"

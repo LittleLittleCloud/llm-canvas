@@ -97,9 +97,9 @@ export const useCanvas = () => {
     }
 
     const nodes = Object.values(canvas.nodes);
-    const userMessages = nodes.filter(n => n.content.role === "user").length;
+    const userMessages = nodes.filter(n => n.message.role === "user").length;
     const assistantMessages = nodes.filter(
-      n => n.content.role === "assistant"
+      n => n.message.role === "assistant"
     ).length;
     const leafNodes = getLeafNodes();
 

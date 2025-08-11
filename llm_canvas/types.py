@@ -6,10 +6,7 @@ including API request/response types and core data structures.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Literal, TypedDict
-
-if TYPE_CHECKING:
-    from collections.abc import Iterable
+from typing import Any, Literal, TypedDict
 
 from anthropic.types import TextBlockParam, ToolResultBlockParam, ToolUseBlockParam
 
@@ -23,7 +20,7 @@ MessageBlock = TextBlockParam | ToolUseBlockParam | ToolResultBlockParam | Any
 class Message(TypedDict):
     """Message structure for canvas conversations."""
 
-    content: str | Iterable[MessageBlock]
+    content: str | list[MessageBlock]
     role: Literal["user", "assistant", "system"]
 
 
@@ -101,115 +98,3 @@ class BranchInfo(TypedDict):
     description: str | None
     head_node_id: str | None
     created_at: float
-
-
-# ---- API Response TypedDict Definitions ----
-
-
-class HealthCheckResponse(TypedDict):
-    """Response type for GET /api/v1/health"""
-
-    status: Literal["healthy"]
-    server_type: Literal["local", "cloud"]
-    timestamp: float | None
-
-
-class CanvasListResponse(TypedDict):
-    """Response type for GET /api/v1/canvas/list"""
-
-    canvases: list[CanvasSummary]
-
-
-class ErrorResponse(TypedDict):
-    """Standard error response format"""
-
-    error: str
-    message: str
-
-
-class StreamEventData(TypedDict):
-    """Data structure for SSE stream events"""
-
-    event: str
-    data: str
-
-
-# ---- API Request TypedDict Definitions (for future endpoints) ----
-
-
-class CreateCanvasRequest(TypedDict, total=False):
-    """Request type for POST /api/v1/canvas (future endpoint)"""
-
-    title: str | None
-    description: str | None
-
-
-class UpdateCanvasRequest(TypedDict, total=False):
-    """Request type for PUT /api/v1/canvas/{canvas_id} (future endpoint)"""
-
-    title: str | None
-    description: str | None
-
-
-# ---- API Response TypedDict Definitions for future endpoints ----
-
-
-class CreateCanvasResponse(TypedDict):
-    """Response type for POST /api/v1/canvas (future endpoint)"""
-
-    canvas_id: str
-    message: str
-
-
-class DeleteCanvasResponse(TypedDict):
-    """Response type for DELETE /api/v1/canvas/{canvas_id} (future endpoint)"""
-
-    canvas_id: str
-    message: str
-
-
-class CreateMessageResponse(TypedDict):
-    """Response type for POST /api/v1/canvas/{canvas_id}/messages (future endpoint)"""
-
-    message_id: str
-    canvas_id: str
-    message: str
-
-
-class DeleteMessageResponse(TypedDict):
-    """Response type for DELETE /api/v1/canvas/{canvas_id}/messages/{message_id} (future endpoint)"""
-
-    message_id: str
-    canvas_id: str
-    message: str
-
-
-# ---- Re-export anthropic types for convenience ----
-if TYPE_CHECKING:
-    __all__ = [
-        "BranchInfo",
-        "CanvasCommitMessageEvent",
-        "CanvasData",
-        "CanvasDeleteMessageEvent",
-        "CanvasEvent",
-        "CanvasEventType",
-        "CanvasListResponse",
-        "CanvasSummary",
-        "CanvasUpdateMessageEvent",
-        "CreateCanvasRequest",
-        "CreateCanvasResponse",
-        "CreateMessageResponse",
-        "DeleteCanvasResponse",
-        "DeleteMessageResponse",
-        "ErrorResponse",
-        "HealthCheckResponse",
-        "Message",
-        "MessageBlock",
-        "MessageNode",
-        "StreamEventData",
-        "TextBlockParam",
-        "ToolResultBlockParam",
-        "ToolUseBlockParam",
-        "UnSupportedBlockParam",
-        "UpdateCanvasRequest",
-    ]

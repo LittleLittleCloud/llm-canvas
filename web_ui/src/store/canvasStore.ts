@@ -75,7 +75,7 @@ export const useCanvasStore = create<CanvasState>()(
         const nodeId = generateId();
         const newNode: MessageNode = {
           id: nodeId,
-          content: normalizeContent(content, role),
+          message: normalizeContent(content, role),
           parent_id: parentId,
           child_ids: [],
           meta: {

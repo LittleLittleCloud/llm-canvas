@@ -7,8 +7,8 @@ interface Props {
 }
 
 export const MessageNodeComponent: React.FC<Props> = ({ node }) => {
-  const role = node.content.role;
-  const content = node.content.content;
+  const role = node.message.role;
+  const content = node.message.content;
   const blocks: MessageBlock[] | null = Array.isArray(content) ? content : null;
 
   return (

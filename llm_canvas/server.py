@@ -36,7 +36,6 @@ def create_app_registry(registry: CanvasRegistry) -> Any:
     from pathlib import Path
 
     from ._api import setup_api_routes
-    from .types import HealthCheckResponse
 
     app = FastAPI(
         title="LLM Canvas Server",
@@ -59,16 +58,6 @@ def create_app_registry(registry: CanvasRegistry) -> Any:
 
     # Set up API routes with the provided registry
     setup_api_routes(app, registry)
-
-    # Add a health check endpoint
-    @app.get("/api/v1/health")
-    def health_check() -> HealthCheckResponse:
-        """Health check endpoint to verify server is running."""
-        return {
-            "status": "healthy",
-            "server_type": "local",
-            "timestamp": None,
-        }
 
     # ---- Static Frontend Serving ----
     static_dir = Path(__file__).parent / "static"
