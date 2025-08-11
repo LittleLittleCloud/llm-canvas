@@ -15,7 +15,7 @@ import threading
 from typing import TYPE_CHECKING
 from urllib.error import URLError
 from urllib.request import Request, urlopen
-
+from llm_canvas_api_client import Client
 from llm_canvas._api import CommitMessageRequest, UpdateMessageRequest
 from llm_canvas.types import CanvasCommitMessageEvent, CanvasUpdateMessageEvent
 

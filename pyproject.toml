@@ -15,6 +15,7 @@ classifiers = [
 dependencies = [
     "anthropic>=0.62.0",
     "fastapi>=0.110.0",
+    "llm-canvas-api-client",
     "openai>=1.99.5",
     "uvicorn[standard]>=0.29.0",
 ]
@@ -28,6 +29,7 @@ dev = ["pytest>=7.0", "black", "ruff", "mypy",]
 
 [project.scripts]
 llm-canvas = "llm_canvas._cli:main"
+llm-canvas-generate-openapi = "scripts.generate_openapi_schema:main"
 
 [build-system]
 requires = ["hatchling<1.19", "hatch-vcs"]
@@ -57,6 +59,9 @@ exclude = [
 
 [tool.hatch.build.targets.sdist.force-include]
 "web_ui/dist" = "llm_canvas/static"
+
+[tool.hatch.metadata]
+allow-direct-references = true
 
 [tool.ruff]
 line-length = 128
@@ -167,8 +172,12 @@ warn_unused_configs = true
 disallow_untyped_defs = true
 disallow_incomplete_defs = true
 
+[tool.uv.sources]
+llm-canvas-api-client = { path = "generated-clients/llm-canvas-client", editable = true }
+
 [dependency-groups]
 dev = [
     "mypy>=1.17.1",
+    "openapi-python-client>=0.25.3",
     "pytest>=8.4.1",
 ]
