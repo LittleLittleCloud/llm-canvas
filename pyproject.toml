@@ -27,7 +27,7 @@ server = ["uvicorn[standard]>=0.29.0"]
 dev = ["pytest>=7.0", "black", "ruff", "mypy",]
 
 [project.scripts]
-llm-canvas = "llm_canvas.cli:main"
+llm-canvas = "llm_canvas._cli:main"
 
 [build-system]
 requires = ["hatchling<1.19", "hatch-vcs"]

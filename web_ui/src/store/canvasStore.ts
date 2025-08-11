@@ -95,16 +95,10 @@ export const useCanvasStore = create<CanvasState>()(
           };
         }
 
-        // Update root_ids if this is a root node
-        const updatedRootIds = parentId
-          ? state.canvas.root_ids
-          : [...state.canvas.root_ids, nodeId];
-
         set({
           canvas: {
             ...state.canvas,
             nodes: updatedNodes,
-            root_ids: updatedRootIds,
           },
         });
 
@@ -150,11 +144,6 @@ export const useCanvasStore = create<CanvasState>()(
           };
         }
 
-        // Remove from root_ids if it's a root
-        const updatedRootIds = state.canvas.root_ids.filter(
-          id => id !== nodeId
-        );
-
         // Recursively remove all children
         const removeNodeAndChildren = (id: string) => {
           const node = updatedNodes[id];
@@ -170,7 +159,6 @@ export const useCanvasStore = create<CanvasState>()(
           canvas: {
             ...state.canvas,
             nodes: updatedNodes,
-            root_ids: updatedRootIds,
           },
         });
       },
@@ -219,9 +207,9 @@ export const useCanvasStore = create<CanvasState>()(
         const state = get();
         if (!state.canvas) return [];
 
-        return state.canvas.root_ids
-          .map(id => state.canvas!.nodes[id])
-          .filter(Boolean);
+        return Object.values(state.canvas.nodes).filter(
+          node => !node.parent_id
+        );
       },
 
       clear: () => set({ canvas: null, isLoading: false, error: null }),

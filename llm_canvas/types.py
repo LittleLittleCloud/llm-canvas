@@ -54,7 +54,6 @@ class CanvasData(TypedDict):
     description: str | None
     canvas_id: str
     created_at: float
-    root_ids: list[str]
     nodes: dict[str, MessageNode]
 
 

@@ -28,7 +28,6 @@ export interface CanvasData {
   description?: string;
   canvas_id: string;
   created_at: number;
-  root_ids: string[];
   nodes: Record<string, MessageNode>;
 }
 

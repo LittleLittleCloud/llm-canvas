@@ -38,7 +38,6 @@ class Canvas:
         self.description = description
         self.created_at = time.time()
         self._nodes: dict[str, MessageNode] = {}
-        self._roots: list[str] = []
 
         # Branch management
         self._branches: dict[str, BranchInfo] = {}
@@ -223,8 +222,6 @@ class Canvas:
         if parent_node_id:
             self._nodes[parent_node_id]["child_ids"].append(node_id)
             self.update_message(parent_node_id, self._nodes[parent_node_id])
-        else:
-            self._roots.append(node_id)
 
         # Emit SSE event
         event: CanvasCommitMessageEvent = {
@@ -281,10 +278,14 @@ class Canvas:
 
     def to_summary(self) -> CanvasSummary:
         """Create a summary representation of the canvas."""
+
+        # find all root nodes
+        # a root node is a node that has no parent
+        root_ids = [node_id for node_id, node in self._nodes.items() if node["parent_id"] is None]
         return {
             "canvas_id": self.canvas_id,
             "created_at": self.created_at,
-            "root_ids": list(self._roots),
+            "root_ids": root_ids,
             "node_count": len(self._nodes),
             "title": self.title,
             "description": self.description,
@@ -297,7 +298,6 @@ class Canvas:
         return {
             "canvas_id": self.canvas_id,
             "created_at": self.created_at,
-            "root_ids": list(self._roots),
             "nodes": dict(self._nodes),
             "title": self.title,
             "description": self.description,
@@ -318,8 +318,5 @@ class Canvas:
 
         # Load all nodes
         canvas._nodes = dict(data["nodes"])
-
-        # Set root node IDs
-        canvas._roots = list(data["root_ids"])
 
         return canvas

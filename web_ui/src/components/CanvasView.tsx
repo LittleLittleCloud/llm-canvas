@@ -279,8 +279,12 @@ const CanvasViewInner: React.FC = () => {
         setEdges([...layoutedEdges]);
 
         // Center the view on the root node
-        const rootNodeId = data.root_ids[0];
-        const rootNode = layoutedNodes.find(node => node.id === rootNodeId);
+        // find the root nodes from data.nodes
+        // a root node is one that has no parent_id
+        const root_ids = Object.values(data.nodes)
+          .filter(node => node.parent_id == null)
+          .map(node => node.id);
+        const rootNode = layoutedNodes.find(node => node.id === root_ids[0]);
         if (rootNode) {
           const x = rootNode.position.x + (rootNode.width || 300) / 2;
           const y = rootNode.position.y + (rootNode.height || 150) / 2;

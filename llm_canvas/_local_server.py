@@ -11,19 +11,14 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import Any
+
+from fastapi import FastAPI
+from fastapi import FastAPI as _FastAPI  # noqa: F401
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from ._api import v1_router
-
-try:  # pragma: no cover - optional dependency
-    from fastapi import FastAPI
-    from fastapi.middleware.cors import CORSMiddleware
-    from fastapi.staticfiles import StaticFiles
-except ImportError:  # pragma: no cover
-    FastAPI = None  # type: ignore[assignment]
-
-if TYPE_CHECKING:  # Only for type checkers
-    from fastapi import FastAPI as _FastAPI  # noqa: F401
 
 logger = logging.getLogger(__name__)
 
