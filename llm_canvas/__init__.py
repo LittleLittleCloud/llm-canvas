@@ -12,14 +12,12 @@ from ._api import (
     UpdateCanvasRequest,
 )
 from .canvas import Canvas
-from .canvas_client import CanvasClient
 from .canvas_registry import CanvasRegistry
 
 # Core type definitions
 from .types import (
     BranchInfo,
     CanvasCommitMessageEvent,
-    CanvasData,
     CanvasDeleteMessageEvent,
     CanvasEvent,
     CanvasSummary,
@@ -37,7 +35,6 @@ __all__ = [
     "Canvas",
     "CanvasClient",
     "CanvasCommitMessageEvent",
-    "CanvasData",
     "CanvasDeleteMessageEvent",
     "CanvasEvent",
     "CanvasRegistry",

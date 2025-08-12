@@ -15,7 +15,7 @@ classifiers = [
 dependencies = [
     "anthropic>=0.62.0",
     "fastapi>=0.110.0",
-    "llm-canvas-api-client",
+    "llm-canvas-local-server-client",
     "openai>=1.99.5",
     "uvicorn[standard]>=0.29.0",
 ]
@@ -173,7 +173,7 @@ disallow_untyped_defs = true
 disallow_incomplete_defs = true
 
 [tool.uv.sources]
-llm-canvas-api-client = { path = "generated-clients/llm-canvas-client", editable = true }
+llm-canvas-local-server-client = { path = "generated-clients/llm-canvas-client", editable = true }
 
 [dependency-groups]
 dev = [

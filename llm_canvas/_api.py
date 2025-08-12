@@ -11,13 +11,14 @@ from collections.abc import Generator
 from typing import Any, Literal
 
 from fastapi import APIRouter, HTTPException, Path, Query
-from fastapi.responses import JSONResponse, StreamingResponse
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
 from llm_canvas._local_registry import get_local_registry
 
 from .types import (
     CanvasCommitMessageEvent,
+    CanvasData,
     CanvasSummary,
     CanvasUpdateMessageEvent,
 )
@@ -56,6 +57,10 @@ class HealthCheckResponse(BaseModel):
     status: Literal["healthy"]
     server_type: Literal["local", "cloud"]
     timestamp: float | None
+
+
+class GetCanvasResponse(BaseModel):
+    data: CanvasData
 
 
 class ErrorResponse(BaseModel):
@@ -136,7 +141,7 @@ def list_canvases() -> CanvasListResponse:
 
 
 @v1_router.get("/canvas")
-def get_canvas(canvas_id: str = Query(..., description="Canvas UUID")) -> Any:
+def get_canvas(canvas_id: str = Query(..., description="Canvas UUID")) -> CanvasData:
     """Get a full canvas by ID.
     Args:
         canvas_id: Canvas UUID to retrieve
@@ -154,8 +159,8 @@ def get_canvas(canvas_id: str = Query(..., description="Canvas UUID")) -> Any:
             detail=error_response.dict(),
         )
 
-    logger.debug(c.to_canvas_data())
-    return JSONResponse(c.to_canvas_data())
+    data = c.to_canvas_data()
+    return data
 
 
 @v1_router.post("/canvas")

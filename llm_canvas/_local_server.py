@@ -16,11 +16,74 @@ from typing import Any
 from fastapi import FastAPI
 from fastapi import FastAPI as _FastAPI  # noqa: F401
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.openapi.utils import get_openapi
 from fastapi.staticfiles import StaticFiles
 
 from ._api import v1_router
 
 logger = logging.getLogger(__name__)
+
+
+def custom_openapi_schema(app: FastAPI) -> dict[str, Any]:
+    """Generate custom OpenAPI schema without Input/Output variants."""
+    if app.openapi_schema:
+        return app.openapi_schema
+
+    openapi_schema = get_openapi(
+        title="LLM Canvas API",
+        version="0.1.0",
+        description="RESTful API for LLM Canvas operations",
+        routes=app.routes,
+    )
+
+    # Fix duplicate schema titles by ensuring unique names
+    if "components" in openapi_schema and "schemas" in openapi_schema["components"]:
+        schemas = openapi_schema["components"]["schemas"]
+
+        # Remove Input/Output variants and merge them into single schemas
+        schemas_to_remove = []
+        schemas_to_add = {}
+
+        for schema_name, schema_def in schemas.items():
+            if schema_name.endswith(("-Input", "-Output")):
+                base_name = schema_name.replace("-Input", "").replace("-Output", "")
+
+                # Use the base name without suffix as the title
+                if "title" in schema_def:
+                    schema_def["title"] = base_name
+
+                # Keep the first variant we see (usually Input), discard others
+                if base_name not in schemas_to_add:
+                    schemas_to_add[base_name] = schema_def
+
+                schemas_to_remove.append(schema_name)
+
+        # Remove old variants
+        for schema_name in schemas_to_remove:
+            del schemas[schema_name]
+
+        # Add cleaned schemas
+        schemas.update(schemas_to_add)
+
+        # Update all references to point to the cleaned schema names
+        def update_refs(obj: Any) -> Any:
+            if isinstance(obj, dict):
+                for key, value in obj.items():
+                    if key == "$ref" and isinstance(value, str):
+                        for old_name in schemas_to_remove:
+                            if old_name in value:
+                                base_name = old_name.replace("-Input", "").replace("-Output", "")
+                                obj[key] = value.replace(old_name, base_name)
+                    else:
+                        update_refs(value)
+            elif isinstance(obj, list):
+                for item in obj:
+                    update_refs(item)
+
+        update_refs(openapi_schema)
+
+    app.openapi_schema = openapi_schema
+    return app.openapi_schema
 
 
 def create_local_server() -> Any:
@@ -41,6 +104,9 @@ def create_local_server() -> Any:
         version="0.1.0",
         description="Free & Open Source LLM Canvas Local Server - Session-based storage only",
     )
+
+    # Set custom OpenAPI schema to eliminate Input/Output variants
+    app.openapi = lambda: custom_openapi_schema(app)
 
     app.add_middleware(
         CORSMiddleware,

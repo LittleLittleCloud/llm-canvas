@@ -7,25 +7,56 @@ This module provides a simplified, one-stop solution for users to:
 - Handle canvas operations in a unified way
 """
 
+# ruff: noqa: BLE001
+# ruff: noqa: TRY301, TRY300
+
 from __future__ import annotations
 
-import json
 import logging
 import threading
-from typing import TYPE_CHECKING
-from urllib.error import URLError
-from urllib.request import Request, urlopen
-from llm_canvas_api_client import Client
-from llm_canvas._api import CommitMessageRequest, UpdateMessageRequest
+
+from httpx import Timeout
+from llm_canvas_local_server_client import Client
+from llm_canvas_local_server_client.api.v1 import (
+    commit_message_api_v1_canvas_canvas_id_messages_post as commit_message_api,
+)
+from llm_canvas_local_server_client.api.v1 import (
+    create_canvas_api_v1_canvas_post as create_canvas_api,
+)
+from llm_canvas_local_server_client.api.v1 import (
+    delete_canvas_api_v1_canvas_canvas_id_delete as delete_canvas_api,
+)
+from llm_canvas_local_server_client.api.v1 import (
+    get_canvas_api_v1_canvas_get as get_canvas_api,
+)
+from llm_canvas_local_server_client.api.v1 import (
+    health_check_api_v1_health_get as health_check_api,
+)
+from llm_canvas_local_server_client.api.v1 import (
+    list_canvases_api_v1_canvas_list_get as list_canvases_api,
+)
+from llm_canvas_local_server_client.api.v1 import (
+    update_message_api_v1_canvas_canvas_id_messages_message_id_put as update_message_api,
+)
+from llm_canvas_local_server_client.models.canvas_commit_message_event import (
+    CanvasCommitMessageEvent as GeneratedCanvasCommitMessageEvent,
+)
+from llm_canvas_local_server_client.models.canvas_update_message_event import (
+    CanvasUpdateMessageEvent as GeneratedCanvasUpdateMessageEvent,
+)
+from llm_canvas_local_server_client.models.commit_message_request import (
+    CommitMessageRequest,
+)
+from llm_canvas_local_server_client.models.create_canvas_request import CreateCanvasRequest
+from llm_canvas_local_server_client.models.create_canvas_response import CreateCanvasResponse
+from llm_canvas_local_server_client.models.http_validation_error import HTTPValidationError
+from llm_canvas_local_server_client.models.update_message_request import UpdateMessageRequest
+
 from llm_canvas.types import CanvasCommitMessageEvent, CanvasUpdateMessageEvent
 
-from .canvas import Canvas
-
-if TYPE_CHECKING:
-    from .canvas import CanvasData, CanvasSummary
-    from .types import CanvasEvent
-
+from .canvas import Canvas, CanvasData, CanvasSummary
 from .canvas_registry import CanvasRegistry
+from .types import CanvasEvent
 
 logger = logging.getLogger(__name__)
 
@@ -50,6 +81,9 @@ class CanvasClient:
         self._server_running = False
         self.server_host = server_host
         self.server_port = server_port
+        # Initialize the API client
+        base_url = f"http://{server_host}:{server_port}"
+        self._api_client = Client(base_url=base_url, timeout=Timeout(10.0))
 
         # Event tracking for canvases
         self._event_lock = threading.Lock()
@@ -74,21 +108,16 @@ class CanvasClient:
         """Call the commit message API endpoint."""
         canvas_id = event["canvas_id"]
 
-        url = f"http://{self.server_host}:{self.server_port}/api/v1/canvas/{canvas_id}/messages"
-        request = CommitMessageRequest(data=event)
         try:
-            json_data = request.model_dump_json().encode()
+            request = CommitMessageRequest(data=GeneratedCanvasCommitMessageEvent.from_dict(event))
+            response = commit_message_api.sync(canvas_id=canvas_id, client=self._api_client, body=request)
 
-            # Create the request
-            req = Request(url, data=json_data, headers={"Content-Type": "application/json"}, method="POST")
+            if response:
+                logger.debug("Successfully called commit message API for canvas %s", canvas_id)
+            else:
+                logger.warning("Failed to call commit message API")
 
-            with urlopen(req, timeout=10) as response:
-                if response.status == 200:
-                    logger.debug("Successfully called commit message API for canvas %s", canvas_id)
-                else:
-                    logger.warning("Failed to call commit message API: HTTP %s", response.status)
-
-        except (URLError, OSError, TimeoutError) as e:
+        except Exception as e:
             logger.warning("Failed to call commit message API: %s", e)
 
     def _call_update_message_api(self, event: CanvasUpdateMessageEvent) -> None:
@@ -96,22 +125,18 @@ class CanvasClient:
         canvas_id = event["canvas_id"]
         message_id = event["data"]["id"]
 
-        url = f"http://{self.server_host}:{self.server_port}/api/v1/canvas/{canvas_id}/messages/{message_id}"
-        request = UpdateMessageRequest(data=event)
         try:
-            json_data = request.model_dump_json().encode()
+            request = UpdateMessageRequest(GeneratedCanvasUpdateMessageEvent.from_dict(event))
+            response = update_message_api.sync(
+                canvas_id=canvas_id, message_id=message_id, client=self._api_client, body=request
+            )
 
-            # Create the request
-            req = Request(url, data=json_data, headers={"Content-Type": "application/json"})
-            req.get_method = lambda: "PUT"
+            if response:
+                logger.debug("Successfully called update message API for canvas %s", canvas_id)
+            else:
+                logger.warning("Failed to call update message API")
 
-            with urlopen(req, timeout=10) as response:
-                if response.status == 200:
-                    logger.debug("Successfully called update message API for canvas %s", canvas_id)
-                else:
-                    logger.warning("Failed to call update message API: HTTP %s", response.status)
-
-        except (URLError, OSError, TimeoutError) as e:
+        except Exception as e:
             logger.warning("Failed to call update message API: %s", e)
 
     def _setup_canvas_event_tracking(self, canvas: Canvas) -> None:
@@ -125,25 +150,12 @@ class CanvasClient:
             True if server is running and healthy, False otherwise
         """
         try:
-            from urllib.error import URLError
-            from urllib.request import urlopen
-
-            url = f"http://{self.server_host}:{self.server_port}/api/v1/health"
-            # Security: Ensure we only allow http/https schemes
-            if not url.startswith(("http://", "https://")):
-                return False
-
-            with urlopen(url, timeout=2) as response:
-                if response.status == 200:  # noqa: PLR2004
-                    import json
-
-                    data = json.loads(response.read().decode())
-                    return data["status"] == "healthy"
-                return False
-
-        except (URLError, OSError, TimeoutError):
+            response = health_check_api.sync(client=self._api_client)
+        except Exception:
             # Any exception means server is not reachable
             return False
+        else:
+            return response is not None and response.status == "healthy"
 
     def _prompt_user_to_start_server(self) -> None:
         """Prompt user to start the server manually."""
@@ -188,36 +200,26 @@ class CanvasClient:
             raise RuntimeError(error_msg)
 
         # Call API to create canvas
-        url = f"http://{self.server_host}:{self.server_port}/api/v1/canvas"
-        request_data = {}
-        if title is not None:
-            request_data["title"] = title
-        if description is not None:
-            request_data["description"] = description
-
         try:
-            req = Request(
-                url, data=json.dumps(request_data).encode("utf-8"), headers={"Content-Type": "application/json"}, method="POST"
-            )
+            request = CreateCanvasRequest(title=title, description=description)
+            response = create_canvas_api.sync(client=self._api_client, body=request)
 
-            with urlopen(req, timeout=10) as response:
-                if response.status == 200:
-                    response_data = json.loads(response.read().decode())
-                    created_canvas_id = response_data["canvas_id"]
+            if isinstance(response, CreateCanvasResponse):
+                created_canvas_id = response.canvas_id
 
-                    # Fetch the full canvas data
-                    canvas = self.get_canvas(created_canvas_id)
-                    if canvas:
-                        logger.info("Created canvas via API: %s - %s", created_canvas_id, title)
-                        return canvas
+                # Fetch the full canvas data
+                canvas = self.get_canvas(created_canvas_id)
+                if canvas:
+                    logger.info("Created canvas via API: %s - %s", created_canvas_id, title)
+                    return canvas
 
-                    msg = f"Failed to retrieve created canvas {created_canvas_id}"
-                    raise RuntimeError(msg)
-
-                msg = f"Failed to create canvas: HTTP {response.status}"
+                msg = f"Failed to retrieve created canvas {created_canvas_id}"
                 raise RuntimeError(msg)
 
-        except (URLError, OSError, TimeoutError) as e:
+            msg = "Failed to create canvas: No response from API"
+            raise RuntimeError(msg)
+
+        except Exception as e:
             msg = f"Failed to create canvas via API: {e}"
             raise RuntimeError(msg) from e
 
@@ -231,22 +233,17 @@ class CanvasClient:
             The Canvas instance if found, None otherwise
         """
         # Call API to get canvas
-        url = f"http://{self.server_host}:{self.server_port}/api/v1/canvas?canvas_id={canvas_id}"
-
         try:
-            with urlopen(url, timeout=10) as response:
-                if response.status == 200:
-                    canvas_data = json.loads(response.read().decode())
-                    # Convert API response to Canvas object
-                    canvas = Canvas.from_canvas_data(canvas_data)
-                    self._setup_canvas_event_tracking(canvas)
-                    return canvas
-                if response.status == 404:
-                    return None
-                logger.warning("Failed to get canvas %s: HTTP %s", canvas_id, response.status)
-                return None
+            canvas_data = get_canvas_api.sync(client=self._api_client, canvas_id=canvas_id)
 
-        except (URLError, OSError, TimeoutError) as e:
+            if not isinstance(canvas_data, HTTPValidationError) and canvas_data is not None:
+                # Convert API response to Canvas object
+                canvas = Canvas.from_canvas_data(canvas_data)
+                self._setup_canvas_event_tracking(canvas)
+                return canvas
+            return None
+
+        except Exception as e:
             logger.warning("Failed to get canvas %s via API: %s", canvas_id, e)
             return None
 
@@ -260,22 +257,20 @@ class CanvasClient:
             return self.registry.list()
 
         # Call API to get canvas list and then fetch each canvas
-        url = f"http://{self.server_host}:{self.server_port}/api/v1/canvas/list"
-
         try:
-            with urlopen(url, timeout=10) as response:
-                if response.status == 200:
-                    response_data = json.loads(response.read().decode())
-                    canvases = []
-                    for summary in response_data["canvases"]:
-                        canvas = self.get_canvas(summary["canvas_id"])
-                        if canvas:
-                            canvases.append(canvas)
-                    return canvases
-                logger.warning("Failed to list canvases: HTTP %s", response.status)
-                return []
+            response = list_canvases_api.sync(client=self._api_client)
 
-        except (URLError, OSError, TimeoutError) as e:
+            if response:
+                canvases = []
+                for summary in response.canvases:
+                    canvas = self.get_canvas(summary.canvas_id)
+                    if canvas:
+                        canvases.append(canvas)
+                return canvases
+            logger.warning("Failed to list canvases: No response from API")
+            return []
+
+        except Exception as e:
             logger.warning("Failed to list canvases via API: %s", e)
             return []
 
@@ -296,17 +291,26 @@ class CanvasClient:
             return summaries
 
         # Call API to get canvas summaries
-        url = f"http://{self.server_host}:{self.server_port}/api/v1/canvas/list"
-
         try:
-            with urlopen(url, timeout=10) as response:
-                if response.status == 200:
-                    response_data = json.loads(response.read().decode())
-                    return response_data["canvases"]  # type: ignore[no-any-return]
-                logger.warning("Failed to get canvas summaries: HTTP %s", response.status)
-                return []
+            response = list_canvases_api.sync(client=self._api_client)
 
-        except (URLError, OSError, TimeoutError) as e:
+            if response:
+                return [
+                    {
+                        "canvas_id": c.canvas_id,
+                        "created_at": c.created_at,
+                        "root_ids": c.root_ids,
+                        "node_count": c.node_count,
+                        "title": c.title,
+                        "description": c.description,
+                        "meta": c.meta.to_dict() if c.meta else {},
+                    }
+                    for c in response.canvases
+                ]
+            logger.warning("Failed to get canvas summaries: No response from API")
+            return []
+
+        except Exception as e:
             logger.warning("Failed to get canvas summaries via API: %s", e)
             return []
 
@@ -326,18 +330,13 @@ class CanvasClient:
             return canvas.to_canvas_data()
 
         # Call API to get canvas data
-        url = f"http://{self.server_host}:{self.server_port}/api/v1/canvas?canvas_id={canvas_id}"
-
         try:
-            with urlopen(url, timeout=10) as response:
-                if response.status == 200:
-                    return json.loads(response.read().decode())  # type: ignore[no-any-return]
-                if response.status == 404:
-                    return None
-                logger.warning("Failed to get canvas data %s: HTTP %s", canvas_id, response.status)
-                return None
+            canvas_data = get_canvas_api.sync(client=self._api_client, canvas_id=canvas_id)
+            if not isinstance(canvas_data, HTTPValidationError) and canvas_data is not None:
+                return CanvasData(**canvas_data.to_dict())
+            return None
 
-        except (URLError, OSError, TimeoutError) as e:
+        except Exception as e:
             logger.warning("Failed to get canvas data %s via API: %s", canvas_id, e)
             return None
 
@@ -357,20 +356,15 @@ class CanvasClient:
             return removed
 
         # Call API to delete canvas
-        url = f"http://{self.server_host}:{self.server_port}/api/v1/canvas/{canvas_id}"
-
         try:
-            req = Request(url, method="DELETE")
-            with urlopen(req, timeout=10) as response:
-                if response.status == 200:
-                    logger.info("Removed canvas via API: %s", canvas_id)
-                    return True
-                if response.status == 404:
-                    return False
-                logger.warning("Failed to remove canvas %s: HTTP %s", canvas_id, response.status)
-                return False
+            response = delete_canvas_api.sync(canvas_id=canvas_id, client=self._api_client)
 
-        except (URLError, OSError, TimeoutError) as e:
+            if response:
+                logger.info("Removed canvas via API: %s", canvas_id)
+                return True
+            return False
+
+        except Exception as e:
             logger.warning("Failed to remove canvas %s via API: %s", canvas_id, e)
             return False
 

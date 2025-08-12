@@ -3,4 +3,3 @@ project_name: "llm-canvas-client"
 package_name: "llm_canvas_client"
 package_version: "0.1.1"
 library: asyncio
-generate_source_code_only: false

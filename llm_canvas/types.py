@@ -9,6 +9,7 @@ from __future__ import annotations
 from typing import Any, Literal, TypedDict
 
 from anthropic.types import TextBlockParam, ToolResultBlockParam, ToolUseBlockParam
+from pydantic import BaseModel
 
 # ---- Core Data Types ----
 
@@ -24,7 +25,7 @@ class Message(TypedDict):
     role: Literal["user", "assistant", "system"]
 
 
-class MessageNode(TypedDict):
+class MessageNode(BaseModel):
     """Node in the canvas conversation graph."""
 
     id: str
