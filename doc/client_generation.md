@@ -14,7 +14,7 @@ uv run llm-canvas-generate-openapi
 uv run python -m scripts.generate_openapi_schema
 
 # Alternative: Direct execution
-uv run openapi-python-client generate --path schemas/openapi.json --output-path generated-clients/llm-canvas-client --config client-config.yaml --overwrite
+uv run openapi-python-client generate --path schemas/openapi.json --output-path generated_client --config client-config.yaml --overwrite
 ```
 
 This generates `schemas/openapi.json` which can be used to generate clients in various languages.

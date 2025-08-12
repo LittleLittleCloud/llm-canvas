@@ -15,7 +15,6 @@ classifiers = [
 dependencies = [
     "anthropic>=0.62.0",
     "fastapi>=0.110.0",
-    "llm-canvas-local-server-client",
     "openai>=1.99.5",
     "uvicorn[standard]>=0.29.0",
 ]
@@ -25,10 +24,11 @@ Homepage = "https://github.com/yourname/llm_canvas"
 
 [project.optional-dependencies]
 server = ["uvicorn[standard]>=0.29.0"]
+client = []
 dev = ["pytest>=7.0", "black", "ruff", "mypy",]
 
 [project.scripts]
-llm-canvas = "llm_canvas._cli:main"
+llm-canvas = "server.cli:main"
 llm-canvas-generate-openapi = "scripts.generate_openapi_schema:main"
 
 [build-system]
@@ -36,17 +36,19 @@ requires = ["hatchling<1.19", "hatch-vcs"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["llm_canvas"]
+packages = ["server", "client", "generated_client"]
 artifacts = [
-    "llm_canvas/static"
+    "server/static"
 ]
 
 [tool.hatch.build.targets.wheel.force-include]
-"web_ui/dist" = "llm_canvas/static"
+"web_ui/dist" = "server/static"
 
 [tool.hatch.build.targets.sdist]
 include = [
-    "llm_canvas/",
+    "server/",
+    "client/",
+    "generated_client/",
     "web_ui/dist/",
     "README.md",
     "LICENSE",
@@ -58,7 +60,7 @@ exclude = [
 ]
 
 [tool.hatch.build.targets.sdist.force-include]
-"web_ui/dist" = "llm_canvas/static"
+"web_ui/dist" = "server/static"
 
 [tool.hatch.metadata]
 allow-direct-references = true
@@ -147,6 +149,7 @@ ignore = [
     "PLR0915",  # too-many-statements
     "TC001",
     "TC003",
+    "EM102",
 ]
 
 [tool.ruff.lint.per-file-ignores]
@@ -173,7 +176,6 @@ disallow_untyped_defs = true
 disallow_incomplete_defs = true
 
 [tool.uv.sources]
-llm-canvas-local-server-client = { path = "generated-clients/llm-canvas-client", editable = true }
 
 [dependency-groups]
 dev = [
