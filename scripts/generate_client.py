@@ -10,8 +10,7 @@ def main() -> None:
     """Generate the Python OpenAPI client."""
     repo_root = Path(__file__).parent.parent
     schemas_path = repo_root / "schemas" / "openapi.json"
-    output_path = repo_root / "generated_client"
-    config_path = repo_root / "client-config.yaml"
+    output_path = repo_root / "llm_canvas_generated_client"
 
     # Ensure the schemas directory exists
     schemas_path.parent.mkdir(exist_ok=True)
@@ -30,8 +29,6 @@ def main() -> None:
         str(schemas_path),
         "--output-path",
         str(output_path),
-        "--config",
-        str(config_path),
         "--overwrite",
     ]
 

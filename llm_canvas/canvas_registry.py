@@ -3,10 +3,8 @@
 from __future__ import annotations
 
 import time
-from typing import TYPE_CHECKING
 
-if TYPE_CHECKING:
-    from .canvas import Canvas
+from llm_canvas.canvas import Canvas
 
 
 class CanvasRegistry:

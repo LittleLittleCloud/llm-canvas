@@ -8,7 +8,7 @@ from pathlib import Path
 # Create a minimal FastAPI app with just the API routes
 from fastapi import FastAPI
 
-from server.api import v1_router
+from llm_canvas._server._api import v1_router
 
 
 def generate_openapi_schema() -> Path:

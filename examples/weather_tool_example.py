@@ -4,18 +4,13 @@ This example demonstrates how to use the Canvas API to create
 a conversation that includes tool usage using the shared CanvasClient instance.
 """
 
-# ruff: noqa: TC001
-
 from __future__ import annotations
 
 import json
 import time
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from llm_canvas.canvas import Message
 
 from examples.shared_client import get_canvas_client
+from llm_canvas.types import Message
 
 
 def simulate_weather_api(location: str, unit: str = "fahrenheit") -> dict:
@@ -142,10 +137,7 @@ It's a pleasant day with comfortable temperatures! The partly cloudy conditions 
 
     # Step 5: User asks follow-up question
     print("5️⃣ User asks about tomorrow's weather")
-    followup_message: Message = {
-        "role": "user",
-        "content": [{"type": "text", "text": "What about tomorrow? Will it rain?"}],
-    }
+    followup_message: Message = {"content": [{"type": "text", "text": "What about tomorrow? Will it rain?"}], "role": "user"}
     canvas.commit_message(followup_message)
 
     # Step 6: Assistant uses forecast tool

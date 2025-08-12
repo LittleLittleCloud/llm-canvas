@@ -5,8 +5,6 @@ a simple conversation between a user and an assistant using the shared
 CanvasClient instance.
 """
 
-# ruff: noqa: TC001
-
 import time
 
 from examples.shared_client import get_canvas_client

@@ -4,17 +4,12 @@ This example demonstrates how to use the Canvas API to create
 branched conversations using the shared CanvasClient instance.
 """
 
-# ruff: noqa: TC001
-
 from __future__ import annotations
 
 import time
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from llm_canvas.canvas import Message
 
 from examples.shared_client import get_canvas_client
+from llm_canvas.canvas import Message
 
 
 def create_vacation_planning() -> None:

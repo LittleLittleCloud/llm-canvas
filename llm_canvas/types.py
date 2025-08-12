@@ -6,14 +6,13 @@ including API request/response types and core data structures.
 
 from __future__ import annotations
 
-from typing import Any, Literal, TypedDict
+from typing import Any, Literal, TypedDict, Union
 
 from anthropic.types import TextBlockParam, ToolResultBlockParam, ToolUseBlockParam
 from pydantic import BaseModel
 
 # ---- Core Data Types ----
 
-type UnSupportedBlockParam = Any  # Placeholder for unsupported block types
 # Union type for message blocks matching TypeScript
 MessageBlock = TextBlockParam | ToolUseBlockParam | ToolResultBlockParam | Any
 
@@ -58,7 +57,7 @@ class CanvasData(TypedDict):
     nodes: dict[str, MessageNode]
 
 
-type CanvasEventType = Literal["commit_message", "update_message", "delete_message"]
+CanvasEventType = Literal["commit_message", "update_message", "delete_message"]
 
 
 class CanvasCommitMessageEvent(TypedDict):
@@ -88,7 +87,7 @@ class CanvasDeleteMessageEvent(TypedDict):
     data: str  # Node ID that was deleted
 
 
-type CanvasEvent = CanvasCommitMessageEvent | CanvasUpdateMessageEvent | CanvasDeleteMessageEvent
+CanvasEvent = Union[CanvasCommitMessageEvent, CanvasUpdateMessageEvent, CanvasDeleteMessageEvent]
 
 
 class BranchInfo(TypedDict):

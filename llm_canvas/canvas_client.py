@@ -16,47 +16,46 @@ import logging
 import threading
 
 from httpx import Timeout
-from llm_canvas_local_server_client import Client
-from llm_canvas_local_server_client.api.v1 import (
+
+from llm_canvas.canvas_registry import CanvasRegistry
+from llm_canvas.types import CanvasCommitMessageEvent, CanvasEvent, CanvasUpdateMessageEvent
+from llm_canvas_generated_client.llm_canvas_api_client import Client
+from llm_canvas_generated_client.llm_canvas_api_client.api.v1 import (
     commit_message_api_v1_canvas_canvas_id_messages_post as commit_message_api,
 )
-from llm_canvas_local_server_client.api.v1 import (
+from llm_canvas_generated_client.llm_canvas_api_client.api.v1 import (
     create_canvas_api_v1_canvas_post as create_canvas_api,
 )
-from llm_canvas_local_server_client.api.v1 import (
+from llm_canvas_generated_client.llm_canvas_api_client.api.v1 import (
     delete_canvas_api_v1_canvas_canvas_id_delete as delete_canvas_api,
 )
-from llm_canvas_local_server_client.api.v1 import (
+from llm_canvas_generated_client.llm_canvas_api_client.api.v1 import (
     get_canvas_api_v1_canvas_get as get_canvas_api,
 )
-from llm_canvas_local_server_client.api.v1 import (
+from llm_canvas_generated_client.llm_canvas_api_client.api.v1 import (
     health_check_api_v1_health_get as health_check_api,
 )
-from llm_canvas_local_server_client.api.v1 import (
+from llm_canvas_generated_client.llm_canvas_api_client.api.v1 import (
     list_canvases_api_v1_canvas_list_get as list_canvases_api,
 )
-from llm_canvas_local_server_client.api.v1 import (
+from llm_canvas_generated_client.llm_canvas_api_client.api.v1 import (
     update_message_api_v1_canvas_canvas_id_messages_message_id_put as update_message_api,
 )
-from llm_canvas_local_server_client.models.canvas_commit_message_event import (
+from llm_canvas_generated_client.llm_canvas_api_client.models.canvas_commit_message_event import (
     CanvasCommitMessageEvent as GeneratedCanvasCommitMessageEvent,
 )
-from llm_canvas_local_server_client.models.canvas_update_message_event import (
+from llm_canvas_generated_client.llm_canvas_api_client.models.canvas_update_message_event import (
     CanvasUpdateMessageEvent as GeneratedCanvasUpdateMessageEvent,
 )
-from llm_canvas_local_server_client.models.commit_message_request import (
+from llm_canvas_generated_client.llm_canvas_api_client.models.commit_message_request import (
     CommitMessageRequest,
 )
-from llm_canvas_local_server_client.models.create_canvas_request import CreateCanvasRequest
-from llm_canvas_local_server_client.models.create_canvas_response import CreateCanvasResponse
-from llm_canvas_local_server_client.models.http_validation_error import HTTPValidationError
-from llm_canvas_local_server_client.models.update_message_request import UpdateMessageRequest
-
-from llm_canvas.types import CanvasCommitMessageEvent, CanvasUpdateMessageEvent
+from llm_canvas_generated_client.llm_canvas_api_client.models.create_canvas_request import CreateCanvasRequest
+from llm_canvas_generated_client.llm_canvas_api_client.models.create_canvas_response import CreateCanvasResponse
+from llm_canvas_generated_client.llm_canvas_api_client.models.http_validation_error import HTTPValidationError
+from llm_canvas_generated_client.llm_canvas_api_client.models.update_message_request import UpdateMessageRequest
 
 from .canvas import Canvas, CanvasData, CanvasSummary
-from .canvas_registry import CanvasRegistry
-from .types import CanvasEvent
 
 logger = logging.getLogger(__name__)
 
@@ -123,7 +122,7 @@ class CanvasClient:
     def _call_update_message_api(self, event: CanvasUpdateMessageEvent) -> None:
         """Call the update message API endpoint."""
         canvas_id = event["canvas_id"]
-        message_id = event["data"]["id"]
+        message_id = event["data"].id
 
         try:
             request = UpdateMessageRequest(GeneratedCanvasUpdateMessageEvent.from_dict(event))

@@ -5,18 +5,13 @@ a conversation with branching paths and tool usage using the shared
 CanvasClient instance.
 """
 
-# ruff: noqa: TC001
-
 from __future__ import annotations
 
 import json
 import time
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from llm_canvas.canvas import Message
 
 from examples.shared_client import get_canvas_client
+from llm_canvas.canvas import Message
 
 
 def simulate_market_data_api(_symbols: list[str], _timeframe: str = "1M", _include_fundamentals: bool = True) -> dict:

@@ -28,27 +28,27 @@ client = []
 dev = ["pytest>=7.0", "black", "ruff", "mypy",]
 
 [project.scripts]
-llm-canvas = "server.cli:main"
+llm-canvas = "llm_canvas.server.cli:main"
 llm-canvas-generate-openapi = "scripts.generate_openapi_schema:main"
+llm-canvas-generate-client = "scripts.generate_client:main"
 
 [build-system]
 requires = ["hatchling<1.19", "hatch-vcs"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["server", "client", "generated_client"]
+packages = ["llm_canvas", "llm_canvas_generated_client"]
 artifacts = [
-    "server/static"
+    "llm_canvas/server/static"
 ]
 
 [tool.hatch.build.targets.wheel.force-include]
-"web_ui/dist" = "server/static"
+"web_ui/dist" = "llm_canvas/server/static"
 
 [tool.hatch.build.targets.sdist]
 include = [
-    "server/",
-    "client/",
-    "generated_client/",
+    "llm_canvas",
+    "llm_canvas_generated_client",
     "web_ui/dist/",
     "README.md",
     "LICENSE",
@@ -57,10 +57,11 @@ exclude = [
     "*.pyc",
     "__pycache__/",
     "web_ui/node_modules/",
+    "llm_canvas/_server",
 ]
 
 [tool.hatch.build.targets.sdist.force-include]
-"web_ui/dist" = "server/static"
+"web_ui/dist" = "llm_canvas/server/static"
 
 [tool.hatch.metadata]
 allow-direct-references = true
