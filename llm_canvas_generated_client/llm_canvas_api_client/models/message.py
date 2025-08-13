@@ -20,32 +20,30 @@ class Message:
     """Message structure for canvas conversations.
 
     Attributes:
-        content (Union[list[Union['TextBlockParam', 'ToolResultBlockParam', 'ToolUseBlockParam', Any]], str]):
+        content (Union[list[Union['TextBlockParam', 'ToolResultBlockParam', 'ToolUseBlockParam']], str]):
         role (MessageRole):
     """
 
-    content: Union[list[Union["TextBlockParam", "ToolResultBlockParam", "ToolUseBlockParam", Any]], str]
+    content: Union[list[Union["TextBlockParam", "ToolResultBlockParam", "ToolUseBlockParam"]], str]
     role: MessageRole
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
         from ..models.text_block_param import TextBlockParam
-        from ..models.tool_result_block_param import ToolResultBlockParam
         from ..models.tool_use_block_param import ToolUseBlockParam
 
-        content: Union[list[Union[Any, dict[str, Any]]], str]
+        content: Union[list[dict[str, Any]], str]
         if isinstance(self.content, list):
             content = []
             for content_type_1_item_data in self.content:
-                content_type_1_item: Union[Any, dict[str, Any]]
+                content_type_1_item: dict[str, Any]
                 if isinstance(content_type_1_item_data, TextBlockParam):
                     content_type_1_item = content_type_1_item_data.to_dict()
                 elif isinstance(content_type_1_item_data, ToolUseBlockParam):
                     content_type_1_item = content_type_1_item_data.to_dict()
-                elif isinstance(content_type_1_item_data, ToolResultBlockParam):
-                    content_type_1_item = content_type_1_item_data.to_dict()
                 else:
-                    content_type_1_item = content_type_1_item_data
+                    content_type_1_item = content_type_1_item_data.to_dict()
+
                 content.append(content_type_1_item)
 
         else:
@@ -74,7 +72,7 @@ class Message:
 
         def _parse_content(
             data: object,
-        ) -> Union[list[Union["TextBlockParam", "ToolResultBlockParam", "ToolUseBlockParam", Any]], str]:
+        ) -> Union[list[Union["TextBlockParam", "ToolResultBlockParam", "ToolUseBlockParam"]], str]:
             try:
                 if not isinstance(data, list):
                     raise TypeError()
@@ -84,7 +82,7 @@ class Message:
 
                     def _parse_content_type_1_item(
                         data: object,
-                    ) -> Union["TextBlockParam", "ToolResultBlockParam", "ToolUseBlockParam", Any]:
+                    ) -> Union["TextBlockParam", "ToolResultBlockParam", "ToolUseBlockParam"]:
                         try:
                             if not isinstance(data, dict):
                                 raise TypeError()
@@ -101,15 +99,11 @@ class Message:
                             return content_type_1_item_type_1
                         except:  # noqa: E722
                             pass
-                        try:
-                            if not isinstance(data, dict):
-                                raise TypeError()
-                            content_type_1_item_type_2 = ToolResultBlockParam.from_dict(data)
+                        if not isinstance(data, dict):
+                            raise TypeError()
+                        content_type_1_item_type_2 = ToolResultBlockParam.from_dict(data)
 
-                            return content_type_1_item_type_2
-                        except:  # noqa: E722
-                            pass
-                        return cast(Union["TextBlockParam", "ToolResultBlockParam", "ToolUseBlockParam", Any], data)
+                        return content_type_1_item_type_2
 
                     content_type_1_item = _parse_content_type_1_item(content_type_1_item_data)
 
@@ -118,9 +112,7 @@ class Message:
                 return content_type_1
             except:  # noqa: E722
                 pass
-            return cast(
-                Union[list[Union["TextBlockParam", "ToolResultBlockParam", "ToolUseBlockParam", Any]], str], data
-            )
+            return cast(Union[list[Union["TextBlockParam", "ToolResultBlockParam", "ToolUseBlockParam"]], str], data)
 
         content = _parse_content(d.pop("content"))
 

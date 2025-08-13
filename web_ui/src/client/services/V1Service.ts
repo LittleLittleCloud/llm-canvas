@@ -4,6 +4,7 @@ import type { CreateCanvasRequest } from "../models/CreateCanvasRequest";
 import type { CreateCanvasResponse } from "../models/CreateCanvasResponse";
 import type { CreateMessageResponse } from "../models/CreateMessageResponse";
 import type { DeleteCanvasResponse } from "../models/DeleteCanvasResponse";
+import type { GetCanvasResponse } from "../models/GetCanvasResponse";
 import type { HealthCheckResponse } from "../models/HealthCheckResponse";
 import type { UpdateMessageRequest } from "../models/UpdateMessageRequest";
 import type { CancelablePromise } from "../core/CancelablePromise";
@@ -88,12 +89,12 @@ export class V1Service {
    * CanvasData on success
    * Raises:
    * HTTPException: 404 if canvas not found
-   * @returns unknown Successful Response
+   * @returns GetCanvasResponse Successful Response
    * @throws ApiError
    */
   public static getCanvasApiV1CanvasGet(
     data: TDataGetCanvasApiV1CanvasGet
-  ): CancelablePromise<unknown> {
+  ): CancelablePromise<GetCanvasResponse> {
     const { canvasId } = data;
     return __request(OpenAPI, {
       method: "GET",

@@ -8,8 +8,6 @@ import type { ToolUseBlockParam } from "./ToolUseBlockParam";
 export type Message = {
   content:
     | string
-    | Array<
-        TextBlockParam | ToolUseBlockParam | ToolResultBlockParam | unknown
-      >;
+    | Array<TextBlockParam | ToolUseBlockParam | ToolResultBlockParam>;
   role: "user" | "assistant" | "system";
 };

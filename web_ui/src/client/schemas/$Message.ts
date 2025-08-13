@@ -21,9 +21,6 @@ export const $Message = {
               {
                 type: "ToolResultBlockParam",
               },
-              {
-                properties: {},
-              },
             ],
           },
         },

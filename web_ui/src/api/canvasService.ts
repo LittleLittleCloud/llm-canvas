@@ -1,49 +1,83 @@
+import {
+  OpenAPI,
+  V1Service,
+  type CanvasData,
+  type CanvasListResponse,
+  type CommitMessageRequest,
+  type CreateCanvasRequest,
+  type CreateCanvasResponse,
+  type CreateMessageResponse,
+  type DeleteCanvasResponse,
+  type UpdateMessageRequest,
+} from "../client";
 import { config } from "../config";
-import { CanvasData, CanvasListResponse } from "../types";
 
 class CanvasService {
-  private getApiBaseUrl(): string {
-    return config.api.baseUrl;
+  constructor() {
+    // Configure the OpenAPI client with the base URL
+    this.configureClient();
   }
 
-  private async apiCall(
-    endpoint: string,
-    options?: RequestInit
-  ): Promise<Response> {
-    const baseUrl = this.getApiBaseUrl();
-    const url = `${baseUrl}${endpoint}`;
-
-    const response = await fetch(url, {
-      ...options,
-      headers: {
-        "Content-Type": "application/json",
-        ...options?.headers,
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(
-        `API call failed: ${response.status} ${response.statusText}`
-      );
-    }
-
-    return response;
+  private configureClient(): void {
+    OpenAPI.BASE = config.api.baseUrl;
+    OpenAPI.HEADERS = {
+      "Content-Type": "application/json",
+    };
   }
 
   async fetchCanvas(canvasId?: string): Promise<CanvasData> {
     if (!canvasId) {
       throw new Error("Canvas ID is required");
     }
-    const endpoint = `/api/v1/canvas?canvas_id=${canvasId}`;
-    const response = await this.apiCall(endpoint);
-    const json = await response.json();
-    return json["data"] as CanvasData;
+
+    const response = await V1Service.getCanvasApiV1CanvasGet({
+      canvasId,
+    });
+    return response.data;
   }
 
   async listCanvases(): Promise<CanvasListResponse> {
-    const endpoint = `/api/v1/canvas/list`;
-    const response = await this.apiCall(endpoint);
-    return response.json();
+    return V1Service.listCanvasesApiV1CanvasListGet();
+  }
+
+  async createCanvas(
+    request: CreateCanvasRequest
+  ): Promise<CreateCanvasResponse> {
+    return V1Service.createCanvasApiV1CanvasPost({
+      requestBody: request,
+    });
+  }
+
+  async deleteCanvas(canvasId: string): Promise<DeleteCanvasResponse> {
+    return V1Service.deleteCanvasApiV1CanvasCanvasIdDelete({
+      canvasId,
+    });
+  }
+
+  async commitMessage(
+    canvasId: string,
+    request: CommitMessageRequest
+  ): Promise<CreateMessageResponse> {
+    return V1Service.commitMessageApiV1CanvasCanvasIdMessagesPost({
+      canvasId,
+      requestBody: request,
+    });
+  }
+
+  async updateMessage(
+    canvasId: string,
+    messageId: string,
+    request: UpdateMessageRequest
+  ): Promise<CreateMessageResponse> {
+    return V1Service.updateMessageApiV1CanvasCanvasIdMessagesMessageIdPut({
+      canvasId,
+      messageId,
+      requestBody: request,
+    });
+  }
+
+  async healthCheck() {
+    return V1Service.healthCheckApiV1HealthGet();
   }
 }
 

@@ -13,7 +13,7 @@ from anthropic.types import TextBlockParam, ToolResultBlockParam, ToolUseBlockPa
 # ---- Core Data Types ----
 
 # Union type for message blocks matching TypeScript
-MessageBlock = TextBlockParam | ToolUseBlockParam | ToolResultBlockParam | Any
+MessageBlock = TextBlockParam | ToolUseBlockParam | ToolResultBlockParam
 
 
 class Message(TypedDict):
