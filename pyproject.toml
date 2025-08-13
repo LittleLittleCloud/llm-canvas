@@ -20,7 +20,7 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/yourname/llm_canvas"
+Homepage = "https://github.com/LittleLittleCloud/llm_canvas"
 
 [project.optional-dependencies]
 server = ["uvicorn[standard]>=0.29.0"]
@@ -28,7 +28,7 @@ client = []
 dev = ["pytest>=7.0", "black", "ruff", "mypy",]
 
 [project.scripts]
-llm-canvas = "llm_canvas.server.cli:main"
+llm-canvas = "llm_canvas._server._cli:main"
 llm-canvas-generate-openapi = "scripts.generate_openapi_schema:main"
 llm-canvas-generate-client = "scripts.generate_client:main"
 
@@ -39,11 +39,11 @@ build-backend = "hatchling.build"
 [tool.hatch.build.targets.wheel]
 packages = ["llm_canvas", "llm_canvas_generated_client"]
 artifacts = [
-    "llm_canvas/server/static"
+    "llm_canvas/_server/static"
 ]
 
 [tool.hatch.build.targets.wheel.force-include]
-"web_ui/dist" = "llm_canvas/server/static"
+"web_ui/dist" = "llm_canvas/_server/static"
 
 [tool.hatch.build.targets.sdist]
 include = [
@@ -57,11 +57,10 @@ exclude = [
     "*.pyc",
     "__pycache__/",
     "web_ui/node_modules/",
-    "llm_canvas/_server",
 ]
 
 [tool.hatch.build.targets.sdist.force-include]
-"web_ui/dist" = "llm_canvas/server/static"
+"web_ui/dist" = "llm_canvas/_server/static"
 
 [tool.hatch.metadata]
 allow-direct-references = true

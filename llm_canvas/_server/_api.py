@@ -22,7 +22,7 @@ from llm_canvas.types import (
     CanvasUpdateMessageEvent,
 )
 
-from .registry import get_local_registry
+from ._registry import get_local_registry
 
 # ---- API Request BaseModel Definitions ----
 

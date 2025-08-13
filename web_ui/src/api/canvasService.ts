@@ -36,7 +36,8 @@ class CanvasService {
     }
     const endpoint = `/api/v1/canvas?canvas_id=${canvasId}`;
     const response = await this.apiCall(endpoint);
-    return response.json();
+    const json = await response.json();
+    return json["data"] as CanvasData;
   }
 
   async listCanvases(): Promise<CanvasListResponse> {

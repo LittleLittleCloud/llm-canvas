@@ -8,7 +8,7 @@ from __future__ import annotations
 import argparse
 import sys
 
-from .server import start_local_server
+from ._server import start_local_server
 
 
 def main() -> None:  # pragma: no cover - CLI utility
