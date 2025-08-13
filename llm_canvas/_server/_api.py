@@ -221,7 +221,7 @@ def commit_message(
             detail=error_response.model_dump(),
         )
     node_data = request.data["data"]
-    node_id = node_data.id
+    node_id = node_data["id"]
     # check if the node id already exist
     if canvas.get_node(node_id):
         error_response2 = ErrorResponse(error="node_already_exists", message="Node already exists")
@@ -230,10 +230,10 @@ def commit_message(
             detail=error_response2.model_dump(),
         )
     # Commit the message to the canvas
-    canvas.nodes[node_data.id] = node_data
-    logger.info(f"Committed message {node_data.id} to canvas {canvas_id}")
+    canvas.nodes[node_data["id"]] = node_data
+    logger.info(f"Committed message {node_data['id']} to canvas {canvas_id}")
     return CreateMessageResponse(
-        message_id=node_data.id,
+        message_id=node_data["id"],
         canvas_id=canvas_id,
         message="Message committed successfully",
     )

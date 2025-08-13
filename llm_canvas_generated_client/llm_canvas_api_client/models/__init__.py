@@ -4,6 +4,8 @@ from .base_64_image_source_param import Base64ImageSourceParam
 from .base_64_image_source_param_media_type import Base64ImageSourceParamMediaType
 from .cache_control_ephemeral_param import CacheControlEphemeralParam
 from .canvas_commit_message_event import CanvasCommitMessageEvent
+from .canvas_data import CanvasData
+from .canvas_data_nodes import CanvasDataNodes
 from .canvas_list_response import CanvasListResponse
 from .canvas_summary import CanvasSummary
 from .canvas_summary_meta import CanvasSummaryMeta
@@ -19,6 +21,7 @@ from .create_canvas_request import CreateCanvasRequest
 from .create_canvas_response import CreateCanvasResponse
 from .create_message_response import CreateMessageResponse
 from .delete_canvas_response import DeleteCanvasResponse
+from .get_canvas_response import GetCanvasResponse
 from .health_check_response import HealthCheckResponse
 from .health_check_response_server_type import HealthCheckResponseServerType
 from .http_validation_error import HTTPValidationError
@@ -40,6 +43,8 @@ __all__ = (
     "Base64ImageSourceParamMediaType",
     "CacheControlEphemeralParam",
     "CanvasCommitMessageEvent",
+    "CanvasData",
+    "CanvasDataNodes",
     "CanvasListResponse",
     "CanvasSummary",
     "CanvasSummaryMeta",
@@ -55,6 +60,7 @@ __all__ = (
     "CreateCanvasResponse",
     "CreateMessageResponse",
     "DeleteCanvasResponse",
+    "GetCanvasResponse",
     "HealthCheckResponse",
     "HealthCheckResponseServerType",
     "HTTPValidationError",

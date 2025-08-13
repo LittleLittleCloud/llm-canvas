@@ -18,6 +18,7 @@ def generate_openapi_schema() -> Path:
         title="LLM Canvas API",
         version="0.1.0",
         description="RESTful API for LLM Canvas operations",
+        separate_input_output_schemas=False,  # Disable separate schemas for input/output
     )
 
     # Include only the API router

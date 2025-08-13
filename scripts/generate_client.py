@@ -6,6 +6,7 @@ import sys
 from pathlib import Path
 
 
+# ruff: noqa: S603
 def main() -> None:
     """Generate the Python OpenAPI client."""
     repo_root = Path(__file__).parent.parent

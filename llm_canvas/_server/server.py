@@ -41,6 +41,7 @@ def create_local_server() -> Any:
         title="LLM Canvas Local Server",
         version="0.1.0",
         description="Free & Open Source LLM Canvas Local Server - Session-based storage only",
+        separate_input_output_schemas=False,  # Disable separate schemas for input/output
     )
 
     app.add_middleware(

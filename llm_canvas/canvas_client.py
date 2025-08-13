@@ -122,7 +122,7 @@ class CanvasClient:
     def _call_update_message_api(self, event: CanvasUpdateMessageEvent) -> None:
         """Call the update message API endpoint."""
         canvas_id = event["canvas_id"]
-        message_id = event["data"].id
+        message_id = event["data"]["id"]
 
         try:
             request = UpdateMessageRequest(GeneratedCanvasUpdateMessageEvent.from_dict(event))
@@ -233,11 +233,20 @@ class CanvasClient:
         """
         # Call API to get canvas
         try:
-            canvas_data = get_canvas_api.sync(client=self._api_client, canvas_id=canvas_id)
+            canvas_data_response = get_canvas_api.sync(client=self._api_client, canvas_id=canvas_id)
 
-            if not isinstance(canvas_data, HTTPValidationError) and canvas_data is not None:
+            if not isinstance(canvas_data_response, HTTPValidationError) and canvas_data_response is not None:
                 # Convert API response to Canvas object
-                canvas = Canvas.from_canvas_data(canvas_data)
+                canvas = Canvas.from_canvas_data(
+                    CanvasData(
+                        title=canvas_data_response.data.title,
+                        description=canvas_data_response.data.description,
+                        created_at=canvas_data_response.data.created_at,
+                        last_updated=canvas_data_response.data.last_updated,
+                        nodes=canvas_data_response.data.nodes.to_dict(),
+                        canvas_id=canvas_data_response.data.canvas_id,
+                    )
+                )
                 self._setup_canvas_event_tracking(canvas)
                 return canvas
             return None
@@ -330,9 +339,16 @@ class CanvasClient:
 
         # Call API to get canvas data
         try:
-            canvas_data = get_canvas_api.sync(client=self._api_client, canvas_id=canvas_id)
-            if not isinstance(canvas_data, HTTPValidationError) and canvas_data is not None:
-                return CanvasData(**canvas_data.to_dict())
+            canvas_data_response = get_canvas_api.sync(client=self._api_client, canvas_id=canvas_id)
+            if not isinstance(canvas_data_response, HTTPValidationError) and canvas_data_response is not None:
+                return CanvasData(
+                    canvas_id=canvas_data_response.data.canvas_id,
+                    title=canvas_data_response.data.title,
+                    description=canvas_data_response.data.description,
+                    created_at=canvas_data_response.data.created_at,
+                    last_updated=canvas_data_response.data.last_updated,
+                    nodes=canvas_data_response.data.nodes.to_dict(),
+                )
             return None
 
         except Exception as e:

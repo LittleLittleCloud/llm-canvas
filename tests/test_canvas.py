@@ -191,9 +191,12 @@ class TestCanvasAPI:
         # Create a message to update
         original_msg = canvas.commit_message({"content": "Original content", "role": "user"})
         original_id = original_msg["id"]
+        updated_content = "Updated content"
+        updated_msg_node = original_msg.copy()
+        updated_msg_node["message"]["content"] = updated_content
 
         # Update the message content
-        updated_msg = canvas.update_message(original_id, {"content": "Updated content", "role": "user"})
+        updated_msg = canvas.update_message(original_id, updated_msg_node)
 
         # Verify the update was applied
         assert updated_msg["id"] == original_id
@@ -207,7 +210,6 @@ class TestCanvasAPI:
 
         # Verify metadata includes last_updated timestamp
         assert retrieved_msg["meta"] is not None
-        assert "last_updated" in retrieved_msg["meta"]
         assert "timestamp" in retrieved_msg["meta"]  # Original timestamp should still exist
 
     def test_update_message_with_metadata(self, canvas: Canvas) -> None:

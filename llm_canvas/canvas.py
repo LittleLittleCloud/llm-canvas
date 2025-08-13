@@ -98,10 +98,10 @@ class Canvas:
             parent_node = self._nodes[current_branch["head_node_id"]]
 
         # Add the message using the existing add_message method
-        node = self._add_message(message, parent_node.id if parent_node else None, meta)
+        node = self._add_message(message, parent_node["id"] if parent_node else None, meta)
 
         # Update the current branch HEAD
-        current_branch["head_node_id"] = node.id
+        current_branch["head_node_id"] = node["id"]
 
         return node
 
@@ -128,7 +128,7 @@ class Canvas:
             # Determine the starting point for the new branch
             head_node_id = None
             if commit_message:
-                head_node_id = commit_message.id
+                head_node_id = commit_message["id"]
             elif self._current_branch in self._branches:
                 head_node_id = self._branches[self._current_branch]["head_node_id"]
 
@@ -218,7 +218,7 @@ class Canvas:
         )
         self._nodes[node_id] = node
         if parent_node_id:
-            self._nodes[parent_node_id].child_ids.append(node_id)
+            self._nodes[parent_node_id]["child_ids"].append(node_id)
             self.update_message(parent_node_id, self._nodes[parent_node_id])
 
         # Emit SSE event
@@ -279,7 +279,7 @@ class Canvas:
 
         # find all root nodes
         # a root node is a node that has no parent
-        root_ids = [node_id for node_id, node in self._nodes.items() if node.parent_id is None]
+        root_ids = [node_id for node_id, node in self._nodes.items() if node["parent_id"] is None]
         return {
             "canvas_id": self.canvas_id,
             "created_at": self.created_at,
