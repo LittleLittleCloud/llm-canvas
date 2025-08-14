@@ -8,11 +8,10 @@ The **Canvas** is the central concept in LLM Canvas. It represents a conversatio
 
 Canvas management is inspired by Git version control, so if you're familiar with Git, you'll find these concepts familiar:
 
-- **Canvas**: A workspace for your LLM conversations
-- **Messages**: Individual conversation entries (user or assistant messages)
-- **Branches**: Different conversation paths within the same canvas
-- **HEAD**: The current position in your conversation history
-- **Commit**: Adding a new message to the conversation history
+- **Canvas**: A workspace for your LLM conversations that can contain multiple branches. Each canvas starts with a default branch called 'main'
+- **Branch**: A linear chat history within a canvas. All messages are committed to branches, not directly to the canvas. Each branch has a **Branch Head** that points to the latest message in that branch. When you checkout to a branch, you'll be positioned at the Branch Head by default. You can also work in a **Detached Head** state by using the checkout API with a specific message ID, where you're working from a specific message that isn't necessarily the latest in any branch
+- **Messages**: Individual conversation entries (user or assistant messages) that belong to a specific branch
+- **Commit**: Adding a new message to the current working branch
 
 ## Getting Started
 
@@ -30,65 +29,100 @@ canvas = canvas_client.create_canvas(
 )
 ```
 
-### 2. Adding Messages to Your Canvas
+### 2. Working with Branches
 
-Once you have a canvas, you can add messages using the `commit_message` method. This method returns a message object containing metadata like message ID and timestamp.
+Before adding messages to your canvas, you need to understand that **all messages are committed to branches, not directly to the canvas**. A canvas can contain multiple branches, and you must have an active working branch to commit messages.
+
+#### Creating and Switching to a Branch
+
+When you create a canvas, you need to create or switch to a branch before adding messages. The `checkout` method returns a branch object that you can use for future operations:
 
 ```python
-# Add a user message
-user_message = canvas.commit_message({
+# Switch to the main branch (you can create it if it doesn't exist)
+branch = canvas.checkout(name="main", description="Main conversation thread", create_if_not_exists=True)
+```
+
+#### Adding Messages to Your Current Branch
+
+Once you have a branch object, you can add messages using the `commit_message` method on the branch. This method commits messages to the branch and returns a message object containing metadata like message ID and timestamp.
+
+```python
+# Add a user message to the branch
+user_message = branch.commit_message({
     "content": "Hello, world!",
     "role": "user"
 })
 
-# Add an assistant response
-assistant_message = canvas.commit_message({
+# Add an assistant response to the branch
+assistant_message = branch.commit_message({
     "content": "Hello! How can I help you today?",
     "role": "assistant"
 })
 ```
 
-### 3. Updating Existing Message in Your Canvas
+### 3. Updating Existing Messages
 
-You can update an existing message by using the `update_message` method. This allows you to modify the content or metadata of a message.
+You can update an existing message by using the `update_message` method on the branch. This allows you to modify the content or metadata of a message in the branch. This feature is particularly useful for streaming responses, where you can commit an initial message and then update it incrementally as more content arrives.
 
-````python
+```python
 # Update the user message
-canvas.update_message(user_message["id"], {
+branch.update_message(user_message["id"], {
     "content": "Hello, world! (updated)",
     "role": "user"
 })
+```
 
+### 4. Switching Between Branches
 
-## Working with Branches
-
-Branches allow you to explore different conversation paths from the same starting point. This is useful for comparing different responses or exploring alternative conversation flows.
-
-### Creating and Switching Branches
+You can switch your working branch at any time to work on different conversation paths. Each checkout returns a branch object for future operations:
 
 ```python
-# Switch to the main branch (created by default)
-canvas.checkout(name="main", description="Main conversation thread")
+# Switch to a different existing branch
+experimental_branch = canvas.checkout(name="experimental")
+
+# Create and switch to a new branch
+new_branch = canvas.checkout(
+    name="new-feature",
+    description="Testing new features",
+    create_if_not_exists=True
+)
+
+# Now you can commit messages to the new branch
+new_branch.commit_message({
+    "content": "Testing new feature",
+    "role": "user"
+})
+```
+
+## Working with Multiple Branches
+
+Branches are linear chat histories within a canvas that allow you to organize and explore different conversation paths. Each branch maintains its own sequence of messages, and you can switch between branches to work on different aspects of your conversation.
+
+### Creating Multiple Branches
+
+```python
+# Switch to the main branch and get branch reference
+main_branch = canvas.checkout(name="main", description="Main conversation thread", create_if_not_exists=True)
 
 # Add a message to main branch
-hello_main = canvas.commit_message({
+hello_main = main_branch.commit_message({
     "content": "Hello, main branch!",
     "role": "user"
 })
 
 # Create and switch to a new branch
-canvas.checkout(
+alt_branch = canvas.checkout(
     name="Alternative Path",
     description="Exploring different responses",
     create_if_not_exists=True
 )
 
 # Add message to the new branch
-canvas.commit_message({
+alt_branch.commit_message({
     "content": "Hello, alternative branch!",
     "role": "user"
 })
-````
+```
 
 ### Branching from Specific Messages
 
@@ -96,7 +130,7 @@ You can create branches that start from any specific message in your conversatio
 
 ```python
 # Create a branch starting from a specific message
-canvas.checkout(
+hello_branch = canvas.checkout(
     name="Branch from Hello",
     description="New path from the hello message",
     create_if_not_exists=True,
@@ -104,8 +138,48 @@ canvas.checkout(
 )
 
 # Add messages to this branch
-canvas.commit_message({
+hello_branch.commit_message({
     "content": "This is a different direction!",
+    "role": "user"
+})
+```
+
+#### Example: Starting a New Conversation Path
+
+Here's a practical example of starting a branch by committing after a specific message. Imagine you want to explore a different response to an earlier question:
+
+```python
+# First, let's say you have some conversation history in main branch
+main_branch = canvas.checkout(name="main", create_if_not_exists=True)
+
+# Add some initial conversation
+question_msg = main_branch.commit_message({
+    "content": "What's the best programming language for web development?",
+    "role": "user"
+})
+
+response_msg = main_branch.commit_message({
+    "content": "JavaScript is widely used for web development...",
+    "role": "assistant"
+})
+
+# Now, let's create a new branch starting after the question to explore a different response
+alt_response_branch = canvas.checkout(
+    name="Alternative Response",
+    description="Exploring a different answer to the programming language question",
+    create_if_not_exists=True,
+    commit_message=question_msg  # Start from the question message
+)
+
+# Add a different response in this branch
+alt_response_branch.commit_message({
+    "content": "Python is an excellent choice for web development because of its simplicity and powerful frameworks like Django and Flask...",
+    "role": "assistant"
+})
+
+# Continue the conversation in this alternative path
+alt_response_branch.commit_message({
+    "content": "Can you tell me more about Django?",
     "role": "user"
 })
 ```

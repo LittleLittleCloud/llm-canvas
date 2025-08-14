@@ -22,6 +22,86 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
+class Branch:
+    """Represents a branch within a canvas for linear chat history."""
+
+    def __init__(self, canvas: Canvas, branch_info: BranchInfo) -> None:
+        self._canvas = canvas
+        self._branch_info = branch_info
+
+    @property
+    def name(self) -> str:
+        """Get the branch name."""
+        return self._branch_info["name"]
+
+    @property
+    def description(self) -> str | None:
+        """Get the branch description."""
+        return self._branch_info["description"]
+
+    @property
+    def branch_info(self) -> BranchInfo:
+        """Get the branch information."""
+        return self._branch_info
+
+    @property
+    def head_node_id(self) -> str | None:
+        """Get the HEAD node ID of this branch."""
+        return self._branch_info["head_node_id"]
+
+    def commit_message(self, message: Message, meta: dict[str, Any] | None = None) -> MessageNode:
+        """
+        Commit a message to this branch.
+
+        Args:
+            message: The message to commit
+            meta: Optional metadata for the message
+
+        Returns:
+            The created MessageNode
+        """
+        parent_node = None
+
+        # Get the current HEAD node if it exists
+        if self._branch_info["head_node_id"]:
+            parent_node = self._canvas.get_node(self._branch_info["head_node_id"])
+
+        # Add the message using the canvas's internal method
+        node = self._canvas.add_message(message, parent_node["id"] if parent_node else None, meta)
+
+        # Update this branch's HEAD
+        self._branch_info["head_node_id"] = node["id"]
+
+        return node
+
+    def update_message(self, node_id: str, updated_message_node: MessageNode) -> MessageNode:
+        """
+        Update an existing message in this branch.
+
+        Args:
+            node_id: The ID of the message node to update
+            updated_message_node: The updated message node
+
+        Returns:
+            The updated MessageNode
+
+        Raises:
+            ValueError: If the node with the given ID doesn't exist
+        """
+        return self._canvas.update_message(node_id, updated_message_node)
+
+    def get_head_node(self) -> MessageNode | None:
+        """
+        Get the HEAD node of this branch.
+
+        Returns:
+            The HEAD MessageNode or None if no HEAD exists
+        """
+        if self._branch_info["head_node_id"]:
+            return self._canvas.get_node(self._branch_info["head_node_id"])
+        return None
+
+
 class Canvas:
     """Represents a DAG of message nodes (LLM conversation branches)."""
 
@@ -73,14 +153,12 @@ class Canvas:
             listeners = list(self._event_listeners)  # Create a copy for thread safety
 
         for listener in listeners:
-            try:
-                listener(event)
-            except Exception as e:
-                logger.exception(f"Error in event listener: {e}")
+            listener(event)
 
     # ---- Public API ----
     def commit_message(self, message: Message, meta: dict[str, Any] | None = None) -> MessageNode:
         """
+        DEPRECATED: Use branch.commit_message() instead.
         Commit a message to the current branch HEAD.
 
         Args:
@@ -90,37 +168,61 @@ class Canvas:
         Returns:
             The created MessageNode
         """
-        current_branch = self._branches[self._current_branch]
-        parent_node = None
-
-        # Get the current HEAD node if it exists
-        if current_branch["head_node_id"]:
-            parent_node = self._nodes[current_branch["head_node_id"]]
-
-        # Add the message using the existing add_message method
-        node = self._add_message(message, parent_node["id"] if parent_node else None, meta)
-
-        # Update the current branch HEAD
-        current_branch["head_node_id"] = node["id"]
-
-        return node
+        logger.warning("Canvas.commit_message() is deprecated. Use branch.commit_message() instead.")
+        current_branch = self.checkout(name=self._current_branch)
+        return current_branch.commit_message(message, meta)
 
     def checkout(
         self,
-        name: str,
+        name: str | None = None,
         description: str | None = None,
         create_if_not_exists: bool = False,
         commit_message: MessageNode | None = None,
-    ) -> None:
+    ) -> Branch:
         """
-        Switch to a branch, optionally creating it if it doesn't exist.
+        Switch to a branch or checkout a specific message (detached head).
 
         Args:
-            name: Branch name to switch to
+            name: Branch name to switch to (None for detached head when commit_message is provided)
             description: Description for new branch (if creating)
             create_if_not_exists: Whether to create the branch if it doesn't exist
-            commit_message: Starting point for new branch (defaults to current HEAD)
+            commit_message: MessageNode to checkout or starting point for new branch
+
+        Returns:
+            Branch object for the checked out branch
+
+        Examples:
+            # Checkout to a branch
+            branch = canvas.checkout(name="main")
+
+            # Create a new branch from current HEAD
+            branch = canvas.checkout(name="feature", create_if_not_exists=True)
+
+            # Create a new branch from a specific message
+            branch = canvas.checkout(name="feature", commit_message=some_message, create_if_not_exists=True)
+
+            # Checkout to a specific message (detached head)
+            branch = canvas.checkout(commit_message=some_message)
         """
+        # Handle detached head checkout (when commit_message is provided without name)
+        if commit_message and not name:
+            message_id = commit_message["id"]
+            if message_id not in self._nodes:
+                raise ValueError(f"Message with ID '{message_id}' does not exist")
+
+            # Create a temporary branch info for detached head
+            detached_branch_info: BranchInfo = {
+                "name": f"detached-{message_id[:8]}",
+                "description": f"Detached HEAD at {message_id}",
+                "head_node_id": message_id,
+                "created_at": time.time(),
+            }
+            return Branch(self, detached_branch_info)
+
+        # Handle regular branch checkout
+        if not name:
+            raise ValueError("Either name or commit_message must be provided")
+
         if name not in self._branches:
             if not create_if_not_exists:
                 raise ValueError(f"Branch '{name}' does not exist")
@@ -143,6 +245,9 @@ class Canvas:
         # Switch to the branch
         self._current_branch = name
 
+        # Return a Branch object
+        return Branch(self, self._branches[name])
+
     def list_branches(self) -> list[BranchInfo]:
         """
         List all branches with their latest commit information.
@@ -150,11 +255,7 @@ class Canvas:
         Returns:
             List of branch information including name and latest commit
         """
-        branches = []
-        for branch in self._branches.values():
-            branches.append(branch)
-
-        return branches
+        return list(self._branches.values())
 
     def delete_branch(self, name: str) -> None:
         """
@@ -174,30 +275,7 @@ class Canvas:
 
         del self._branches[name]
 
-    def get_current_branch(self) -> str:
-        """Get the name of the current branch."""
-        return self._current_branch
-
-    def get_head_node(self, branch_name: str | None = None) -> MessageNode | None:
-        """
-        Get the HEAD node of a branch.
-
-        Args:
-            branch_name: Branch name (defaults to current branch)
-
-        Returns:
-            The HEAD MessageNode or None if no HEAD exists
-        """
-        branch_name = branch_name or self._current_branch
-        if branch_name not in self._branches:
-            raise ValueError(f"Branch '{branch_name}' does not exist")
-
-        branch = self._branches[branch_name]
-        if branch["head_node_id"]:
-            return self._nodes.get(branch["head_node_id"])
-        return None
-
-    def _add_message(
+    def add_message(
         self,
         message: Message,
         parent_node_id: str | None = None,
