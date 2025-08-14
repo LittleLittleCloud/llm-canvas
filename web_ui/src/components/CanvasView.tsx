@@ -47,43 +47,53 @@ const CustomMessageNode = ({
     <div
       ref={nodeRef}
       data-node-id={data.id}
-      className={`bg-white rounded-lg shadow-md border-2 min-w-[280px] relative transition-all duration-200 ${
-        selected
-          ? "nowheel border-blue-500 shadow-lg ring-2 ring-blue-200"
-          : "border-gray-200 hover:border-gray-300"
+      className={`bg-white shadow-sm hover:shadow-xl border border-gray-100 min-w-[320px] relative transition-all duration-300 hover:scale-[1.02] group ${
+        selected ? "nowheel " : "hover:border-indigo-200"
       }`}
     >
+      {/* header ribbon */}
+      <div
+        className={`h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-t-2xl transition-opacity duration-300 ${
+          selected ? "opacity-100" : "opacity-0"
+        }`}
+      />
+      {/* Node content */}
       {/* Target handle - only show if node has parent */}
       {hasParent && (
         <Handle
           type="target"
           position={isVertical ? Position.Top : Position.Left}
           id={isVertical ? "top" : "left"}
-          style={{ background: "#6366f1" }}
+          style={{
+            background: "linear-gradient(135deg, #6366f1, #8b5cf6)",
+            border: "2px solid white",
+            width: "12px",
+            height: "12px",
+            borderRadius: "50%",
+          }}
           isConnectable={false}
         />
       )}
-
-      <MessageNodeComponent node={data} />
-
-      {/* Dimensions display */}
-      <div className="absolute top-1 right-1 bg-gray-100 text-gray-600 text-xs px-1 py-0.5 rounded opacity-70">
-        {currentNode?.width}×{currentNode?.height}
-        {currentNode && (
-          <div className="text-xs">
-            Pos: {Math.round(currentNode.position.x)},
-            {Math.round(currentNode.position.y)}
-          </div>
-        )}
+      <div className="p-1">
+        <MessageNodeComponent node={data} />
       </div>
-
+      <div
+        className={`absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-b-2xl transition-opacity duration-300 ${
+          selected ? "opacity-100" : "opacity-0"
+        }`}
+      />
       {/* Source handle - only show if node has children */}
       {hasChildren && (
         <Handle
           type="source"
           position={isVertical ? Position.Bottom : Position.Right}
           id={isVertical ? "bottom" : "right"}
-          style={{ background: "#6366f1" }}
+          style={{
+            background: "linear-gradient(135deg, #6366f1, #8b5cf6)",
+            border: "2px solid white",
+            width: "12px",
+            height: "12px",
+          }}
           isConnectable={false}
         />
       )}
@@ -232,7 +242,7 @@ const CanvasViewInner: React.FC = () => {
           hasChildren,
           direction: "TB",
         },
-        style: { width: 300 },
+        style: { width: 320 },
       });
     });
 
@@ -245,11 +255,11 @@ const CanvasViewInner: React.FC = () => {
           target: childId,
           sourceHandle: "bottom",
           targetHandle: "top",
-          type: "smoothstep",
+          type: "simplebezier",
           animated: false,
           style: {
             stroke: "#6366f1",
-            strokeWidth: 2,
+            strokeWidth: 3,
           },
           markerEnd: {
             type: MarkerType.ArrowClosed,
@@ -286,7 +296,7 @@ const CanvasViewInner: React.FC = () => {
           .map(node => node.id);
         const rootNode = layoutedNodes.find(node => node.id === root_ids[0]);
         if (rootNode) {
-          const x = rootNode.position.x + (rootNode.width || 300) / 2;
+          const x = rootNode.position.x + (rootNode.width || 320) / 2;
           const y = rootNode.position.y + (rootNode.height || 150) / 2;
           reactFlowInstance.setCenter(x, y, {
             zoom: reactFlowInstance.getZoom(),
@@ -336,7 +346,7 @@ const CanvasViewInner: React.FC = () => {
           const nodeLeft = selectedNode.position.x * viewport.zoom + viewport.x;
           const nodeTop = selectedNode.position.y * viewport.zoom + viewport.y;
           const nodeRight =
-            nodeLeft + (selectedNode.width || 300) * viewport.zoom;
+            nodeLeft + (selectedNode.width || 320) * viewport.zoom;
           const nodeBottom =
             nodeTop + (selectedNode.height || 150) * viewport.zoom;
 
@@ -348,7 +358,7 @@ const CanvasViewInner: React.FC = () => {
             nodeBottom > containerHeight;
 
           if (isOutsideViewport) {
-            const x = selectedNode.position.x + (selectedNode.width || 300) / 2;
+            const x = selectedNode.position.x + (selectedNode.width || 320) / 2;
             const y =
               selectedNode.position.y + (selectedNode.height || 150) / 2;
 
@@ -369,7 +379,7 @@ const CanvasViewInner: React.FC = () => {
       const currentNode = nodes.find(n => n.id === currentNodeId);
       if (!currentNode) return null;
 
-      const currentX = currentNode.position.x + (currentNode.width || 300) / 2;
+      const currentX = currentNode.position.x + (currentNode.width || 320) / 2;
       const currentY = currentNode.position.y + (currentNode.height || 150) / 2;
 
       let candidates = nodes.filter(n => n.id !== currentNodeId);
@@ -390,13 +400,13 @@ const CanvasViewInner: React.FC = () => {
           break;
         case "left":
           candidates = candidates.filter(n => {
-            const nodeX = n.position.x + (n.width || 300) / 2;
+            const nodeX = n.position.x + (n.width || 320) / 2;
             return nodeX < currentX;
           });
           break;
         case "right":
           candidates = candidates.filter(n => {
-            const nodeX = n.position.x + (n.width || 300) / 2;
+            const nodeX = n.position.x + (n.width || 320) / 2;
             return nodeX > currentX;
           });
           break;
@@ -409,7 +419,7 @@ const CanvasViewInner: React.FC = () => {
       let minDistance = Infinity;
 
       candidates.forEach(candidate => {
-        const candidateX = candidate.position.x + (candidate.width || 300) / 2;
+        const candidateX = candidate.position.x + (candidate.width || 320) / 2;
         const candidateY = candidate.position.y + (candidate.height || 150) / 2;
 
         let distance: number;
@@ -573,11 +583,11 @@ const CanvasViewInner: React.FC = () => {
       disableKeyboardA11y
       fitView
       fitViewOptions={{ padding: 0.1 }}
-      className="bg-gray-50"
+      className="bg-gradient-to-br from-slate-50 to-indigo-50"
       defaultEdgeOptions={{
-        type: "smoothstep",
+        type: "simplebezier",
         animated: false,
-        style: { strokeWidth: 2, stroke: "#6366f1" },
+        style: { strokeWidth: 3, stroke: "#6366f1" },
         markerEnd: { type: MarkerType.ArrowClosed, color: "#6366f1" },
       }}
       deleteKeyCode={["Backspace", "Delete"]}
@@ -585,46 +595,113 @@ const CanvasViewInner: React.FC = () => {
       tabIndex={0}
       style={{ outline: "none" }}
     >
-      <Background color="#f3f4f6" gap={20} />
-      <Controls />
+      <svg
+        style={{ position: "absolute", top: 0, left: 0, width: 0, height: 0 }}
+      >
+        <defs>
+          <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor="#6366f1" />
+            <stop offset="100%" stopColor="#8b5cf6" />
+          </linearGradient>
+        </defs>
+      </svg>
+      <Background color="#e2e8f0" gap={24} size={1} style={{ opacity: 0.4 }} />
+      <Controls className="!bg-white !border-gray-200 !shadow-lg !rounded-xl [&>button]:!bg-white [&>button]:!border-gray-200 [&>button]:!rounded-lg [&>button]:hover:!bg-gray-50 [&>button]:!transition-colors" />
       <MiniMap
         pannable
         zoomable
         nodeColor="#6366f1"
-        maskColor="rgba(0, 0, 0, 0.1)"
-        className="!bg-white !border-gray-300"
+        maskColor="rgba(0, 0, 0, 0.05)"
+        className="!bg-white !border-gray-200 !shadow-lg !rounded-xl !overflow-hidden"
+        style={{ backgroundColor: "rgba(255, 255, 255, 0.95)" }}
       />
       <Panel
         position="top-left"
-        className="bg-white p-3 rounded-lg shadow text-sm space-y-2"
+        className="bg-white rounded-2xl shadow-lg border border-gray-100 p-4 space-y-3 backdrop-blur-sm bg-white/95"
       >
-        <div className="font-semibold text-gray-800">
-          {data?.title || "Canvas"}
+        <div className="flex items-center gap-3">
+          <div className="w-3 h-3 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full"></div>
+          <div className="font-semibold text-gray-900 text-lg">
+            {data?.title || "Canvas"}
+          </div>
         </div>
-        <div className="text-gray-500">
+        <div className="text-gray-600 text-sm">
           {data ? Object.keys(data.nodes).length : 0} messages
         </div>
-        <div className="text-xs text-gray-400 mb-2">
-          Use ↑↓←→ arrow keys to navigate between nodes
+        <div className="text-xs text-gray-500 py-2 px-3 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl border border-indigo-100">
+          💡 Use ↑↓←→ arrow keys to navigate between nodes
         </div>
-        <div className="flex gap-2">
-          <button
-            onClick={() => onLayout("TB")}
-            className="px-2 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600"
-          >
-            ⬇ Vertical
-          </button>
-          <button
-            onClick={() => onLayout("LR")}
-            className="px-2 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600"
-          >
-            ➡ Horizontal
-          </button>
+        <div className="space-y-2">
+          <div className="text-xs font-medium text-gray-700 mb-2">
+            Layout Options
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={() => onLayout("TB")}
+              className="group relative overflow-hidden px-3 py-2 text-xs bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-medium rounded-xl shadow-sm hover:shadow-md transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-1 transition-all duration-200"
+            >
+              <span className="relative z-10 flex items-center">
+                <svg
+                  className="w-3 h-3 mr-1"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M19 14l-7 7m0 0l-7-7m7 7V3"
+                  />
+                </svg>
+                Vertical
+              </span>
+              <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 to-purple-600 opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
+            </button>
+            <button
+              onClick={() => onLayout("LR")}
+              className="group relative overflow-hidden px-3 py-2 text-xs bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-medium rounded-xl shadow-sm hover:shadow-md transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-1 transition-all duration-200"
+            >
+              <span className="relative z-10 flex items-center">
+                <svg
+                  className="w-3 h-3 mr-1"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M14 5l7 7m0 0l-7 7m7-7H3"
+                  />
+                </svg>
+                Horizontal
+              </span>
+              <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 to-purple-600 opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
+            </button>
+          </div>
           <button
             onClick={onReLayout}
-            className="px-2 py-1 text-xs bg-green-500 text-white rounded hover:bg-green-600"
+            className="w-full group relative overflow-hidden px-3 py-2 text-xs bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-medium rounded-xl shadow-sm hover:shadow-md transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-1 transition-all duration-200"
           >
-            🔄 Re-layout
+            <span className="relative z-10 flex items-center justify-center">
+              <svg
+                className="w-3 h-3 mr-1"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                />
+              </svg>
+              Re-layout
+            </span>
+            <div className="absolute inset-0 bg-gradient-to-r from-emerald-600 to-teal-600 opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
           </button>
         </div>
       </Panel>

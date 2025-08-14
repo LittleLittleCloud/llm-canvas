@@ -84,3 +84,8 @@ body {
 .animate-shake {
   animation: shake 0.5s ease-in-out;
 }
+
+/* Custom scrollbar for message nodes */
+.message-content::-webkit-scrollbar {
+  width: 4px;
+}
