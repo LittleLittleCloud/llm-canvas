@@ -1,6 +1,7 @@
 import React from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useCanvasStore } from "../store/canvasStore";
+import { LLMCanvasPrimaryLogo } from "./Logo";
 
 export const Header: React.FC = () => {
   const navigate = useNavigate();
@@ -11,9 +12,9 @@ export const Header: React.FC = () => {
 
   return (
     <header className="p-4 bg-indigo-600 text-white font-semibold shadow flex items-center justify-between">
-      <h1 className="cursor-pointer" onClick={() => navigate("/")}>
-        LLM Canvas
-      </h1>
+      <div className="cursor-pointer" onClick={() => navigate("/")}>
+        <LLMCanvasPrimaryLogo />
+      </div>
       {isCanvasPage && canvas && (
         <div className="text-xs opacity-75 font-mono">{canvas.canvas_id}</div>
       )}

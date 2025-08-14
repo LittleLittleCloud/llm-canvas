@@ -185,6 +185,9 @@ def investment_decision() -> None:
 
     print("💰 Creating Investment Decision example...")
 
+    # Get main branch
+    main_branch = canvas.checkout(name="main", create_if_not_exists=True)
+
     # Step 1: User asks about investment options
     print("\n1️⃣ User asks about investment options")
     user_message: Message = {
@@ -196,7 +199,7 @@ def investment_decision() -> None:
             }
         ],
     }
-    canvas.commit_message(user_message)
+    main_branch.commit_message(user_message)
 
     # Step 2: Assistant suggests exploring both paths
     print("2️⃣ Assistant suggests exploring both paths")
@@ -214,11 +217,11 @@ def investment_decision() -> None:
             }
         ],
     }
-    assistant_intro_message_node = canvas.commit_message(assistant_intro_message)
+    assistant_intro_message_node = main_branch.commit_message(assistant_intro_message)
 
     print("\n📈 Exploring Stock Market Branch...")
 
-    canvas.checkout(name="stock investment", description="Investment in stocks", create_if_not_exists=True)
+    stock_branch = canvas.checkout(name="stock investment", description="Investment in stocks", create_if_not_exists=True)
 
     # Branch A: Stock Investment Path
     # Step 3a: User explores stock market
@@ -232,7 +235,7 @@ def investment_decision() -> None:
             }
         ],
     }
-    canvas.commit_message(stock_inquiry)
+    stock_branch.commit_message(stock_inquiry)
 
     # Step 4a: Assistant uses market data tool
     print("4️⃣a Assistant uses market data tool")
@@ -259,7 +262,7 @@ def investment_decision() -> None:
             },
         ],
     }
-    canvas.commit_message(market_tool_message)
+    stock_branch.commit_message(market_tool_message)
 
     # Step 5a: Market data tool result
     print("5️⃣a Market data tool execution")
@@ -274,7 +277,7 @@ def investment_decision() -> None:
             }
         ],
     }
-    canvas.commit_message(market_result_message)
+    stock_branch.commit_message(market_result_message)
 
     # Step 6a: Assistant analyzes market data
     print("6️⃣a Assistant analyzes market conditions")
@@ -312,7 +315,7 @@ def investment_decision() -> None:
             }
         ],
     }
-    canvas.commit_message(market_analysis_response)
+    stock_branch.commit_message(market_analysis_response)
 
     # Step 7a: User asks about individual stocks
     print("7️⃣a User asks about individual stocks")
@@ -325,7 +328,7 @@ def investment_decision() -> None:
             }
         ],
     }
-    canvas.commit_message(individual_stocks_inquiry)
+    stock_branch.commit_message(individual_stocks_inquiry)
 
     # Step 8a: Assistant uses stock analysis tool
     print("8️⃣a Assistant uses stock analysis tool")
@@ -349,7 +352,7 @@ def investment_decision() -> None:
             },
         ],
     }
-    canvas.commit_message(stock_analysis_tool_message)
+    stock_branch.commit_message(stock_analysis_tool_message)
 
     # Step 9a: Stock analysis tool result
     print("9️⃣a Stock analysis tool execution")
@@ -364,7 +367,7 @@ def investment_decision() -> None:
             }
         ],
     }
-    canvas.commit_message(stock_result_message)
+    stock_branch.commit_message(stock_result_message)
 
     # Step 10a: Final stock recommendations
     print("🔟a Assistant provides final stock recommendations")
@@ -406,14 +409,14 @@ This balances growth potential with risk management!""",
             }
         ],
     }
-    canvas.commit_message(stock_final_response)
+    stock_branch.commit_message(stock_final_response)
 
     print("\n🏠 Exploring Real Estate Branch...")
 
     # Branch B: Real Estate Investment Path
     # We need to branch from the assistant intro message for real estate
     # First, let's go back to that point and create the real estate branch
-    canvas.checkout(
+    real_estate_branch = canvas.checkout(
         name="real estate investment",
         description="Investment in real estate",
         create_if_not_exists=True,
@@ -431,7 +434,7 @@ This balances growth potential with risk management!""",
             }
         ],
     }
-    canvas.commit_message(real_estate_inquiry)
+    real_estate_branch.commit_message(real_estate_inquiry)
 
     # Step 4b: Assistant uses real estate data tool
     print("4️⃣b Assistant uses real estate data tool")
@@ -458,7 +461,7 @@ This balances growth potential with risk management!""",
             },
         ],
     }
-    canvas.commit_message(real_estate_tool_message)
+    real_estate_branch.commit_message(real_estate_tool_message)
 
     # Step 5b: Real estate data tool result
     print("5️⃣b Real estate data tool execution")
@@ -475,7 +478,7 @@ This balances growth potential with risk management!""",
             }
         ],
     }
-    canvas.commit_message(real_estate_result_message)
+    real_estate_branch.commit_message(real_estate_result_message)
 
     # Step 6b: Assistant analyzes real estate data
     print("6️⃣b Assistant analyzes real estate market")
@@ -517,7 +520,7 @@ This balances growth potential with risk management!""",
             }
         ],
     }
-    canvas.commit_message(real_estate_analysis_response)
+    real_estate_branch.commit_message(real_estate_analysis_response)
 
     # Step 7b: User asks for specific recommendations
     print("7️⃣b User asks for specific REIT recommendations")
@@ -530,7 +533,7 @@ This balances growth potential with risk management!""",
             }
         ],
     }
-    canvas.commit_message(reit_inquiry)
+    real_estate_branch.commit_message(reit_inquiry)
 
     # Step 8b: Assistant uses REIT analysis tool
     print("8️⃣b Assistant uses REIT analysis tool")
@@ -554,7 +557,7 @@ This balances growth potential with risk management!""",
             },
         ],
     }
-    canvas.commit_message(reit_analysis_tool_message)
+    real_estate_branch.commit_message(reit_analysis_tool_message)
 
     # Step 9b: REIT analysis tool result
     print("9️⃣b REIT analysis tool execution")
@@ -571,7 +574,7 @@ This balances growth potential with risk management!""",
             }
         ],
     }
-    canvas.commit_message(reit_result_message)
+    real_estate_branch.commit_message(reit_result_message)
 
     # Step 10b: Final real estate recommendations
     print("🔟b Assistant provides final real estate recommendations")
@@ -620,7 +623,68 @@ This gives you liquidity + growth potential!""",
             }
         ],
     }
-    canvas.commit_message(real_estate_final_response)
+    real_estate_branch.commit_message(real_estate_final_response)
+
+    # Switch back to main branch for comparison
+    print("\n🔄 Switching back to main branch for comparison")
+    main_branch = canvas.checkout()  # Returns to main
+
+    # User asks to compare options
+    print("🤔 User asks for comparison")
+    time.sleep(0.2)
+    comparison_request: Message = {
+        "role": "user",
+        "content": [
+            {
+                "type": "text",
+                "text": "Can you summarize the key differences between the crypto and real estate investment "
+                "strategies? Which might be better for a cautious investor?",
+            }
+        ],
+    }
+    main_branch.commit_message(comparison_request)
+
+    # Final comparison and recommendation
+    print("🎯 Assistant provides final comparison")
+    time.sleep(0.2)
+    final_comparison: Message = {
+        "role": "assistant",
+        "content": [
+            {
+                "type": "text",
+                "text": """Let me compare the two investment strategies:
+
+📊 **CRYPTO STRATEGY**
+💰 Risk: High | Returns: 15-200%+
+⚡ Liquidity: Very High
+🎯 Best for: Risk-tolerant, tech-savvy investors
+⏰ Time Horizon: 1-5 years
+🛡️ Strategy: 70% established (BTC/ETH) + 30% growth
+
+🏠 **REAL ESTATE STRATEGY**
+💰 Risk: Medium | Returns: 6-9%
+⚡ Liquidity: Medium
+🎯 Best for: Income-focused, conservative investors
+⏰ Time Horizon: 3-10 years
+🛡️ Strategy: REITs + crowdfunding mix
+
+**For a CAUTIOUS investor:**
+🏆 **Real Estate wins** due to:
+✅ Predictable income streams
+✅ Lower volatility
+✅ Tangible asset backing
+✅ Inflation hedge
+
+**Hybrid Approach:** 70% Real Estate + 30% Crypto
+- Balances growth potential with stability
+- $7K in REITs/crowdfunding
+- $3K in BTC/ETH only
+
+Would you like me to explore this balanced approach?""",
+            }
+        ],
+    }
+    main_branch.commit_message(final_comparison)
 
     print("\n✅ Investment Decision example completed! Canvas available at server.")
 

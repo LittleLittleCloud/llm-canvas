@@ -22,12 +22,15 @@ def create_hello_canvas() -> None:
     print("🚀 Creating Hello Canvas example...")
     print(f"Canvas ID: {canvas.canvas_id}")
 
+    # Get main branch
+    main_branch = canvas.checkout(name="main", create_if_not_exists=True)
+
     # Create the user message
     user_message: Message = {"role": "user", "content": [{"type": "text", "text": "Hello model"}]}
 
-    # Commit the user message to the canvas
+    # Commit the user message to the branch
     print("📝 Adding user message: 'Hello model'")
-    canvas.commit_message(user_message)
+    main_branch.commit_message(user_message)
 
     # Simulate a brief pause (like processing time)
     time.sleep(0.2)
@@ -37,7 +40,7 @@ def create_hello_canvas() -> None:
 
     # Commit the assistant response
     print("🤖 Adding assistant response: 'Model reply'")
-    canvas.commit_message(assistant_message)
+    main_branch.commit_message(assistant_message)
 
     print("✅ Hello Canvas example completed! Canvas available at server.")
 

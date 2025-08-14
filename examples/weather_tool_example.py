@@ -58,6 +58,9 @@ def weather_inquiry() -> None:
         title="Weather Inquiry", description="A conversation demonstrating tool usage for weather queries"
     )
 
+    # Get the main branch for committing messages
+    main_branch = canvas.checkout()
+
     print("🌤️ Creating Weather Tool Usage example...")
 
     # Step 1: User asks about weather
@@ -71,7 +74,7 @@ def weather_inquiry() -> None:
             }
         ],
     }
-    canvas.commit_message(user_message)
+    main_branch.commit_message(user_message)
 
     # Step 2: Assistant responds with tool use
     print("2️⃣ Assistant responds with tool use")
@@ -94,7 +97,7 @@ def weather_inquiry() -> None:
             },
         ],
     }
-    canvas.commit_message(assistant_tool_message)
+    main_branch.commit_message(assistant_tool_message)
 
     # Step 3: Tool result (simulated)
     print("3️⃣ Tool execution and result")
@@ -109,7 +112,7 @@ def weather_inquiry() -> None:
             }
         ],
     }
-    canvas.commit_message(tool_result_message)
+    main_branch.commit_message(tool_result_message)
 
     # Step 4: Assistant interprets the results
     print("4️⃣ Assistant interprets weather data")
@@ -133,12 +136,12 @@ It's a pleasant day with comfortable temperatures! The partly cloudy conditions 
             }
         ],
     }
-    canvas.commit_message(weather_response)
+    main_branch.commit_message(weather_response)
 
     # Step 5: User asks follow-up question
     print("5️⃣ User asks about tomorrow's weather")
     followup_message: Message = {"content": [{"type": "text", "text": "What about tomorrow? Will it rain?"}], "role": "user"}
-    canvas.commit_message(followup_message)
+    main_branch.commit_message(followup_message)
 
     # Step 6: Assistant uses forecast tool
     print("6️⃣ Assistant uses forecast tool")
@@ -162,7 +165,7 @@ It's a pleasant day with comfortable temperatures! The partly cloudy conditions 
             },
         ],
     }
-    canvas.commit_message(forecast_tool_message)
+    main_branch.commit_message(forecast_tool_message)
 
     # Step 7: Forecast tool result
     print("7️⃣ Forecast tool execution")
@@ -177,7 +180,7 @@ It's a pleasant day with comfortable temperatures! The partly cloudy conditions 
             }
         ],
     }
-    canvas.commit_message(forecast_result_message)
+    main_branch.commit_message(forecast_result_message)
 
     # Step 8: Final assistant response
     print("8️⃣ Assistant provides forecast analysis")
@@ -209,7 +212,7 @@ The Southwest wind pattern often brings moisture from the Pacific, which explain
             }
         ],
     }
-    canvas.commit_message(forecast_response)
+    main_branch.commit_message(forecast_response)
 
     print("✅ Weather Tool Usage example completed! Canvas available at server.")
 

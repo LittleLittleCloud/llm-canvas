@@ -23,6 +23,10 @@ def create_vacation_planning() -> None:
     )
 
     print("🏖️ Creating Vacation Planning with Branches example...")
+
+    # Get main branch
+    main_branch = canvas.checkout(name="main", create_if_not_exists=True)
+
     # Step 1: User's initial question
     print("1️⃣ User asks about vacation destination")
     user_question: Message = {
@@ -34,7 +38,7 @@ def create_vacation_planning() -> None:
             }
         ],
     }
-    canvas.commit_message(user_question)
+    main_branch.commit_message(user_question)
 
     # Step 2: Assistant's response suggesting exploration
     print("2️⃣ Assistant suggests exploring both options")
@@ -48,11 +52,11 @@ def create_vacation_planning() -> None:
             }
         ],
     }
-    branch_point = canvas.commit_message(assistant_response)
+    branch_point = main_branch.commit_message(assistant_response)
 
     # Create Japan branch
     print("\n🏮 Creating Japan exploration branch")
-    canvas.checkout(
+    japan_branch = canvas.checkout(
         "japan-exploration",
         description="Exploring Japan as vacation destination",
         create_if_not_exists=True,
@@ -72,7 +76,7 @@ def create_vacation_planning() -> None:
             }
         ],
     }
-    canvas.commit_message(japan_question, meta={"branch": "japan"})
+    japan_branch.commit_message(japan_question, meta={"branch": "japan"})
 
     print("4a️⃣ Assistant responds about Japan")
     time.sleep(0.2)
@@ -102,7 +106,7 @@ def create_vacation_planning() -> None:
             }
         ],
     }
-    canvas.commit_message(japan_response, meta={"branch": "japan"})
+    japan_branch.commit_message(japan_response, meta={"branch": "japan"})
 
     # Continue Japan conversation
     print("5a️⃣ User asks about Japanese food")
@@ -115,7 +119,7 @@ def create_vacation_planning() -> None:
             }
         ],
     }
-    canvas.commit_message(japan_food_question, meta={"branch": "japan"})
+    japan_branch.commit_message(japan_food_question, meta={"branch": "japan"})
 
     print("6a️⃣ Assistant describes Japanese cuisine")
     time.sleep(0.2)
@@ -150,11 +154,11 @@ Japan offers both comfort and challenge for food lovers!""",
             }
         ],
     }
-    canvas.commit_message(japan_food_response, meta={"branch": "japan"})
+    japan_branch.commit_message(japan_food_response, meta={"branch": "japan"})
 
     # Create Italy branch
     print("\n🇮🇹 Creating Italy exploration branch")
-    canvas.checkout(
+    italy_branch = canvas.checkout(
         "italy-exploration",
         description="Exploring Italy as vacation destination",
         create_if_not_exists=True,
@@ -174,7 +178,7 @@ Japan offers both comfort and challenge for food lovers!""",
             }
         ],
     }
-    canvas.commit_message(italy_question, meta={"branch": "italy"})
+    italy_branch.commit_message(italy_question, meta={"branch": "italy"})
 
     print("4b️⃣ Assistant responds about Italy")
     time.sleep(0.2)
@@ -208,7 +212,7 @@ Japan offers both comfort and challenge for food lovers!""",
             }
         ],
     }
-    canvas.commit_message(italy_response, meta={"branch": "italy"})
+    italy_branch.commit_message(italy_response, meta={"branch": "italy"})
 
     # Continue Italy conversation
     print("5b️⃣ User asks about Italy itinerary")
@@ -221,7 +225,7 @@ Japan offers both comfort and challenge for food lovers!""",
             }
         ],
     }
-    canvas.commit_message(italy_itinerary_question, meta={"branch": "italy"})
+    italy_branch.commit_message(italy_itinerary_question, meta={"branch": "italy"})
 
     print("6b️⃣ Assistant provides Italy itinerary")
     time.sleep(0.2)
@@ -259,7 +263,7 @@ Japan offers both comfort and challenge for food lovers!""",
             }
         ],
     }
-    canvas.commit_message(italy_itinerary_response, meta={"branch": "italy"})
+    italy_branch.commit_message(italy_itinerary_response, meta={"branch": "italy"})
 
     print("✅ Vacation Planning example completed! Canvas available at server.")
 
