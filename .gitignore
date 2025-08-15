@@ -54,6 +54,24 @@ ENV/
 env.bak/
 venv.bak/
 
+# Environment files (keep only .env.example files)
+.env.local
+.env.development
+.env.development.local
+.env.test.local
+.env.production
+.env.production.local
+**/.env
+**/.env.local
+**/.env.development.local
+**/.env.test.local
+**/.env.production.local
+# Allow example files
+!.env.example
+!.env.*.example
+!**/.env.example
+!**/.env.*.example
+
 # IDEs
 .vscode/
 .idea/
@@ -69,11 +87,6 @@ venv.bak/
 .Trashes
 ehthumbs.db
 Thumbs.db
-
-# Project specific
-example_canvas.json
-trip.json
-*.json
 
 # Node.js (frontend)
 web_ui/node_modules/
@@ -94,8 +107,10 @@ llm_canvas/static/
 
 # uv
 .python-version
-uv.lock
 
 # Temporary files
 *.tmp
 *.temp
+
+.ruff_cache
+.mypy_cache

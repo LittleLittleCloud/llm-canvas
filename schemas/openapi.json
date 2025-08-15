@@ -1,0 +1,1404 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "LLM Canvas API",
+    "description": "RESTful API for LLM Canvas operations",
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/api/v1/health": {
+      "get": {
+        "tags": [
+          "v1"
+        ],
+        "summary": "Health Check",
+        "description": "Health check endpoint to verify server is running.",
+        "operationId": "health_check_api_v1_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthCheckResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/canvas/list": {
+      "get": {
+        "tags": [
+          "v1"
+        ],
+        "summary": "List Canvases",
+        "description": "List all available canvases.\nReturns:\n    CanvasListResponse with list of canvas summaries",
+        "operationId": "list_canvases_api_v1_canvas_list_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CanvasListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/canvas": {
+      "get": {
+        "tags": [
+          "v1"
+        ],
+        "summary": "Get Canvas",
+        "description": "Get a full canvas by ID.\nArgs:\n    canvas_id: Canvas UUID to retrieve\nReturns:\n    CanvasData on success\nRaises:\n    HTTPException: 404 if canvas not found",
+        "operationId": "get_canvas_api_v1_canvas_get",
+        "parameters": [
+          {
+            "name": "canvas_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "Canvas UUID",
+              "title": "Canvas Id"
+            },
+            "description": "Canvas UUID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetCanvasResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "v1"
+        ],
+        "summary": "Create Canvas",
+        "description": "Create a new canvas.\nArgs:\n    request: Canvas creation request with optional title and description\nReturns:\n    CreateCanvasResponse with the canvas ID and success message",
+        "operationId": "create_canvas_api_v1_canvas_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCanvasRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateCanvasResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/canvas/{canvas_id}": {
+      "delete": {
+        "tags": [
+          "v1"
+        ],
+        "summary": "Delete Canvas",
+        "description": "Delete a canvas by ID.\nArgs:\n    canvas_id: Canvas UUID to delete\nReturns:\n    DeleteCanvasResponse with success message\nRaises:\n    HTTPException: 404 if canvas not found",
+        "operationId": "delete_canvas_api_v1_canvas__canvas_id__delete",
+        "parameters": [
+          {
+            "name": "canvas_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "Canvas UUID to delete",
+              "title": "Canvas Id"
+            },
+            "description": "Canvas UUID to delete"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeleteCanvasResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/canvas/{canvas_id}/messages": {
+      "post": {
+        "tags": [
+          "v1"
+        ],
+        "summary": "Commit Message",
+        "description": "Commit a new message to a canvas.\nArgs:\n    canvas_id: Canvas UUID to add message to\n    request: Canvas commit message event data\nReturns:\n    CreateMessageResponse with the message ID and success message\nRaises:\n    HTTPException: 404 if canvas not found",
+        "operationId": "commit_message_api_v1_canvas__canvas_id__messages_post",
+        "parameters": [
+          {
+            "name": "canvas_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "Canvas UUID",
+              "title": "Canvas Id"
+            },
+            "description": "Canvas UUID"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CommitMessageRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateMessageResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/canvas/{canvas_id}/messages/{message_id}": {
+      "put": {
+        "tags": [
+          "v1"
+        ],
+        "summary": "Update Message",
+        "description": "Update an existing message in a canvas.\nArgs:\n    canvas_id: Canvas UUID containing the message\n    message_id: Message ID to update\n    request: Canvas update message event data\nReturns:\n    CreateMessageResponse with the message ID and success message\nRaises:\n    HTTPException: 404 if canvas or message not found",
+        "operationId": "update_message_api_v1_canvas__canvas_id__messages__message_id__put",
+        "parameters": [
+          {
+            "name": "canvas_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "Canvas UUID",
+              "title": "Canvas Id"
+            },
+            "description": "Canvas UUID"
+          },
+          {
+            "name": "message_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "Message ID to update",
+              "title": "Message Id"
+            },
+            "description": "Message ID to update"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateMessageRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateMessageResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/canvas/stream": {
+      "get": {
+        "tags": [
+          "v1"
+        ],
+        "summary": "Stream",
+        "description": "Stream canvas updates via Server-Sent Events.\nArgs:\n    canvas_id: Canvas UUID to stream\nReturns:\n    StreamingResponse with SSE events\nRaises:\n    HTTPException: 404 if canvas not found",
+        "operationId": "stream_api_v1_canvas_stream_get",
+        "parameters": [
+          {
+            "name": "canvas_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "Canvas UUID",
+              "title": "Canvas Id"
+            },
+            "description": "Canvas UUID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Stream Api V1 Canvas Stream Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Base64ImageSourceParam": {
+        "properties": {
+          "data": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "string",
+                "format": "path"
+              }
+            ],
+            "title": "Data"
+          },
+          "media_type": {
+            "type": "string",
+            "enum": [
+              "image/jpeg",
+              "image/png",
+              "image/gif",
+              "image/webp"
+            ],
+            "title": "Media Type"
+          },
+          "type": {
+            "type": "string",
+            "const": "base64",
+            "title": "Type"
+          }
+        },
+        "type": "object",
+        "required": [
+          "data",
+          "media_type",
+          "type"
+        ],
+        "title": "Base64ImageSourceParam"
+      },
+      "CacheControlEphemeralParam": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "ephemeral",
+            "title": "Type"
+          }
+        },
+        "type": "object",
+        "required": [
+          "type"
+        ],
+        "title": "CacheControlEphemeralParam"
+      },
+      "CanvasCommitMessageEvent": {
+        "properties": {
+          "event_type": {
+            "type": "string",
+            "const": "commit_message",
+            "title": "Event Type"
+          },
+          "canvas_id": {
+            "type": "string",
+            "title": "Canvas Id"
+          },
+          "timestamp": {
+            "type": "number",
+            "title": "Timestamp"
+          },
+          "data": {
+            "$ref": "#/components/schemas/MessageNode"
+          }
+        },
+        "type": "object",
+        "required": [
+          "event_type",
+          "canvas_id",
+          "timestamp",
+          "data"
+        ],
+        "title": "CanvasCommitMessageEvent",
+        "description": "Event data for canvas message commits."
+      },
+      "CanvasData": {
+        "properties": {
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          },
+          "last_updated": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Updated"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "canvas_id": {
+            "type": "string",
+            "title": "Canvas Id"
+          },
+          "created_at": {
+            "type": "number",
+            "title": "Created At"
+          },
+          "nodes": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/MessageNode"
+            },
+            "type": "object",
+            "title": "Nodes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "title",
+          "last_updated",
+          "description",
+          "canvas_id",
+          "created_at",
+          "nodes"
+        ],
+        "title": "CanvasData",
+        "description": "Complete canvas data structure."
+      },
+      "CanvasListResponse": {
+        "properties": {
+          "canvases": {
+            "items": {
+              "$ref": "#/components/schemas/CanvasSummary"
+            },
+            "type": "array",
+            "title": "Canvases"
+          }
+        },
+        "type": "object",
+        "required": [
+          "canvases"
+        ],
+        "title": "CanvasListResponse",
+        "description": "Response type for GET /api/v1/canvas/list"
+      },
+      "CanvasSummary": {
+        "properties": {
+          "canvas_id": {
+            "type": "string",
+            "title": "Canvas Id"
+          },
+          "created_at": {
+            "type": "number",
+            "title": "Created At"
+          },
+          "root_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Root Ids"
+          },
+          "node_count": {
+            "type": "integer",
+            "title": "Node Count"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "meta": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Meta"
+          }
+        },
+        "type": "object",
+        "required": [
+          "canvas_id",
+          "created_at",
+          "root_ids",
+          "node_count",
+          "title",
+          "description",
+          "meta"
+        ],
+        "title": "CanvasSummary",
+        "description": "Summary information about a canvas."
+      },
+      "CanvasUpdateMessageEvent": {
+        "properties": {
+          "event_type": {
+            "type": "string",
+            "const": "update_message",
+            "title": "Event Type"
+          },
+          "canvas_id": {
+            "type": "string",
+            "title": "Canvas Id"
+          },
+          "timestamp": {
+            "type": "number",
+            "title": "Timestamp"
+          },
+          "data": {
+            "$ref": "#/components/schemas/MessageNode"
+          }
+        },
+        "type": "object",
+        "required": [
+          "event_type",
+          "canvas_id",
+          "timestamp",
+          "data"
+        ],
+        "title": "CanvasUpdateMessageEvent",
+        "description": "Event data for canvas message updates."
+      },
+      "CitationCharLocationParam": {
+        "properties": {
+          "cited_text": {
+            "type": "string",
+            "title": "Cited Text"
+          },
+          "document_index": {
+            "type": "integer",
+            "title": "Document Index"
+          },
+          "document_title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Document Title"
+          },
+          "end_char_index": {
+            "type": "integer",
+            "title": "End Char Index"
+          },
+          "start_char_index": {
+            "type": "integer",
+            "title": "Start Char Index"
+          },
+          "type": {
+            "type": "string",
+            "const": "char_location",
+            "title": "Type"
+          }
+        },
+        "type": "object",
+        "required": [
+          "cited_text",
+          "document_index",
+          "document_title",
+          "end_char_index",
+          "start_char_index",
+          "type"
+        ],
+        "title": "CitationCharLocationParam"
+      },
+      "CitationContentBlockLocationParam": {
+        "properties": {
+          "cited_text": {
+            "type": "string",
+            "title": "Cited Text"
+          },
+          "document_index": {
+            "type": "integer",
+            "title": "Document Index"
+          },
+          "document_title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Document Title"
+          },
+          "end_block_index": {
+            "type": "integer",
+            "title": "End Block Index"
+          },
+          "start_block_index": {
+            "type": "integer",
+            "title": "Start Block Index"
+          },
+          "type": {
+            "type": "string",
+            "const": "content_block_location",
+            "title": "Type"
+          }
+        },
+        "type": "object",
+        "required": [
+          "cited_text",
+          "document_index",
+          "document_title",
+          "end_block_index",
+          "start_block_index",
+          "type"
+        ],
+        "title": "CitationContentBlockLocationParam"
+      },
+      "CitationPageLocationParam": {
+        "properties": {
+          "cited_text": {
+            "type": "string",
+            "title": "Cited Text"
+          },
+          "document_index": {
+            "type": "integer",
+            "title": "Document Index"
+          },
+          "document_title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Document Title"
+          },
+          "end_page_number": {
+            "type": "integer",
+            "title": "End Page Number"
+          },
+          "start_page_number": {
+            "type": "integer",
+            "title": "Start Page Number"
+          },
+          "type": {
+            "type": "string",
+            "const": "page_location",
+            "title": "Type"
+          }
+        },
+        "type": "object",
+        "required": [
+          "cited_text",
+          "document_index",
+          "document_title",
+          "end_page_number",
+          "start_page_number",
+          "type"
+        ],
+        "title": "CitationPageLocationParam"
+      },
+      "CitationSearchResultLocationParam": {
+        "properties": {
+          "cited_text": {
+            "type": "string",
+            "title": "Cited Text"
+          },
+          "end_block_index": {
+            "type": "integer",
+            "title": "End Block Index"
+          },
+          "search_result_index": {
+            "type": "integer",
+            "title": "Search Result Index"
+          },
+          "source": {
+            "type": "string",
+            "title": "Source"
+          },
+          "start_block_index": {
+            "type": "integer",
+            "title": "Start Block Index"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          },
+          "type": {
+            "type": "string",
+            "const": "search_result_location",
+            "title": "Type"
+          }
+        },
+        "type": "object",
+        "required": [
+          "cited_text",
+          "end_block_index",
+          "search_result_index",
+          "source",
+          "start_block_index",
+          "title",
+          "type"
+        ],
+        "title": "CitationSearchResultLocationParam"
+      },
+      "CitationWebSearchResultLocationParam": {
+        "properties": {
+          "cited_text": {
+            "type": "string",
+            "title": "Cited Text"
+          },
+          "encrypted_index": {
+            "type": "string",
+            "title": "Encrypted Index"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          },
+          "type": {
+            "type": "string",
+            "const": "web_search_result_location",
+            "title": "Type"
+          },
+          "url": {
+            "type": "string",
+            "title": "Url"
+          }
+        },
+        "type": "object",
+        "required": [
+          "cited_text",
+          "encrypted_index",
+          "title",
+          "type",
+          "url"
+        ],
+        "title": "CitationWebSearchResultLocationParam"
+      },
+      "CitationsConfigParam": {
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "title": "Enabled"
+          }
+        },
+        "type": "object",
+        "title": "CitationsConfigParam"
+      },
+      "CommitMessageRequest": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/CanvasCommitMessageEvent"
+          }
+        },
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "title": "CommitMessageRequest"
+      },
+      "CreateCanvasRequest": {
+        "properties": {
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          }
+        },
+        "type": "object",
+        "title": "CreateCanvasRequest",
+        "description": "Request type for POST /api/v1/canvas"
+      },
+      "CreateCanvasResponse": {
+        "properties": {
+          "canvas_id": {
+            "type": "string",
+            "title": "Canvas Id"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          }
+        },
+        "type": "object",
+        "required": [
+          "canvas_id",
+          "message"
+        ],
+        "title": "CreateCanvasResponse",
+        "description": "Response type for POST /api/v1/canvas"
+      },
+      "CreateMessageResponse": {
+        "properties": {
+          "message_id": {
+            "type": "string",
+            "title": "Message Id"
+          },
+          "canvas_id": {
+            "type": "string",
+            "title": "Canvas Id"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          }
+        },
+        "type": "object",
+        "required": [
+          "message_id",
+          "canvas_id",
+          "message"
+        ],
+        "title": "CreateMessageResponse",
+        "description": "Response type for POST /api/v1/canvas/{canvas_id}/messages"
+      },
+      "DeleteCanvasResponse": {
+        "properties": {
+          "canvas_id": {
+            "type": "string",
+            "title": "Canvas Id"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          }
+        },
+        "type": "object",
+        "required": [
+          "canvas_id",
+          "message"
+        ],
+        "title": "DeleteCanvasResponse",
+        "description": "Response type for DELETE /api/v1/canvas/{canvas_id}"
+      },
+      "GetCanvasResponse": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/CanvasData"
+          }
+        },
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "title": "GetCanvasResponse"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "HealthCheckResponse": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "const": "healthy",
+            "title": "Status"
+          },
+          "server_type": {
+            "type": "string",
+            "enum": [
+              "local",
+              "cloud"
+            ],
+            "title": "Server Type"
+          },
+          "timestamp": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Timestamp"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status",
+          "server_type",
+          "timestamp"
+        ],
+        "title": "HealthCheckResponse",
+        "description": "Response type for GET /api/v1/health"
+      },
+      "ImageBlockParam": {
+        "properties": {
+          "source": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Base64ImageSourceParam"
+              },
+              {
+                "$ref": "#/components/schemas/URLImageSourceParam"
+              }
+            ],
+            "title": "Source"
+          },
+          "type": {
+            "type": "string",
+            "const": "image",
+            "title": "Type"
+          },
+          "cache_control": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CacheControlEphemeralParam"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "source",
+          "type"
+        ],
+        "title": "ImageBlockParam"
+      },
+      "Message": {
+        "properties": {
+          "content": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "items": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/TextBlockParam"
+                    },
+                    {
+                      "$ref": "#/components/schemas/ToolUseBlockParam"
+                    },
+                    {
+                      "$ref": "#/components/schemas/ToolResultBlockParam"
+                    }
+                  ]
+                },
+                "type": "array"
+              }
+            ],
+            "title": "Content"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "user",
+              "assistant",
+              "system"
+            ],
+            "title": "Role"
+          }
+        },
+        "type": "object",
+        "required": [
+          "content",
+          "role"
+        ],
+        "title": "Message",
+        "description": "Message structure for canvas conversations."
+      },
+      "MessageNode": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "message": {
+            "$ref": "#/components/schemas/Message"
+          },
+          "parent_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parent Id"
+          },
+          "child_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Child Ids"
+          },
+          "meta": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Meta"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "message",
+          "parent_id",
+          "child_ids",
+          "meta"
+        ],
+        "title": "MessageNode",
+        "description": "Node in the canvas conversation graph."
+      },
+      "SearchResultBlockParam": {
+        "properties": {
+          "content": {
+            "items": {
+              "$ref": "#/components/schemas/TextBlockParam"
+            },
+            "type": "array",
+            "title": "Content"
+          },
+          "source": {
+            "type": "string",
+            "title": "Source"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "type": {
+            "type": "string",
+            "const": "search_result",
+            "title": "Type"
+          },
+          "cache_control": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CacheControlEphemeralParam"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "citations": {
+            "$ref": "#/components/schemas/CitationsConfigParam"
+          }
+        },
+        "type": "object",
+        "required": [
+          "content",
+          "source",
+          "title",
+          "type"
+        ],
+        "title": "SearchResultBlockParam"
+      },
+      "TextBlockParam": {
+        "properties": {
+          "text": {
+            "type": "string",
+            "title": "Text"
+          },
+          "type": {
+            "type": "string",
+            "const": "text",
+            "title": "Type"
+          },
+          "cache_control": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CacheControlEphemeralParam"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "citations": {
+            "anyOf": [
+              {
+                "items": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/CitationCharLocationParam"
+                    },
+                    {
+                      "$ref": "#/components/schemas/CitationPageLocationParam"
+                    },
+                    {
+                      "$ref": "#/components/schemas/CitationContentBlockLocationParam"
+                    },
+                    {
+                      "$ref": "#/components/schemas/CitationWebSearchResultLocationParam"
+                    },
+                    {
+                      "$ref": "#/components/schemas/CitationSearchResultLocationParam"
+                    }
+                  ]
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Citations"
+          }
+        },
+        "type": "object",
+        "required": [
+          "text",
+          "type"
+        ],
+        "title": "TextBlockParam"
+      },
+      "ToolResultBlockParam": {
+        "properties": {
+          "tool_use_id": {
+            "type": "string",
+            "title": "Tool Use Id"
+          },
+          "type": {
+            "type": "string",
+            "const": "tool_result",
+            "title": "Type"
+          },
+          "cache_control": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CacheControlEphemeralParam"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "content": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "items": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/TextBlockParam"
+                    },
+                    {
+                      "$ref": "#/components/schemas/ImageBlockParam"
+                    },
+                    {
+                      "$ref": "#/components/schemas/SearchResultBlockParam"
+                    }
+                  ]
+                },
+                "type": "array"
+              }
+            ],
+            "title": "Content"
+          },
+          "is_error": {
+            "type": "boolean",
+            "title": "Is Error"
+          }
+        },
+        "type": "object",
+        "required": [
+          "tool_use_id",
+          "type"
+        ],
+        "title": "ToolResultBlockParam"
+      },
+      "ToolUseBlockParam": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "type": {
+            "type": "string",
+            "const": "tool_use",
+            "title": "Type"
+          },
+          "cache_control": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CacheControlEphemeralParam"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "input",
+          "name",
+          "type"
+        ],
+        "title": "ToolUseBlockParam"
+      },
+      "URLImageSourceParam": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "url",
+            "title": "Type"
+          },
+          "url": {
+            "type": "string",
+            "title": "Url"
+          }
+        },
+        "type": "object",
+        "required": [
+          "type",
+          "url"
+        ],
+        "title": "URLImageSourceParam"
+      },
+      "UpdateMessageRequest": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/CanvasUpdateMessageEvent"
+          }
+        },
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "title": "UpdateMessageRequest"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      }
+    }
+  }
+}

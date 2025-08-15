@@ -1,0 +1,55 @@
+# Configuration for auto-labeling PRs
+# See https://github.com/actions/labeler for syntax
+
+# Frontend related changes
+"frontend":
+  - changed-files:
+      - any-glob-to-any-file: "web_ui/**/*"
+
+# Backend/API changes
+"backend":
+  - changed-files:
+      - any-glob-to-any-file: "llm_canvas/**/*.py"
+      - any-glob-to-any-file: "llm_canvas/_server/**/*"
+
+# Documentation changes
+"documentation":
+  - changed-files:
+      - any-glob-to-any-file: "**/*.md"
+      - any-glob-to-any-file: "doc/**/*"
+
+# Tests
+"tests":
+  - changed-files:
+      - any-glob-to-any-file: "tests/**/*"
+      - any-glob-to-any-file: "**/*test*.py"
+
+# Examples
+"examples":
+  - changed-files:
+      - any-glob-to-any-file: "examples/**/*"
+
+# Dependencies
+"dependencies":
+  - changed-files:
+      - any-glob-to-any-file: "pyproject.toml"
+      - any-glob-to-any-file: "uv.lock"
+      - any-glob-to-any-file: "web_ui/package.json"
+      - any-glob-to-any-file: "web_ui/package-lock.json"
+
+# Build/CI
+"build":
+  - changed-files:
+      - any-glob-to-any-file: ".github/**/*"
+      - any-glob-to-any-file: "build.py"
+      - any-glob-to-any-file: "build.sh"
+      - any-glob-to-any-file: "build.ps1"
+
+# Configuration
+"config":
+  - changed-files:
+      - any-glob-to-any-file: "*.toml"
+      - any-glob-to-any-file: "*.ini"
+      - any-glob-to-any-file: "*.json"
+      - any-glob-to-any-file: "*.yml"
+      - any-glob-to-any-file: "*.yaml"

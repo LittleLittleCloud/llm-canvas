@@ -63,8 +63,6 @@ def create_vacation_planning() -> None:
         commit_message=branch_point,
     )
 
-    print(f"Switched to branch: {canvas.get_current_branch()}")
-
     # Japan branch conversation
     print("3a️⃣ User asks about Japan")
     japan_question: Message = {
@@ -164,8 +162,6 @@ Japan offers both comfort and challenge for food lovers!""",
         create_if_not_exists=True,
         commit_message=branch_point,
     )
-
-    print(f"Switched to branch: {canvas.get_current_branch()}")
 
     # Italy branch conversation
     print("3b️⃣ User asks about Italy")

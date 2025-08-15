@@ -183,4 +183,7 @@ dev = [
     "mypy>=1.17.1",
     "openapi-python-client>=0.25.3",
     "pytest>=8.4.1",
+    "build>=1.0.0",
+    "twine>=5.0.0",
+    "safety>=3.0.0",
 ]

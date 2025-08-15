@@ -25,5 +25,7 @@ dist-ssr
 
 # Environment files that should not be committed
 .env.local
-.env.development.local
+.env.development
+
+.env.development.*
 .env.production.local
