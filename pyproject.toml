@@ -148,6 +148,7 @@ ignore = [
     "TC003",
     "EM102",
     "EM101",
+    "EXE001",
 ]
 
 [tool.ruff.lint.per-file-ignores]
