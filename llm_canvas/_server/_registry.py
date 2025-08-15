@@ -6,7 +6,7 @@ _local_registry: CanvasRegistry | None = None
 
 
 def get_local_registry() -> CanvasRegistry:
-    global _local_registry
+    global _local_registry  # noqa: PLW0603
 
     if _local_registry is None:
         _local_registry = CanvasRegistry()
