@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import logging
 import threading
+from typing import Union
 
 from httpx import Timeout
 
@@ -76,7 +77,7 @@ class CanvasClient:
 
     def __init__(self, server_host: str = "127.0.0.1", server_port: int = 8000) -> None:
         self.registry = CanvasRegistry()
-        self._server_thread: threading.Thread | None = None
+        self._server_thread: Union[threading.Thread, None] = None
         self._server_running = False
         self.server_host = server_host
         self.server_port = server_port
@@ -179,8 +180,8 @@ class CanvasClient:
 
     def create_canvas(
         self,
-        title: str | None = None,
-        description: str | None = None,
+        title: Union[str, None] = None,
+        description: Union[str, None] = None,
     ) -> Canvas:
         """Create a new canvas and add it to the registry.
 
@@ -222,7 +223,7 @@ class CanvasClient:
             msg = f"Failed to create canvas via API: {e}"
             raise RuntimeError(msg) from e
 
-    def get_canvas(self, canvas_id: str) -> Canvas | None:
+    def get_canvas(self, canvas_id: str) -> Union[Canvas, None]:
         """Get a canvas by ID.
 
         Args:
@@ -322,7 +323,7 @@ class CanvasClient:
             logger.warning("Failed to get canvas summaries via API: %s", e)
             return []
 
-    def get_canvas_data(self, canvas_id: str) -> CanvasData | None:
+    def get_canvas_data(self, canvas_id: str) -> Union[CanvasData, None]:
         """Get canvas data in the standard format.
 
         Args:

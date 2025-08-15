@@ -13,13 +13,13 @@ from anthropic.types import TextBlockParam, ToolResultBlockParam, ToolUseBlockPa
 # ---- Core Data Types ----
 
 # Union type for message blocks matching TypeScript
-MessageBlock = TextBlockParam | ToolUseBlockParam | ToolResultBlockParam
+MessageBlock = Union[TextBlockParam, ToolUseBlockParam, ToolResultBlockParam]
 
 
 class Message(TypedDict):
     """Message structure for canvas conversations."""
 
-    content: str | list[MessageBlock]
+    content: Union[str, list[MessageBlock]]
     role: Literal["user", "assistant", "system"]
 
 
@@ -28,9 +28,9 @@ class MessageNode(TypedDict):
 
     id: str
     message: Message
-    parent_id: str | None
+    parent_id: Union[str, None]
     child_ids: list[str]
-    meta: dict[str, Any] | None
+    meta: Union[dict[str, Any], None]
 
 
 class CanvasSummary(TypedDict):
@@ -40,17 +40,17 @@ class CanvasSummary(TypedDict):
     created_at: float
     root_ids: list[str]
     node_count: int
-    title: str | None
-    description: str | None
+    title: Union[str, None]
+    description: Union[str, None]
     meta: dict[str, Any]
 
 
 class CanvasData(TypedDict):
     """Complete canvas data structure."""
 
-    title: str | None
-    last_updated: float | None
-    description: str | None
+    title: Union[str, None]
+    last_updated: Union[float, None]
+    description: Union[str, None]
     canvas_id: str
     created_at: float
     nodes: dict[str, MessageNode]
@@ -93,6 +93,6 @@ class BranchInfo(TypedDict):
     """Information about a canvas branch."""
 
     name: str
-    description: str | None
-    head_node_id: str | None
+    description: Union[str, None]
+    head_node_id: Union[str, None]
     created_at: float
