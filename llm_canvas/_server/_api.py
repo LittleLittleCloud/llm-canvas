@@ -8,7 +8,7 @@ from __future__ import annotations
 import json
 import logging
 from collections.abc import Generator
-from typing import Any, Literal
+from typing import Any, Literal, Union
 
 from fastapi import APIRouter, HTTPException, Path, Query
 from fastapi.responses import StreamingResponse
@@ -30,15 +30,15 @@ from ._registry import get_local_registry
 class CreateCanvasRequest(BaseModel):
     """Request type for POST /api/v1/canvas"""
 
-    title: str | None = None
-    description: str | None = None
+    title: Union[str, None] = None
+    description: Union[str, None] = None
 
 
 class UpdateCanvasRequest(BaseModel):
     """Request type for PUT /api/v1/canvas/{canvas_id}"""
 
-    title: str | None = None
-    description: str | None = None
+    title: Union[str, None] = None
+    description: Union[str, None] = None
 
 
 class CommitMessageRequest(BaseModel):
@@ -57,7 +57,7 @@ class HealthCheckResponse(BaseModel):
 
     status: Literal["healthy"]
     server_type: Literal["local", "cloud"]
-    timestamp: float | None
+    timestamp: Union[float, None]
 
 
 class GetCanvasResponse(BaseModel):

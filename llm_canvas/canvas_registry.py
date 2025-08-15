@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import time
+from typing import Union
 
 from llm_canvas.canvas import Canvas
 
@@ -19,7 +20,7 @@ class CanvasRegistry:
         self._canvases[canvas.canvas_id] = canvas
         self._last_updated[canvas.canvas_id] = time.time()
 
-    def get(self, canvas_id: str) -> Canvas | None:
+    def get(self, canvas_id: str) -> Union[Canvas, None]:
         """Get a canvas by ID."""
         return self._canvases.get(canvas_id)
 
@@ -44,6 +45,6 @@ class CanvasRegistry:
         if canvas_id in self._last_updated:
             self._last_updated[canvas_id] = time.time()
 
-    def last_updated(self, canvas_id: str) -> float | None:
+    def last_updated(self, canvas_id: str) -> Union[float, None]:
         """Get the last updated timestamp for a canvas."""
         return self._last_updated.get(canvas_id)

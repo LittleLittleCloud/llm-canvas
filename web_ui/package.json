@@ -8,7 +8,9 @@
     "build": "vite build",
     "preview": "vite preview",
     "generate_openapi_client": "openapi-ts && prettier --write src/client/**/*.ts",
-    "format": "prettier --write src/**/*.{ts,tsx,js,jsx,json}"
+    "format": "prettier --write src/**/*.{ts,tsx,js,jsx,json}",
+    "format:check": "prettier --check src/**/*.{ts,tsx,js,jsx,json}",
+    "type-check": "tsc --noEmit"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.59.0",

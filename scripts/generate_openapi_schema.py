@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Generate OpenAPI schema from the FastAPI application."""
 
 import json

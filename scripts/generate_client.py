@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Script to generate both Python and TypeScript OpenAPI clients for LLM Canvas."""
 
 import shutil

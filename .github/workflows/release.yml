@@ -69,7 +69,7 @@ jobs:
 
       - name: Build package
         run: |
-          uv run python build.py
+          uv build
 
       - name: Check build artifacts
         run: |

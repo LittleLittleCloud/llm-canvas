@@ -5,7 +5,7 @@ import threading
 import time
 import uuid
 from collections.abc import Iterable
-from typing import Any, Callable
+from typing import Any, Callable, Union
 
 from llm_canvas.types import (
     BranchInfo,
@@ -35,7 +35,7 @@ class Branch:
         return self._branch_info["name"]
 
     @property
-    def description(self) -> str | None:
+    def description(self) -> Union[str, None]:
         """Get the branch description."""
         return self._branch_info["description"]
 
@@ -45,11 +45,11 @@ class Branch:
         return self._branch_info
 
     @property
-    def head_node_id(self) -> str | None:
+    def head_node_id(self) -> Union[str, None]:
         """Get the HEAD node ID of this branch."""
         return self._branch_info["head_node_id"]
 
-    def commit_message(self, message: Message, meta: dict[str, Any] | None = None) -> MessageNode:
+    def commit_message(self, message: Message, meta: Union[dict[str, Any], None] = None) -> MessageNode:
         """
         Commit a message to this branch.
 
@@ -90,7 +90,7 @@ class Branch:
         """
         return self._canvas.update_message(node_id, updated_message_node)
 
-    def get_head_node(self) -> MessageNode | None:
+    def get_head_node(self) -> Union[MessageNode, None]:
         """
         Get the HEAD node of this branch.
 
@@ -107,9 +107,9 @@ class Canvas:
 
     def __init__(
         self,
-        canvas_id: str | None = None,
-        title: str | None = None,
-        description: str | None = None,
+        canvas_id: Union[str, None] = None,
+        title: Union[str, None] = None,
+        description: Union[str, None] = None,
     ) -> None:
         self.canvas_id = canvas_id or str(uuid.uuid4())
         self.title = title
@@ -156,7 +156,7 @@ class Canvas:
             listener(event)
 
     # ---- Public API ----
-    def commit_message(self, message: Message, meta: dict[str, Any] | None = None) -> MessageNode:
+    def commit_message(self, message: Message, meta: Union[dict[str, Any], None] = None) -> MessageNode:
         """
         DEPRECATED: Use branch.commit_message() instead.
         Commit a message to the current branch HEAD.
@@ -174,10 +174,10 @@ class Canvas:
 
     def checkout(
         self,
-        name: str | None = None,
-        description: str | None = None,
+        name: Union[str, None] = None,
+        description: Union[str, None] = None,
         create_if_not_exists: bool = False,
-        commit_message: MessageNode | None = None,
+        commit_message: Union[MessageNode, None] = None,
     ) -> Branch:
         """
         Switch to a branch or checkout a specific message (detached head).
@@ -278,9 +278,9 @@ class Canvas:
     def add_message(
         self,
         message: Message,
-        parent_node_id: str | None = None,
-        meta: dict[str, Any] | None = None,
-        node_id: str | None = None,
+        parent_node_id: Union[str, None] = None,
+        meta: Union[dict[str, Any], None] = None,
+        node_id: Union[str, None] = None,
     ) -> MessageNode:
         node_id = node_id or str(uuid.uuid4())
         _meta = {"timestamp": time.time()}
@@ -346,7 +346,7 @@ class Canvas:
         """Get all nodes in the canvas."""
         return self._nodes
 
-    def get_node(self, node_id: str) -> MessageNode | None:
+    def get_node(self, node_id: str) -> Union[MessageNode, None]:
         return self._nodes.get(node_id)
 
     def iter_nodes(self) -> Iterable[MessageNode]:
