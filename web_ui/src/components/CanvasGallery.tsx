@@ -237,7 +237,7 @@ export const CanvasGallery: React.FC<Props> = ({
 
   if (!canvasSummaries.length) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-indigo-50">
+      <div className="h-full bg-gradient-to-br from-slate-50 to-indigo-50">
         <div className="p-8">
           <div className="max-w-6xl mx-auto">
             {/* Header */}
@@ -331,7 +331,7 @@ export const CanvasGallery: React.FC<Props> = ({
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-indigo-50">
+    <div className="h-full bg-gradient-to-br from-slate-50 to-indigo-50">
       <div className="p-8">
         <div className="max-w-6xl mx-auto">
           {/* Header */}
