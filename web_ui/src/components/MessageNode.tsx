@@ -11,7 +11,7 @@ export const MessageNodeComponent: React.FC<Props> = ({ node }) => {
   const content = node.message.content;
 
   return (
-    <div className="rounded-xl border-0 p-2 space-y-3 text-sm leading-relaxed">
+    <div className="rounded-xl border-0 p-2 space-y-3 text-sm leading-relaxed ">
       <div className="flex items-center gap-2 mb-3">
         <div
           className={`w-2 h-2 rounded-full ${
@@ -26,15 +26,21 @@ export const MessageNodeComponent: React.FC<Props> = ({ node }) => {
           {role}
         </div>
       </div>
-      <div className="overflow-y-auto max-h-96 message-content">
+      <div
+        className="overflow-y-auto max-h-96 message-content cursor-text nodrag"
+        style={{ userSelect: "text" }}
+      >
         {/* Add content here */}
         {typeof content === "string" && (
-          <div className="whitespace-pre-wrap text-gray-800 leading-relaxed">
-            {content}
-          </div>
+          <MessageBlockView
+            block={{
+              text: content,
+              type: "text",
+            }}
+          />
         )}
         {Array.isArray(content) && (
-          <div className="space-y-2">
+          <div className="space-y-2  ">
             {content.map((b, i) => (
               <MessageBlockView key={i} block={b} index={i} />
             ))}

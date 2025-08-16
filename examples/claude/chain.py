@@ -44,9 +44,11 @@ if __name__ == "__main__":
     92%: customer satisfaction
     87%: employee satisfaction""",
         """Format the sorted data as a markdown table with columns:
-    | Metric | Value |
-    |:--|--:|
-    | Customer Satisfaction | 92% |""",
+
+| Metric | Value |
+|:--|--:|
+| Customer Satisfaction | 92% |
+    """,
     ]
 
     report = """

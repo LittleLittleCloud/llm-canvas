@@ -48,7 +48,7 @@ const CustomMessageNode = ({
       ref={nodeRef}
       data-node-id={data.id}
       className={`bg-white shadow-sm hover:shadow-xl border border-gray-100 min-w-[320px] relative transition-all duration-300 hover:scale-[1.02] group ${
-        selected ? "nowheel " : "hover:border-indigo-200"
+        selected ? "nowheel nopan" : "hover:border-indigo-200"
       }`}
     >
       {/* header ribbon */}
