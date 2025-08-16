@@ -22,7 +22,7 @@ export const MessageNodeComponent: React.FC<Props> = ({ node }) => {
                 : "bg-gradient-to-r from-gray-400 to-gray-500"
           }`}
         ></div>
-        <div className="text-xs uppercase tracking-wider text-gray-600 font-semibold">
+        <div className="text-xs uppercase tracking-wider text-gray-600 dark:text-gray-400 font-semibold">
           {role}
         </div>
       </div>
@@ -48,7 +48,7 @@ export const MessageNodeComponent: React.FC<Props> = ({ node }) => {
         )}
       </div>
       {node.meta != null && typeof node.meta["model"] === "string" && (
-        <div className="text-xs text-gray-500 pt-3 border-t border-gray-100 flex items-center gap-1">
+        <div className="text-xs text-gray-500 dark:text-gray-400 pt-3 border-t border-gray-100 dark:border-gray-700 flex items-center gap-1">
           <svg
             className="w-3 h-3"
             fill="none"

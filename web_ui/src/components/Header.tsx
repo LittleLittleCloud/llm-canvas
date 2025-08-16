@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { useCanvasStore } from "../store/canvasStore";
 import { LLMCanvasPrimaryLogo } from "./Logo";
 import { ServerStatusIndicator } from "./ServerStatusIndicator";
+import { ThemeToggle } from "./ThemeToggle";
 
 export const Header: React.FC = () => {
   const navigate = useNavigate();
@@ -12,7 +13,7 @@ export const Header: React.FC = () => {
   const isCanvasPage = location.pathname.startsWith("/canvas/");
 
   return (
-    <header className="p-4 bg-indigo-600 text-white font-semibold shadow flex items-center justify-between">
+    <header className="p-4 bg-indigo-600 dark:bg-gray-800 text-white font-semibold shadow flex items-center justify-between transition-colors duration-200">
       <div className="flex items-center space-x-3">
         <div className="cursor-pointer" onClick={() => navigate("/")}>
           <LLMCanvasPrimaryLogo />
@@ -20,6 +21,7 @@ export const Header: React.FC = () => {
         <ServerStatusIndicator />
       </div>
       <div className="flex items-center space-x-4">
+        <ThemeToggle />
         {isCanvasPage && canvas && (
           <div className="text-xs opacity-75 font-mono">{canvas.canvas_id}</div>
         )}

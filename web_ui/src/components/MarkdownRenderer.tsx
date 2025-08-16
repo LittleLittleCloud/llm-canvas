@@ -38,11 +38,11 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
               return (
                 <div className="relative">
                   {language && (
-                    <div className="absolute top-2 right-2 px-2 py-1 text-xs text-gray-500 bg-gray-100 rounded">
+                    <div className="absolute top-2 right-2 px-2 py-1 text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 rounded">
                       {language}
                     </div>
                   )}
-                  <pre className="bg-gray-50 border rounded-lg p-4 overflow-x-auto">
+                  <pre className="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg p-4 overflow-x-auto [&_.hljs]:!bg-transparent">
                     <code className={className} {...props}>
                       {children}
                     </code>
@@ -53,7 +53,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
 
             return (
               <code
-                className="bg-gray-100 px-1 py-0.5 rounded text-sm font-mono"
+                className="bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 px-1 py-0.5 rounded text-sm font-mono"
                 {...props}
               >
                 {children}
@@ -64,25 +64,27 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
           // Customize tables
           table: ({ children }) => (
             <div className="overflow-x-auto my-4">
-              <table className="min-w-full border-collapse border border-gray-300">
+              <table className="min-w-full border-collapse border border-gray-300 dark:border-gray-600">
                 {children}
               </table>
             </div>
           ),
 
           th: ({ children }) => (
-            <th className="border border-gray-300 bg-gray-50 px-4 py-2 text-left font-semibold">
+            <th className="border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 px-4 py-2 text-left font-semibold">
               {children}
             </th>
           ),
 
           td: ({ children }) => (
-            <td className="border border-gray-300 px-4 py-2">{children}</td>
+            <td className="border border-gray-300 dark:border-gray-600 px-4 py-2">
+              {children}
+            </td>
           ),
 
           // Customize headings
           h1: ({ children }) => (
-            <h1 className="text-2xl font-bold mb-4 mt-6 first:mt-0 border-b border-gray-200 pb-2">
+            <h1 className="text-2xl font-bold mb-4 mt-6 first:mt-0 border-b border-gray-200 dark:border-gray-700 pb-2">
               {children}
             </h1>
           ),
@@ -125,7 +127,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
 
           // Customize blockquotes
           blockquote: ({ children }) => (
-            <blockquote className="border-l-4 border-gray-300 pl-4 italic my-4 text-gray-700">
+            <blockquote className="border-l-4 border-gray-300 dark:border-gray-600 pl-4 italic my-4 text-gray-700 dark:text-gray-300">
               {children}
             </blockquote>
           ),
@@ -134,7 +136,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
           a: ({ href, children }) => (
             <a
               href={href}
-              className="text-blue-600 hover:text-blue-800 underline"
+              className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 underline"
               target="_blank"
               rel="noopener noreferrer"
             >
@@ -143,7 +145,9 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
           ),
 
           // Customize horizontal rules
-          hr: () => <hr className="my-6 border-gray-300" />,
+          hr: () => (
+            <hr className="my-6 border-gray-300 dark:border-gray-600" />
+          ),
         }}
       >
         {content}

@@ -26,18 +26,18 @@ export const ToolResultBlockView: React.FC<Props> = ({ block }) => {
     <div
       className={`rounded border px-2 py-1 space-y-1 ${
         isError
-          ? "border-rose-300 bg-rose-50"
-          : "border-emerald-200 bg-emerald-50"
+          ? "border-rose-300 dark:border-rose-700 bg-rose-50 dark:bg-rose-900/20"
+          : "border-emerald-200 dark:border-emerald-700 bg-emerald-50 dark:bg-emerald-900/20"
       }`}
     >
       <div className="flex items-center gap-2 text-[10px] uppercase tracking-wide font-semibold">
         <span className={`px-1 rounded ${badgeClr}`}>{badgeLabel}</span>
-        <span className="text-[10px] text-gray-500 font-mono">
+        <span className="text-[10px] text-gray-500 dark:text-gray-400 font-mono">
           ↔ {block.tool_use_id}
         </span>
       </div>
       {typeof content === "string" ? (
-        <pre className="m-0 p-0 text-xs leading-tight font-mono whitespace-pre-wrap">
+        <pre className="m-0 p-0 text-xs leading-tight font-mono whitespace-pre-wrap text-gray-800 dark:text-gray-300">
           {truncate(content)}
         </pre>
       ) : (
@@ -45,7 +45,7 @@ export const ToolResultBlockView: React.FC<Props> = ({ block }) => {
           {content.map((c, i) => (
             <div
               key={i}
-              className="text-xs whitespace-pre-wrap leading-snug font-mono"
+              className="text-xs whitespace-pre-wrap leading-snug font-mono text-gray-800 dark:text-gray-300"
             >
               {c.type === "text" && truncate((c as TextBlockParam).text, 400)}
               {c.type !== "text" && <span>[unsupported block]</span>}

@@ -80,14 +80,14 @@ export const ServerStatusIndicator: React.FC<ServerStatusIndicatorProps> = ({
           />
 
           {/* Popout Content */}
-          <div className="absolute left-0 top-8 z-20 bg-white text-gray-900 rounded-lg shadow-lg border border-gray-200 p-3 min-w-56">
+          <div className="absolute left-0 top-8 z-20 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-lg shadow-lg border border-gray-200 dark:border-gray-600 p-3 min-w-56">
             <div className="space-y-2">
               {/* Header */}
               <div className="flex items-center justify-between">
                 <h3 className="font-medium text-sm">Server Status</h3>
                 <button
                   onClick={() => setShowPopout(false)}
-                  className="text-gray-400 hover:text-gray-600 text-sm"
+                  className="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 text-sm"
                 >
                   ✕
                 </button>
@@ -105,19 +105,19 @@ export const ServerStatusIndicator: React.FC<ServerStatusIndicatorProps> = ({
 
               {/* Server Type */}
               {serverType && (
-                <div className="text-xs text-gray-500">
+                <div className="text-xs text-gray-500 dark:text-gray-400">
                   Type: {serverType === "local" ? "Local" : "Cloud"}
                 </div>
               )}
 
               {/* Last Checked */}
-              <div className="text-xs text-gray-500">
+              <div className="text-xs text-gray-500 dark:text-gray-400">
                 Last checked: {formatLastChecked(lastChecked)}
               </div>
 
               {/* Error Message */}
               {error && (
-                <div className="text-xs text-red-600 bg-red-50 p-2 rounded">
+                <div className="text-xs text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 p-2 rounded">
                   {error}
                 </div>
               )}
@@ -127,7 +127,7 @@ export const ServerStatusIndicator: React.FC<ServerStatusIndicatorProps> = ({
                 onClick={() => {
                   checkStatus();
                 }}
-                className="w-full text-xs bg-gray-100 text-gray-700 py-1.5 px-2 rounded hover:bg-gray-200 transition-colors duration-200"
+                className="w-full text-xs bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 py-1.5 px-2 rounded hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors duration-200"
                 disabled={status === "loading"}
               >
                 {status === "loading" ? "Checking..." : "Refresh"}

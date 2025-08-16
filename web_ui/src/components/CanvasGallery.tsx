@@ -83,17 +83,17 @@ const CreateCanvasModal: React.FC<{
 
       {/* Modal */}
       <div className="flex min-h-full items-center justify-center p-4">
-        <div className="relative transform overflow-hidden rounded-2xl bg-white shadow-2xl transition-all w-full max-w-md">
+        <div className="relative transform overflow-hidden rounded-2xl bg-white dark:bg-gray-800 shadow-2xl transition-all w-full max-w-md">
           {/* Header */}
           <div className="px-6 pt-6 pb-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-xl font-semibold text-gray-900">
+              <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
                 Create New Canvas
               </h3>
               <button
                 onClick={handleClose}
                 disabled={isCreating}
-                className="rounded-lg p-1 text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50"
+                className="rounded-lg p-1 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50"
               >
                 <svg
                   className="h-6 w-6"
@@ -118,7 +118,7 @@ const CreateCanvasModal: React.FC<{
               <div>
                 <label
                   htmlFor="modal-title"
-                  className="block text-sm font-medium text-gray-700 mb-2"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
                 >
                   Title
                 </label>
@@ -127,7 +127,7 @@ const CreateCanvasModal: React.FC<{
                   id="modal-title"
                   value={title}
                   onChange={e => setTitle(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
                   placeholder="Enter a descriptive title..."
                   disabled={isCreating}
                 />
@@ -136,7 +136,7 @@ const CreateCanvasModal: React.FC<{
               <div>
                 <label
                   htmlFor="modal-description"
-                  className="block text-sm font-medium text-gray-700 mb-2"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
                 >
                   Description
                 </label>
@@ -145,7 +145,7 @@ const CreateCanvasModal: React.FC<{
                   value={description}
                   onChange={e => setDescription(e.target.value)}
                   rows={3}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all resize-none"
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all resize-none"
                   placeholder="What will you use this canvas for?"
                   disabled={isCreating}
                 />
@@ -158,7 +158,7 @@ const CreateCanvasModal: React.FC<{
                 type="button"
                 onClick={handleClose}
                 disabled={isCreating}
-                className="flex-1 px-4 py-3 text-sm font-medium text-gray-700 bg-gray-100 rounded-xl hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Cancel
               </button>
@@ -237,16 +237,16 @@ export const CanvasGallery: React.FC<Props> = ({
 
   if (!canvasSummaries.length) {
     return (
-      <div className="h-full bg-gradient-to-br from-slate-50 to-indigo-50">
+      <div className="h-full bg-gradient-to-br from-slate-50 to-indigo-50 dark:from-gray-900 dark:to-gray-800">
         <div className="p-8">
           <div className="max-w-6xl mx-auto">
             {/* Header */}
             <div className="flex justify-between items-center mb-12">
               <div>
-                <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
+                <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 dark:from-gray-100 dark:to-gray-400 bg-clip-text text-transparent">
                   Canvas Gallery
                 </h1>
-                <p className="text-gray-600 mt-2">
+                <p className="text-gray-600 dark:text-gray-400 mt-2">
                   Create and manage your AI conversation canvases
                 </p>
               </div>
@@ -276,9 +276,9 @@ export const CanvasGallery: React.FC<Props> = ({
 
             {/* Empty State */}
             <div className="text-center py-20">
-              <div className="mx-auto w-24 h-24 bg-gradient-to-br from-indigo-100 to-purple-100 rounded-full flex items-center justify-center mb-6">
+              <div className="mx-auto w-24 h-24 bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900/30 dark:to-purple-900/30 rounded-full flex items-center justify-center mb-6">
                 <svg
-                  className="w-12 h-12 text-indigo-600"
+                  className="w-12 h-12 text-indigo-600 dark:text-indigo-400"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -291,10 +291,10 @@ export const CanvasGallery: React.FC<Props> = ({
                   />
                 </svg>
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">
+              <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
                 No canvases yet
               </h3>
-              <p className="text-gray-600 mb-8 max-w-md mx-auto">
+              <p className="text-gray-600 dark:text-gray-400 mb-8 max-w-md mx-auto">
                 Get started by creating your first canvas. Perfect for AI
                 conversations, brainstorming, and collaborative thinking.
               </p>
@@ -331,16 +331,16 @@ export const CanvasGallery: React.FC<Props> = ({
   }
 
   return (
-    <div className="h-full bg-gradient-to-br from-slate-50 to-indigo-50">
+    <div className="h-full bg-gradient-to-br from-slate-50 to-indigo-50 dark:from-gray-900 dark:to-gray-800">
       <div className="p-8">
         <div className="max-w-6xl mx-auto">
           {/* Header */}
           <div className="flex justify-between items-center mb-12">
             <div>
-              <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
+              <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 dark:from-gray-100 dark:to-gray-400 bg-clip-text text-transparent">
                 Canvas Gallery
               </h1>
-              <p className="text-gray-600 mt-2">
+              <p className="text-gray-600 dark:text-gray-400 mt-2">
                 {canvasSummaries.length} canvas
                 {canvasSummaries.length !== 1 ? "es" : ""} available
               </p>
@@ -374,7 +374,7 @@ export const CanvasGallery: React.FC<Props> = ({
             {canvasSummaries.map(canvas => (
               <div
                 key={canvas.canvas_id}
-                className="group relative bg-white rounded-2xl shadow-sm hover:shadow-xl border border-gray-100 overflow-hidden transition-all duration-300 hover:scale-[1.02] hover:-translate-y-1"
+                className="group relative bg-white dark:bg-gray-800 rounded-2xl shadow-sm hover:shadow-xl border border-gray-100 dark:border-gray-700 overflow-hidden transition-all duration-300 hover:scale-[1.02] hover:-translate-y-1"
               >
                 {/* Canvas Header with Gradient */}
                 <div className="h-2 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500" />
@@ -386,14 +386,14 @@ export const CanvasGallery: React.FC<Props> = ({
                 >
                   {/* Title */}
                   <div className="mb-2">
-                    <h3 className="text-lg font-semibold text-gray-900 truncate group-hover:text-indigo-600 transition-colors">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 truncate group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
                       {canvas.title || "Untitled Canvas"}
                     </h3>
                   </div>
 
                   {/* Stats - right below title */}
                   <div className="flex items-center gap-4 mb-4">
-                    <div className="flex items-center text-xs text-gray-500">
+                    <div className="flex items-center text-xs text-gray-500 dark:text-gray-400">
                       <svg
                         className="w-4 h-4 mr-1"
                         fill="none"
@@ -409,7 +409,7 @@ export const CanvasGallery: React.FC<Props> = ({
                       </svg>
                       {canvas.node_count} nodes
                     </div>
-                    <div className="flex items-center text-xs text-gray-500">
+                    <div className="flex items-center text-xs text-gray-500 dark:text-gray-400">
                       <svg
                         className="w-4 h-4 mr-1"
                         fill="none"
@@ -430,29 +430,29 @@ export const CanvasGallery: React.FC<Props> = ({
                   {/* Description - fixed height */}
                   <div className="mb-4 h-16">
                     {canvas.description ? (
-                      <p className="text-sm text-gray-600 line-clamp-3 leading-relaxed">
+                      <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-3 leading-relaxed">
                         {canvas.description}
                       </p>
                     ) : (
-                      <p className="text-sm text-gray-400 italic">
+                      <p className="text-sm text-gray-400 dark:text-gray-500 italic">
                         No description provided
                       </p>
                     )}
                   </div>
 
                   {/* Footer with delete button */}
-                  <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-                    <div className="text-xs text-gray-500">
+                  <div className="flex items-center justify-between pt-4 border-t border-gray-100 dark:border-gray-700">
+                    <div className="text-xs text-gray-500 dark:text-gray-400">
                       Created {formatTs(canvas.created_at)}
                     </div>
                     <div className="flex items-center gap-2">
-                      <div className="text-xs text-gray-400">
+                      <div className="text-xs text-gray-400 dark:text-gray-500">
                         {formatTimeAgo(canvas.created_at)}
                       </div>
                       <button
                         onClick={e => handleDeleteCanvas(canvas.canvas_id, e)}
                         disabled={deletingIds.has(canvas.canvas_id)}
-                        className="p-1 text-gray-400 hover:text-red-500 focus:outline-none focus:text-red-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="p-1 text-gray-400 hover:text-red-500 dark:text-gray-500 dark:hover:text-red-400 focus:outline-none focus:text-red-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         title="Delete canvas"
                       >
                         {deletingIds.has(canvas.canvas_id) ? (
