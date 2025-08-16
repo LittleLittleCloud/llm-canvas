@@ -4,7 +4,6 @@
 
 LLM Canvas allows you to programmatically create interactive, branching conversation trees. Build complex conversation structures, explore different response paths, and visualize tool calls in a beautiful web interface — all while maintaining complete privacy with local deployment.
 
-![LLM Canvas Features](https://img.shields.io/badge/Features-Conversation%20Branches%20|%20Tool%20Visualization%20|%20Real--time%20Updates-blue)
 ![License](https://img.shields.io/badge/License-MIT-green)
 ![Python](https://img.shields.io/badge/Python-3.9%2B-blue)
 
@@ -16,10 +15,6 @@ LLM Canvas allows you to programmatically create interactive, branching conversa
 
 - **🌳 Branching Conversations**: Create and explore multiple conversation paths from any message
 - **🔧 Tool Call Visualization**: See how your LLM uses tools with clear input/output flows
-- **⚡ Real-time Updates**: Live collaboration and streaming updates via Server-Sent Events
-- **🎨 Rich Content Support**: Text, code blocks, images, and extensible content types
-- **🔒 Privacy First**: 100% local deployment with no data leaving your machine
-- **🚀 Easy Integration**: Simple Python API that works with any LLM client
 - **📦 Zero Dependencies**: Self-contained with built-in web UI
 
 ## 🚀 Quick Start
@@ -27,7 +22,8 @@ LLM Canvas allows you to programmatically create interactive, branching conversa
 ### Installation
 
 ```bash
-pip install llm-canvas[server]
+pip install llm-canvas
+llm-canvas server --port 8000
 ```
 
 ### Basic Usage
