@@ -40,7 +40,7 @@ export const GalleryPage: React.FC = () => {
 
     // Only set up periodic refresh for local mode (not gh-page mode)
     // Examples are static, so no need to refresh them
-    let refreshInterval: number | null = null;
+    let refreshInterval = null;
     if (config.build.mode === "local") {
       refreshInterval = setInterval(() => {
         loadCanvases();
