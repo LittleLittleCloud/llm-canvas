@@ -1,8 +1,10 @@
 # LLM Canvas
 
-**Visualize and navigate Large Language Model conversations like never before.**
+**Visualize complex LLM conversation flows like never before.**
 
-LLM Canvas allows you to programmatically create interactive, branching conversation trees. Build complex conversation structures, explore different response paths, and visualize tool calls in a beautiful web interface — all while maintaining complete privacy with local deployment.
+As LLM applications evolve, conversation flows become increasingly complex. Conversations may branch into multiple paths, run in parallel, or require summarization across different threads. Managing and understanding these intricate conversation flows becomes a significant challenge in LLM ops.
+
+LLM Canvas solves this by providing a powerful visualization tool for complex conversation flows. Create branching conversation trees, explore different response paths, and visualize tool interactions through an intuitive web interface — all while maintaining complete privacy with local deployment.
 
 [![PyPI](https://img.shields.io/pypi/v/llm-canvas)](https://pypi.org/project/llm-canvas/)
 ![License](https://img.shields.io/badge/License-MIT-green)
