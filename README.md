@@ -24,7 +24,16 @@ LLM Canvas allows you to programmatically create interactive, branching conversa
 
 ```bash
 pip install llm-canvas
+```
+
+### Start Local Server
+
+```bash
+# Start the local server
 llm-canvas server --port 8000
+
+# Server starts at http://localhost:8000
+# Create and view your canvases in the web interface
 ```
 
 ### Basic Usage
@@ -46,28 +55,7 @@ client.add_message(
 )
 ```
 
-### Start Local Server
-
-```bash
-# Start the local server
-llm-canvas server --port 8000
-
-# Server starts at http://localhost:8000
-# Create and view your canvases in the web interface
-```
-
-## 💡 What Makes LLM Canvas Special?
-
-### Git-Like Conversation Management
-
-Just like Git manages code versions, LLM Canvas manages conversation versions:
-
-- **Branches**: Multiple conversation paths within a single canvas
-- **Commits**: Each message is committed to a branch
-- **Checkout**: Switch between different conversation branches
-- **Merge**: Explore different paths and outcomes
-
-### Advanced Use Cases
+### Use Cases
 
 #### 1. **Conversation Branching**
 
@@ -98,104 +86,7 @@ client.add_message(canvas_id, [
 ], "user")
 ```
 
-## 🎯 Perfect For
-
-- **🔬 AI Researchers**: Analyze conversation patterns and model behavior
-- **👨‍💻 LLM Developers**: Debug and optimize chatbot interactions
-- **📚 Educators**: Teach AI concepts with visual examples
-- **🚀 Startups**: Prototype and demo conversational AI applications
-- **🔒 Privacy-Conscious Users**: Keep all data local and secure
-
-## 📚 Examples & Documentation
-
-### Interactive Examples
-
-Run the included examples to see LLM Canvas in action:
-
-```bash
-# Start the server first
-llm-canvas server
-
-# Then run examples (in a new terminal)
-python -m examples.run_examples
-
-# Or run specific examples:
-python -m examples.hello_example          # Basic conversation
-python -m examples.weather_tool_example   # Tool usage demo
-python -m examples.vacation_planning_example  # Conversation branching
-python -m examples.investment_decision_example  # Complex multi-branch scenario
-```
-
-Visit `http://localhost:8000` to see all your canvases in the web interface!
-
-### Key Concepts
-
-| Concept      | Description                       | Like Git       |
-| ------------ | --------------------------------- | -------------- |
-| **Canvas**   | A workspace for LLM conversations | Repository     |
-| **Branch**   | Linear conversation threads       | Branch         |
-| **Message**  | Individual conversation entries   | Commit         |
-| **Checkout** | Switch between conversation paths | `git checkout` |
-| **Commit**   | Add messages to a branch          | `git commit`   |
-
-📝 **See detailed examples** → [examples/README.md](examples/README.md)
-
-## 🛠️ Development
-
-### Local Development Setup
-
-```bash
-git clone https://github.com/LittleLittleCloud/llm_canvas.git
-cd llm_canvas
-
-# Install dependencies
-pip install -e ".[server,dev]"
-
-# Build frontend
-cd web_ui && npm install && npm run build && cd ..
-
-# Start development server
-llm-canvas server --port 8000
-```
-
-### Frontend Development
-
-```bash
-# Start backend server
-llm-canvas server --port 8000
-
-# Start frontend dev server (in another terminal)
-cd web_ui
-npm run dev  # Runs on http://localhost:5173
-```
-
-## 🔒 Privacy & Data
-
-**Local-First Philosophy**: Your conversations stay on your machine.
-
-- ✅ **No external API calls** for the visualization server
-- ✅ **No data collection** or telemetry
-- ✅ **No account required** for local usage
-- ✅ **Full control** over your conversation data
-- ⚠️ **Session-based storage** (data lost on server restart)
-
-> **Note**: The local server does not persist data between sessions. For permanent storage, consider our [cloud plans](https://llm-canvas.com/pricing) or implement your own persistence layer.
-
-## 🌐 Deployment Options
-
-### Local Server (Free & Open Source)
-
-- ✅ Complete privacy control
-- ✅ All visualization features
-- ❌ No data persistence
-- ❌ Session-only storage
-
-### Cloud Server (Coming Soon)
-
-- ✅ Permanent data storage
-- ✅ Cross-device access
-- ✅ Team collaboration
-- ✅ Backup & recovery
+📝 **More examples** → [examples/README.md](examples/README.md)
 
 ## 🤝 Contributing
 
@@ -206,12 +97,12 @@ We welcome contributions! LLM Canvas is open source and community-driven.
 - � **Pull Requests**: See our [Contributing Guide](CONTRIBUTING.md)
 - 📖 **Documentation**: Help improve our docs
 
+## LLM Canvas: Story Behind
+
+Check out the [full story](https://dev.to/littlelittlecloud/llm-canvas-the-story-behind-11i6) to learn about the inspiration and development journey of LLM Canvas.
+
 ## 📄 License
 
 MIT License - see [LICENSE](LICENSE) for details.
 
 ---
-
-**Built with ❤️ for the AI community**
-
-Transform your LLM conversations from linear logs into navigable, visual experiences. Start exploring today!
