@@ -8,9 +8,7 @@ from llm_canvas.types import Message
 def parallel(prompt: str, inputs: list[dict], n_workers: int = 3) -> list[str]:
     """Process multiple inputs concurrently with the same prompt."""
     with ThreadPoolExecutor(max_workers=n_workers) as executor:
-        futures = [
-            executor.submit(chain, prompt, [x["input"]], x["branch"]) for x in inputs
-        ]
+        futures = [executor.submit(chain, prompt, [x["input"]], x["branch"]) for x in inputs]
         return [f.result() for f in futures]
 
 
