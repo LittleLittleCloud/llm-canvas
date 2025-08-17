@@ -10,10 +10,11 @@ import { GithubLandingPage } from "./pages/GithubLandingPage";
 
 export const App: React.FC = () => {
   const isGithubMode = config.build.mode === "gh-page";
+  const basename = isGithubMode ? "/llm-canvas" : "/";
 
   return (
     <ThemeProvider>
-      <Router>
+      <Router basename={basename}>
         <div className="flex flex-col h-screen bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors duration-200">
           <Header />
           <div className="flex-1 overflow-auto">
