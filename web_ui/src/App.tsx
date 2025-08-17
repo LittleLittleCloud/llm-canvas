@@ -4,6 +4,7 @@ import { Header } from "./components/Header";
 import { ThemeProvider } from "./components/ThemeProvider";
 import "./index.css";
 import { CanvasPage } from "./pages/CanvasPage";
+import { DocumentationPage } from "./pages/DocumentationPage";
 import { GalleryPage } from "./pages/GalleryPage";
 
 export const App: React.FC = () => {
@@ -16,6 +17,7 @@ export const App: React.FC = () => {
             <Routes>
               <Route path="/" element={<GalleryPage />} />
               <Route path="/canvas/:id" element={<CanvasPage />} />
+              <Route path="/docs" element={<DocumentationPage />} />
               <Route
                 path="*"
                 element={

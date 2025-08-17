@@ -21,6 +21,28 @@ export const Header: React.FC = () => {
         <ServerStatusIndicator />
       </div>
       <div className="flex items-center space-x-4">
+        <nav className="flex items-center space-x-4">
+          <button
+            onClick={() => navigate("/")}
+            className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
+              location.pathname === "/"
+                ? "bg-white/20 text-white"
+                : "text-white/80 hover:text-white hover:bg-white/10"
+            }`}
+          >
+            Gallery
+          </button>
+          <button
+            onClick={() => navigate("/docs")}
+            className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
+              location.pathname === "/docs"
+                ? "bg-white/20 text-white"
+                : "text-white/80 hover:text-white hover:bg-white/10"
+            }`}
+          >
+            Documentation
+          </button>
+        </nav>
         <ThemeToggle />
         {isCanvasPage && canvas && (
           <div className="text-xs opacity-75 font-mono">{canvas.canvas_id}</div>

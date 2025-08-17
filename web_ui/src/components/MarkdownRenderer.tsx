@@ -1,10 +1,16 @@
 import React from "react";
 import ReactMarkdown from "react-markdown";
-import rehypeHighlight from "rehype-highlight";
+import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
+import {
+  oneDark,
+  oneLight,
+} from "react-syntax-highlighter/dist/esm/styles/prism";
 import rehypeKatex from "rehype-katex";
 import remarkBreaks from "remark-breaks";
 import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
+import { useTheme } from "../hooks/useTheme";
+import { CopyButton } from "./CopyButton";
 
 interface MarkdownRendererProps {
   content: string;
@@ -22,31 +28,48 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
     remarkPlugins.push(remarkBreaks);
   }
 
+  // Use the theme hook for reactive dark mode detection
+  const { isDark } = useTheme();
+
   return (
     <div className={`markdown-renderer ${className}`}>
       <ReactMarkdown
         remarkPlugins={remarkPlugins}
-        rehypePlugins={[rehypeKatex, rehypeHighlight]}
+        rehypePlugins={[rehypeKatex]}
         components={{
           // Customize code blocks
           code: ({ className, children, ...props }: any) => {
             const match = /language-(\w+)/.exec(className || "");
             const language = match ? match[1] : "";
             const inline = !className?.includes("language-");
+            const codeContent = String(children).replace(/\n$/, "");
 
             if (!inline) {
               return (
                 <div className="relative">
-                  {language && (
-                    <div className="absolute top-2 right-2 px-2 py-1 text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 rounded">
-                      {language}
-                    </div>
-                  )}
-                  <pre className="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg p-4 overflow-x-auto [&_.hljs]:!bg-transparent">
-                    <code className={className} {...props}>
-                      {children}
-                    </code>
-                  </pre>
+                  <div className="absolute top-2 right-2 z-10">
+                    <CopyButton content={codeContent} />
+                  </div>
+                  <SyntaxHighlighter
+                    style={isDark ? oneDark : oneLight}
+                    language={language || "text"}
+                    PreTag="div"
+                    customStyle={{
+                      margin: 0,
+                      borderRadius: "0.5rem",
+                      fontSize: "0.875rem",
+                      lineHeight: "1.5",
+                    }}
+                    codeTagProps={{
+                      style: {
+                        fontSize: "0.875rem",
+                        fontFamily:
+                          'ui-monospace, SFMono-Regular, "SF Mono", Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
+                      },
+                    }}
+                  >
+                    {codeContent}
+                  </SyntaxHighlighter>
                 </div>
               );
             }
