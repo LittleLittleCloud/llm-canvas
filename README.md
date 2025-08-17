@@ -137,6 +137,8 @@ Visit `http://localhost:8000` to see all your canvases in the web interface!
 | **Checkout** | Switch between conversation paths | `git checkout` |
 | **Commit**   | Add messages to a branch          | `git commit`   |
 
+📝 **See detailed examples** → [examples/README.md](examples/README.md)
+
 ## 🛠️ Development
 
 ### Local Development Setup
