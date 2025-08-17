@@ -122,7 +122,7 @@ jobs:
 
       - name: Build package
         run: |
-          uv run python build.py
+          uv build
 
       - name: Generate release notes
         id: release_notes
