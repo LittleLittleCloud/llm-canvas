@@ -1,73 +1,31 @@
 import React from "react";
 import { MarkdownRenderer } from "../components/MarkdownRenderer";
 
-export const DocumentationPage: React.FC = () => {
+export const GithubLandingPage: React.FC = () => {
   // Code examples as markdown strings
   const installationCode = `\`\`\`bash
 pip install llm-canvas
+\`\`\``;
+
+  const startLlMCanvasCode = `\`\`\`bash
 llm-canvas server --port 8000
 \`\`\``;
 
-  const basicUsageCode = `\`\`\`python
-from llm_canvas import CanvasClient
-
-client = CanvasClient()
-canvas = client.create_canvas("My Chat")
-\`\`\``;
-
   const branchingConversationCode = `\`\`\`python
-from llm_canvas import CanvasClient
-
+# Create client
 client = CanvasClient()
-canvas = client.create_canvas("AI Conversation", "Exploring different responses")
+canvas = client.create_canvas("Hello Canvas")
 
-# Main conversation
-user_msg = client.add_message(canvas.canvas_id, "Explain quantum computing", "user")
-ai_msg = client.add_message(
-    canvas.canvas_id,
-    "Quantum computing uses quantum mechanics...",
-    "assistant",
-    parent_node_id=user_msg
-)
+# Get main branch
+main_branch = canvas.checkout(name="main", create_if_not_exists=True)
 
-# Create branches for different follow-ups
-client.add_message(canvas.canvas_id, "Can you give examples?", "user", parent_node_id=ai_msg)
-client.add_message(canvas.canvas_id, "How is it different from classical computing?", "user", parent_node_id=ai_msg)
+# Create and commit the user message
+user_message: Message = {"role": "user", "content": [{"type": "text", "text": "Hello Canvas"}]}
+main_branch.commit_message(user_message)
 
-# Start the server to visualize
-client.run_server(port=8000)
-\`\`\``;
-
-  const toolUsageCode = `\`\`\`python
-# Assistant uses a tool
-tool_msg = client.add_message(
-    canvas.canvas_id,
-    [
-        {"type": "text", "text": "I'll check the weather for you."},
-        {
-            "type": "tool_use",
-            "id": "weather_001", 
-            "name": "get_weather",
-            "input": {"location": "San Francisco"}
-        }
-    ],
-    "assistant",
-    parent_node_id=user_msg
-)
-
-# Tool result
-result_msg = client.add_message(
-    canvas.canvas_id,
-    [
-        {
-            "type": "tool_result",
-            "tool_use_id": "weather_001",
-            "content": '{"temperature": 72, "condition": "sunny"}'
-        }
-    ],
-    "user",
-    parent_node_id=tool_msg
-)
+# Create and commit the assistant response
+assistant_message: Message = {"role": "assistant", "content": [{"type": "text", "text": "Model reply"}]}
+main_branch.commit_message(assistant_message)
 \`\`\``;
 
   return (
@@ -76,12 +34,11 @@ result_msg = client.add_message(
         {/* Header */}
         <div className="text-center mb-16">
           <h1 className="text-5xl font-bold bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text text-transparent mb-6">
-            LLM Canvas Documentation
+            LLM Canvas
           </h1>
           <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto leading-relaxed">
-            Visualize and navigate Large Language Model conversations like never
-            before. Create interactive, branching conversation trees with
-            complete privacy.
+            Visualize and navigate Large Language Model conversations with
+            interactive, branching conversation trees.
           </p>
         </div>
 
@@ -104,7 +61,7 @@ result_msg = client.add_message(
             Quick Start
           </h2>
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8 border border-gray-200 dark:border-gray-700">
-            <div className="grid md:grid-cols-2 gap-8">
+            <div className="space-y-8">
               <div>
                 <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
                   Installation
@@ -113,9 +70,15 @@ result_msg = client.add_message(
               </div>
               <div>
                 <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-                  Basic Usage
+                  Start llm canvas
                 </h3>
-                <MarkdownRenderer content={basicUsageCode} />
+                <MarkdownRenderer content={startLlMCanvasCode} />
+              </div>
+              <div>
+                <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+                  Hello Canvas
+                </h3>
+                <MarkdownRenderer content={branchingConversationCode} />
               </div>
             </div>
           </div>
@@ -341,28 +304,100 @@ result_msg = client.add_message(
                 d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"
               />
             </svg>
-            Code Examples
+            Examples && Gallery
           </h2>
-          <div className="space-y-6">
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700">
-              <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-                <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
-                  Creating a Branching Conversation
-                </h3>
-              </div>
+          <div className="grid md:grid-cols-2 gap-6">
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 hover:shadow-xl transition-shadow">
               <div className="p-6">
-                <MarkdownRenderer content={branchingConversationCode} />
+                <div className="w-12 h-12 bg-gradient-to-br from-pink-100 to-pink-200 dark:from-pink-900 dark:to-pink-800 rounded-lg flex items-center justify-center mb-4">
+                  <svg
+                    className="w-6 h-6 text-pink-600"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"
+                    />
+                  </svg>
+                </div>
+                <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-3">
+                  Examples
+                </h3>
+                <p className="text-gray-600 dark:text-gray-300 mb-4">
+                  Explore real-world examples showing different LLM conversation
+                  patterns and workflows.
+                </p>
+                <a
+                  href="https://github.com/LittleLittleCloud/llm-canvas/tree/main/examples"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center text-pink-600 hover:text-pink-700 dark:text-pink-400 dark:hover:text-pink-300 font-medium"
+                >
+                  View Examples
+                  <svg
+                    className="w-4 h-4 ml-1"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                    />
+                  </svg>
+                </a>
               </div>
             </div>
 
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700">
-              <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-                <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
-                  Tool Usage Visualization
-                </h3>
-              </div>
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 hover:shadow-xl transition-shadow">
               <div className="p-6">
-                <MarkdownRenderer content={toolUsageCode} />
+                <div className="w-12 h-12 bg-gradient-to-br from-purple-100 to-purple-200 dark:from-purple-900 dark:to-purple-800 rounded-lg flex items-center justify-center mb-4">
+                  <svg
+                    className="w-6 h-6 text-purple-600"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
+                    />
+                  </svg>
+                </div>
+                <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-3">
+                  Gallery
+                </h3>
+                <p className="text-gray-600 dark:text-gray-300 mb-4">
+                  Browse pre-built canvas examples and explore interactive
+                  conversation trees.
+                </p>
+                <a
+                  href="/gallery"
+                  className="inline-flex items-center text-purple-600 hover:text-purple-700 dark:text-purple-400 dark:hover:text-purple-300 font-medium"
+                >
+                  Browse Gallery
+                  <svg
+                    className="w-4 h-4 ml-1"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 5l7 7-7 7"
+                    />
+                  </svg>
+                </a>
               </div>
             </div>
           </div>
@@ -613,7 +648,7 @@ result_msg = client.add_message(
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
               <a
-                href="https://github.com/LittleLittleCloud/llm_canvas"
+                href="https://github.com/LittleLittleCloud/llm-canvas"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-gray-800 to-gray-900 text-white font-medium rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-all duration-200"

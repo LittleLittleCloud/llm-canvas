@@ -1,16 +1,17 @@
+import { Github } from "lucide-react";
 import React from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { useCanvasStore } from "../store/canvasStore";
+import config from "../config";
 import { LLMCanvasPrimaryLogo } from "./Logo";
 import { ServerStatusIndicator } from "./ServerStatusIndicator";
 import { ThemeToggle } from "./ThemeToggle";
+import { Button } from "./ui/button";
 
 export const Header: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const canvas = useCanvasStore(s => s.canvas);
 
-  const isCanvasPage = location.pathname.startsWith("/canvas/");
+  const isGithubMode = config.build.mode === "gh-page";
 
   return (
     <header className="p-4 bg-indigo-600 dark:bg-gray-800 text-white font-semibold shadow flex items-center justify-between transition-colors duration-200">
@@ -18,35 +19,35 @@ export const Header: React.FC = () => {
         <div className="cursor-pointer" onClick={() => navigate("/")}>
           <LLMCanvasPrimaryLogo />
         </div>
-        <ServerStatusIndicator />
-      </div>
-      <div className="flex items-center space-x-4">
-        <nav className="flex items-center space-x-4">
-          <button
-            onClick={() => navigate("/")}
-            className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
-              location.pathname === "/"
-                ? "bg-white/20 text-white"
-                : "text-white/80 hover:text-white hover:bg-white/10"
-            }`}
+        {isGithubMode && (
+          <Button
+            onClick={() => navigate("/gallery")}
+            variant="ghost"
+            size="sm"
+            className="text-white hover:text-white hover:bg-white/10"
           >
             Gallery
-          </button>
-          <button
-            onClick={() => navigate("/docs")}
-            className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
-              location.pathname === "/docs"
-                ? "bg-white/20 text-white"
-                : "text-white/80 hover:text-white hover:bg-white/10"
-            }`}
-          >
-            Documentation
-          </button>
-        </nav>
-        <ThemeToggle />
-        {isCanvasPage && canvas && (
-          <div className="text-xs opacity-75 font-mono">{canvas.canvas_id}</div>
+          </Button>
         )}
+      </div>
+      <div className="flex items-center space-x-2">
+        {!isGithubMode && <ServerStatusIndicator />}
+        <Button
+          asChild
+          variant="ghost"
+          size="icon"
+          className="text-white/80 hover:text-white hover:bg-white/10"
+        >
+          <a
+            href="https://github.com/LittleLittleCloud/llm-canvas"
+            target="_blank"
+            rel="noopener noreferrer"
+            title="View on GitHub"
+          >
+            <Github className="w-5 h-5" />
+          </a>
+        </Button>
+        <ThemeToggle />
       </div>
     </header>
   );

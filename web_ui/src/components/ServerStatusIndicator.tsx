@@ -1,6 +1,7 @@
 import { Loader2, Plug, PlugZap } from "lucide-react";
 import React, { useState } from "react";
 import { useServerStatus } from "../hooks/useServerStatus";
+import { Button } from "./ui/button";
 
 interface ServerStatusIndicatorProps {
   className?: string;
@@ -23,6 +24,19 @@ export const ServerStatusIndicator: React.FC<ServerStatusIndicatorProps> = ({
         return "text-yellow-400";
       default:
         return "text-gray-400";
+    }
+  };
+
+  const getHoverStatusColor = () => {
+    switch (status) {
+      case "healthy":
+        return "hover:text-green-300";
+      case "error":
+        return "hover:text-red-300";
+      case "loading":
+        return "hover:text-yellow-300";
+      default:
+        return "hover:text-gray-300";
     }
   };
 
@@ -60,15 +74,15 @@ export const ServerStatusIndicator: React.FC<ServerStatusIndicatorProps> = ({
   return (
     <div className={`relative ${className}`}>
       {/* Connection Status Button */}
-      <button
+      <Button
         onClick={() => setShowPopout(!showPopout)}
-        className={`${getStatusColor()} ${
-          status === "loading" ? "" : ""
-        } hover:opacity-80 transition-opacity duration-200 cursor-pointer`}
+        variant="ghost"
+        size="icon"
+        className={`${getStatusColor()} ${getHoverStatusColor()} hover:bg-white/10 duration-200`}
         title="Click to view server status details"
       >
         {getStatusIcon()}
-      </button>
+      </Button>
 
       {/* Popout Panel */}
       {showPopout && (
@@ -80,7 +94,7 @@ export const ServerStatusIndicator: React.FC<ServerStatusIndicatorProps> = ({
           />
 
           {/* Popout Content */}
-          <div className="absolute left-0 top-8 z-20 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-lg shadow-lg border border-gray-200 dark:border-gray-600 p-3 min-w-56">
+          <div className="absolute right-8 top-10 z-20 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-lg shadow-lg border border-gray-200 dark:border-gray-600 p-3 min-w-56">
             <div className="space-y-2">
               {/* Header */}
               <div className="flex items-center justify-between">
@@ -123,15 +137,17 @@ export const ServerStatusIndicator: React.FC<ServerStatusIndicatorProps> = ({
               )}
 
               {/* Refresh Button */}
-              <button
+              <Button
                 onClick={() => {
                   checkStatus();
                 }}
-                className="w-full text-xs bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 py-1.5 px-2 rounded hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors duration-200"
+                variant="ghost"
+                size="sm"
+                className="w-full text-xs"
                 disabled={status === "loading"}
               >
                 {status === "loading" ? "Checking..." : "Refresh"}
-              </button>
+              </Button>
             </div>
           </div>
         </>

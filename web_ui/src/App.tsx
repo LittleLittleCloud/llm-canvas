@@ -2,12 +2,15 @@ import React from "react";
 import { Route, BrowserRouter as Router, Routes } from "react-router-dom";
 import { Header } from "./components/Header";
 import { ThemeProvider } from "./components/ThemeProvider";
+import config from "./config";
 import "./index.css";
 import { CanvasPage } from "./pages/CanvasPage";
-import { DocumentationPage } from "./pages/DocumentationPage";
 import { GalleryPage } from "./pages/GalleryPage";
+import { GithubLandingPage } from "./pages/GithubLandingPage";
 
 export const App: React.FC = () => {
+  const isGithubMode = config.build.mode === "gh-page";
+
   return (
     <ThemeProvider>
       <Router>
@@ -15,9 +18,14 @@ export const App: React.FC = () => {
           <Header />
           <div className="flex-1 overflow-auto">
             <Routes>
-              <Route path="/" element={<GalleryPage />} />
+              <Route
+                path="/"
+                element={isGithubMode ? <GithubLandingPage /> : <GalleryPage />}
+              />
+              {isGithubMode && (
+                <Route path="/gallery" element={<GalleryPage />} />
+              )}
               <Route path="/canvas/:id" element={<CanvasPage />} />
-              <Route path="/docs" element={<DocumentationPage />} />
               <Route
                 path="*"
                 element={

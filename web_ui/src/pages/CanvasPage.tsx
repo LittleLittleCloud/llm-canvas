@@ -1,7 +1,9 @@
 import React, { useEffect } from "react";
 import { useParams } from "react-router-dom";
+import { canvasExampleService } from "../api/canvasExampleService";
 import canvasService from "../api/canvasService";
 import { CanvasView } from "../components/CanvasView";
+import { config } from "../config";
 import { useCanvasStore } from "../store/canvasStore";
 
 export const CanvasPage: React.FC = () => {
@@ -13,10 +15,20 @@ export const CanvasPage: React.FC = () => {
 
   useEffect(() => {
     if (id) {
-      canvasService
-        .fetchCanvas(id)
+      // Use example service when in gh-page mode, otherwise use regular API service
+      const fetchCanvas =
+        config.build.mode === "gh-page"
+          ? canvasExampleService.fetchExample(id)
+          : canvasService.fetchCanvas(id);
+
+      fetchCanvas
         .then(data => {
-          setCanvas(data);
+          if (data) {
+            setCanvas(data);
+          } else {
+            console.error("Canvas not found");
+            clear();
+          }
         })
         .catch(err => {
           console.error("Failed to fetch canvas:", err);

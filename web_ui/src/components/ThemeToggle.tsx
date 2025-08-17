@@ -1,6 +1,7 @@
 import { Monitor, Moon, Sun } from "lucide-react";
 import React from "react";
 import { Theme, useThemeStore } from "../store/themeStore";
+import { Button } from "./ui/button";
 
 export const ThemeToggle: React.FC = () => {
   const { theme, setTheme } = useThemeStore();
@@ -20,13 +21,15 @@ export const ThemeToggle: React.FC = () => {
   };
 
   return (
-    <button
+    <Button
       onClick={handleThemeChange}
-      className="flex items-center space-x-2 px-3 py-2 text-sm font-medium text-white hover:text-indigo-200 dark:text-gray-300 dark:hover:text-white transition-colors duration-200 rounded-md hover:bg-indigo-700/50 dark:hover:bg-gray-700/50"
+      variant="ghost"
+      size="sm"
+      className="flex items-center space-x-2 text-white/80 hover:text-white hover:bg-white/10 dark:text-gray-300 dark:hover:text-white transition-colors duration-200"
       title={`Current theme: ${currentTheme?.label}. Click to cycle themes.`}
     >
       {currentTheme?.icon}
       <span className="hidden sm:inline">{currentTheme?.label}</span>
-    </button>
+    </Button>
   );
 };

@@ -1,0 +1,117 @@
+{
+  "title": "Chain",
+  "last_updated": 1755392672.7675257,
+  "description": "\n    This canvas visualizes the chain of thought for analyzing the Q3 performance report.\n    Each step represents a different aspect of the analysis, from data extraction to final presentation.\n\n    Original notebook: https://github.com/anthropics/anthropic-cookbook/blob/main/patterns/agents/basic_workflows.ipynb\n    ",
+  "canvas_id": "474f369e-bba9-4c3a-81e2-c30395457010",
+  "created_at": 1755329487.4586556,
+  "nodes": {
+    "9c6b3bb6-8c5e-47f4-9eae-aca3a973a349": {
+      "id": "9c6b3bb6-8c5e-47f4-9eae-aca3a973a349",
+      "message": {
+        "content": "\nQ3 Performance Summary:\nOur customer satisfaction score rose to 92 points this quarter.\nRevenue grew by 45% compared to last year.\nMarket share is now at 23% in our primary market.\nCustomer churn decreased to 5% from 8%.\nNew user acquisition cost is $43 per user.\nProduct adoption rate increased to 78%.\nEmployee satisfaction is at 87 points.\nOperating margin improved to 34%.\n",
+        "role": "user"
+      },
+      "parent_id": null,
+      "child_ids": ["b88af4d9-6780-4e47-a4e4-ba70b4261dad"],
+      "meta": {
+        "timestamp": 1755329487.4616587
+      }
+    },
+    "b88af4d9-6780-4e47-a4e4-ba70b4261dad": {
+      "id": "b88af4d9-6780-4e47-a4e4-ba70b4261dad",
+      "message": {
+        "content": "Extract only the numerical values and their associated metrics from the text.\n    Format each as 'value: metric' on a new line.\n    Example format:\n    92: customer satisfaction\n    45%: revenue growth",
+        "role": "user"
+      },
+      "parent_id": "9c6b3bb6-8c5e-47f4-9eae-aca3a973a349",
+      "child_ids": ["00146039-e6db-4655-932e-d9859bc01061"],
+      "meta": {
+        "timestamp": 1755329487.4656563
+      }
+    },
+    "00146039-e6db-4655-932e-d9859bc01061": {
+      "id": "00146039-e6db-4655-932e-d9859bc01061",
+      "message": {
+        "content": "92: customer satisfaction points\n45%: revenue growth\n23%: market share\n5%: customer churn\n8%: previous customer churn\n$43: user acquisition cost\n78%: product adoption rate\n87: employee satisfaction points\n34%: operating margin",
+        "role": "assistant"
+      },
+      "parent_id": "b88af4d9-6780-4e47-a4e4-ba70b4261dad",
+      "child_ids": ["7c322834-2c97-4952-b8cb-ed4e0caf38c5"],
+      "meta": {
+        "timestamp": 1755329489.4901843
+      }
+    },
+    "7c322834-2c97-4952-b8cb-ed4e0caf38c5": {
+      "id": "7c322834-2c97-4952-b8cb-ed4e0caf38c5",
+      "message": {
+        "content": "Convert all numerical values to percentages where possible.\n    If not a percentage or points, convert to decimal (e.g., 92 points -> 92%).\n    Keep one number per line.\n    Example format:\n    92%: customer satisfaction\n    45%: revenue growth",
+        "role": "user"
+      },
+      "parent_id": "00146039-e6db-4655-932e-d9859bc01061",
+      "child_ids": ["0e89bc44-83a5-464e-81bc-f9e2906647d6"],
+      "meta": {
+        "timestamp": 1755329489.5021865
+      }
+    },
+    "0e89bc44-83a5-464e-81bc-f9e2906647d6": {
+      "id": "0e89bc44-83a5-464e-81bc-f9e2906647d6",
+      "message": {
+        "content": "92%: customer satisfaction\n45%: revenue growth\n23%: market share\n5%: customer churn\n8%: previous customer churn\n43.00: user acquisition cost\n78%: product adoption rate\n87%: employee satisfaction\n34%: operating margin",
+        "role": "assistant"
+      },
+      "parent_id": "7c322834-2c97-4952-b8cb-ed4e0caf38c5",
+      "child_ids": ["4e13a114-2521-4675-b6c5-7faa76691c8f"],
+      "meta": {
+        "timestamp": 1755329491.2458298
+      }
+    },
+    "4e13a114-2521-4675-b6c5-7faa76691c8f": {
+      "id": "4e13a114-2521-4675-b6c5-7faa76691c8f",
+      "message": {
+        "content": "Sort all lines in descending order by numerical value.\n    Keep the format 'value: metric' on each line.\n    Example:\n    92%: customer satisfaction\n    87%: employee satisfaction",
+        "role": "user"
+      },
+      "parent_id": "0e89bc44-83a5-464e-81bc-f9e2906647d6",
+      "child_ids": ["0b0762d5-e6ff-410e-8592-1265febcfd6e"],
+      "meta": {
+        "timestamp": 1755329491.2552261
+      }
+    },
+    "0b0762d5-e6ff-410e-8592-1265febcfd6e": {
+      "id": "0b0762d5-e6ff-410e-8592-1265febcfd6e",
+      "message": {
+        "content": "Here are the lines sorted in descending order by numerical value:\n\n92%: customer satisfaction\n87%: employee satisfaction\n78%: product adoption rate\n45%: revenue growth\n43.00: user acquisition cost\n34%: operating margin\n23%: market share\n8%: previous customer churn\n5%: customer churn",
+        "role": "assistant"
+      },
+      "parent_id": "4e13a114-2521-4675-b6c5-7faa76691c8f",
+      "child_ids": ["af4b0e80-3b2b-4383-8d11-a0df40aeff8f"],
+      "meta": {
+        "timestamp": 1755329493.0612361
+      }
+    },
+    "af4b0e80-3b2b-4383-8d11-a0df40aeff8f": {
+      "id": "af4b0e80-3b2b-4383-8d11-a0df40aeff8f",
+      "message": {
+        "content": "Format the sorted data as a markdown table with columns:\n\n| Metric | Value |\n|:--|--:|\n| Customer Satisfaction | 92% |\n    ",
+        "role": "user"
+      },
+      "parent_id": "0b0762d5-e6ff-410e-8592-1265febcfd6e",
+      "child_ids": ["4a2ed357-92d2-4856-8921-337ecb246fc1"],
+      "meta": {
+        "timestamp": 1755329493.0712447
+      }
+    },
+    "4a2ed357-92d2-4856-8921-337ecb246fc1": {
+      "id": "4a2ed357-92d2-4856-8921-337ecb246fc1",
+      "message": {
+        "content": "Here's the data formatted as a markdown table:\n\n| Metric | Value |\n|:--|--:|\n| Customer Satisfaction | 92% |\n| Employee Satisfaction | 87% |\n| Product Adoption Rate | 78% |\n| Revenue Growth | 45% |\n| User Acquisition Cost | 43.00 |\n| Operating Margin | 34% |\n| Market Share | 23% |\n| Previous Customer Churn | 8% |\n| Customer Churn | 5% |",
+        "role": "assistant"
+      },
+      "parent_id": "af4b0e80-3b2b-4383-8d11-a0df40aeff8f",
+      "child_ids": [],
+      "meta": {
+        "timestamp": 1755329495.3465214
+      }
+    }
+  }
+}
