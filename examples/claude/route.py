@@ -21,7 +21,7 @@ from llm_canvas.types import Message
 
 
 def route(
-    input: str,
+    input_str: str,
     routes: dict[str, str],
     route_branches: dict[str, Branch],
     route_analysis_branch: Branch,
@@ -29,9 +29,7 @@ def route(
     """Route input to specialized prompt using content classification."""
 
     # Log the input ticket to canvas
-    route_analysis_branch.commit_message(
-        message=Message(content=f"Support Ticket:\n{input}", role="user")
-    )
+    route_analysis_branch.commit_message(message=Message(content=f"Support Ticket:\n{input_str}", role="user"))
 
     selector_prompt = f"""
     Analyze the input and select the most appropriate support team from these options: {list(routes.keys())}
@@ -46,29 +44,25 @@ def route(
     The chosen team name
     </selection>
 
-    Input: {input}""".strip()
+    Input: {input_str}""".strip()  # noqa: S608
 
     route_response = llm_call(selector_prompt)
     route_key = extract_xml(route_response, "selection").strip().lower()
 
     # Log the routing decision to canvas
     routing_decision = f"Selected Route: {route_key}"
-    route_analysis_branch.commit_message(
-        message=Message(content=routing_decision, role="assistant")
-    )
+    route_analysis_branch.commit_message(message=Message(content=routing_decision, role="assistant"))
 
     # Validate route key exists
     if route_key not in routes:
-        raise ValueError(
-            f"Unknown route key: {route_key}. Available routes: {list(routes.keys())}"
-        )
+        raise ValueError(f"Unknown route key: {route_key}. Available routes: {list(routes.keys())}")
 
     # Process input with selected specialized prompt
     selected_prompt = routes[route_key]
 
     # Get the appropriate branch for the route
     branch = route_branches[route_key]
-    return chain(selected_prompt, [input], branch)
+    return chain(selected_prompt, [input_str], branch)
 
 
 support_routes = {
@@ -78,9 +72,9 @@ support_routes = {
     3. Explain any charges or discrepancies clearly
     4. List concrete next steps with timeline
     5. End with payment options if relevant
-    
+
     Keep responses professional but friendly.
-    
+
     Input: """,
     "technical": """You are a technical support engineer. Follow these guidelines:
     1. Always start with "Technical Support Response:"
@@ -88,9 +82,9 @@ support_routes = {
     3. Include system requirements if relevant
     4. Provide workarounds for common problems
     5. End with escalation path if needed
-    
+
     Use clear, numbered steps and technical details.
-    
+
     Input: """,
     "account": """You are an account security specialist. Follow these guidelines:
     1. Always start with "Account Support Response:"
@@ -98,9 +92,9 @@ support_routes = {
     3. Provide clear steps for account recovery/changes
     4. Include security tips and warnings
     5. Set clear expectations for resolution time
-    
+
     Maintain a serious, security-focused tone.
-    
+
     Input: """,
     "product": """You are a product specialist. Follow these guidelines:
     1. Always start with "Product Support Response:"
@@ -108,17 +102,17 @@ support_routes = {
     3. Include specific examples of usage
     4. Link to relevant documentation sections
     5. Suggest related features that might help
-    
+
     Be educational and encouraging in tone.
-    
+
     Input: """,
 }
 
 # Test with different support tickets
 tickets = [
     """Subject: Can't access my account
-    Message: Hi, I've been trying to log in for the past hour but keep getting an 'invalid password' error. 
-    I'm sure I'm using the right password. Can you help me regain access? This is urgent as I need to 
+    Message: Hi, I've been trying to log in for the past hour but keep getting an 'invalid password' error.
+    I'm sure I'm using the right password. Can you help me regain access? This is urgent as I need to
     submit a report by end of day.
     - John""",
     """Subject: Unexpected charge on my card
@@ -151,7 +145,7 @@ if __name__ == "__main__":
         2. The routing analysis and decision
         3. The specialized prompt used
         4. The final response
-        
+
         This demonstrates how LLM routing can be tracked and analyzed across different ticket types.
         """,
     )
@@ -159,18 +153,10 @@ if __name__ == "__main__":
     print("Processing support tickets...\n")
     main_branch = canvas.checkout("main", create_if_not_exists=True)
     route_analysis_branch = canvas.checkout("route_analysis", create_if_not_exists=True)
-    billing_support_branch = canvas.checkout(
-        "billing_support", create_if_not_exists=True
-    )
-    account_security_branch = canvas.checkout(
-        "account_security", create_if_not_exists=True
-    )
-    technical_support_branch = canvas.checkout(
-        "technical_support", create_if_not_exists=True
-    )
-    product_support_branch = canvas.checkout(
-        "product_support", create_if_not_exists=True
-    )
+    billing_support_branch = canvas.checkout("billing_support", create_if_not_exists=True)
+    account_security_branch = canvas.checkout("account_security", create_if_not_exists=True)
+    technical_support_branch = canvas.checkout("technical_support", create_if_not_exists=True)
+    product_support_branch = canvas.checkout("product_support", create_if_not_exists=True)
 
     route_analysis_branch.commit_message(
         Message(
@@ -185,50 +171,32 @@ if __name__ == "__main__":
     <selection>
     The chosen team name
     </selection>
-    """,
+    """,  # noqa: E501, S608
             role="user",
         )
     )
 
-    billing_support_branch.commit_message(
-        message=Message(content=support_routes["billing"], role="user")
-    )
-    account_security_branch.commit_message(
-        message=Message(content=support_routes["account"], role="user")
-    )
-    technical_support_branch.commit_message(
-        message=Message(content=support_routes["technical"], role="user")
-    )
-    product_support_branch.commit_message(
-        message=Message(content=support_routes["product"], role="user")
-    )
+    billing_support_branch.commit_message(message=Message(content=support_routes["billing"], role="user"))
+    account_security_branch.commit_message(message=Message(content=support_routes["account"], role="user"))
+    technical_support_branch.commit_message(message=Message(content=support_routes["technical"], role="user"))
+    product_support_branch.commit_message(message=Message(content=support_routes["product"], role="user"))
 
     for i, ticket in enumerate(tickets, 1):
         # Create temporary branches for each route for this ticket
         canvas.checkout(route_analysis_branch.name)
-        temp_route_analysis_branch = canvas.checkout(
-            f"ticket-{i}-route_analysis", create_if_not_exists=True
-        )
+        temp_route_analysis_branch = canvas.checkout(f"ticket-{i}-route_analysis", create_if_not_exists=True)
 
         canvas.checkout(billing_support_branch.name)
-        temp_billing_support_branch = canvas.checkout(
-            f"ticket-{i}-billing", create_if_not_exists=True
-        )
+        temp_billing_support_branch = canvas.checkout(f"ticket-{i}-billing", create_if_not_exists=True)
 
         canvas.checkout(account_security_branch.name)
-        temp_account_security_branch = canvas.checkout(
-            f"ticket-{i}-account", create_if_not_exists=True
-        )
+        temp_account_security_branch = canvas.checkout(f"ticket-{i}-account", create_if_not_exists=True)
 
         canvas.checkout(technical_support_branch.name)
-        temp_technical_support_branch = canvas.checkout(
-            f"ticket-{i}-technical", create_if_not_exists=True
-        )
+        temp_technical_support_branch = canvas.checkout(f"ticket-{i}-technical", create_if_not_exists=True)
 
         canvas.checkout(product_support_branch.name)
-        temp_product_support_branch = canvas.checkout(
-            f"ticket-{i}-product", create_if_not_exists=True
-        )
+        temp_product_support_branch = canvas.checkout(f"ticket-{i}-product", create_if_not_exists=True)
 
         # Create route_branches mapping for this ticket
         ticket_route_branches = {
