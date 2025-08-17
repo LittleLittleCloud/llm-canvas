@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "build:gh-pages": "VITE_BUILD_MODE=gh-page vite build",
     "preview": "vite preview",
     "generate_openapi_client": "openapi-ts && prettier --write src/client/**/*.ts",
     "format": "prettier --write src/**/*.{ts,tsx,js,jsx,json}",
