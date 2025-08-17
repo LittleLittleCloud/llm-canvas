@@ -1,0 +1,266 @@
+{
+  "title": "Support Ticket Routing",
+  "last_updated": 1755392951.115459,
+  "description": "\n        This canvas visualizes the routing process for support tickets.\n        Each branch represents a different support ticket and shows:\n        1. The original ticket content\n        2. The routing analysis and decision\n        3. The specialized prompt used\n        4. The final response\n        \n        This demonstrates how LLM routing can be tracked and analyzed across different ticket types.\n        ",
+  "canvas_id": "062a3712-f1f1-4165-bb43-3965ac21c177",
+  "created_at": 1755328111.542464,
+  "nodes": {
+    "369e1abe-bebe-49e7-9175-fd5afa90f2a9": {
+      "id": "369e1abe-bebe-49e7-9175-fd5afa90f2a9",
+      "message": {
+        "content": "Analyze the input and select the most appropriate support team from these options: ['billing', 'technical', 'account', 'product']\n    First explain your reasoning, then provide your selection in this XML format:\n\n    <reasoning>\n    Brief explanation of why this ticket should be routed to a specific team.\n    Consider key terms, user intent, and urgency level.\n    </reasoning>\n\n    <selection>\n    The chosen team name\n    </selection>\n    ",
+        "role": "user"
+      },
+      "parent_id": null,
+      "child_ids": [
+        "fa76bc2a-71f4-4cdc-ad82-cba875133d88",
+        "6999c783-6f36-49f9-9ea6-d802f7d73a97",
+        "95ec83dd-42e9-4848-9535-decbbd23d2b1",
+        "5ae74296-7135-426c-a503-4b41c467f05d"
+      ],
+      "meta": {
+        "timestamp": 1755328111.546463
+      }
+    },
+    "5b585db0-8d69-4334-b644-859982a12d28": {
+      "id": "5b585db0-8d69-4334-b644-859982a12d28",
+      "message": {
+        "content": "You are a billing support specialist. Follow these guidelines:\n    1. Always start with \"Billing Support Response:\"\n    2. First acknowledge the specific billing issue\n    3. Explain any charges or discrepancies clearly\n    4. List concrete next steps with timeline\n    5. End with payment options if relevant\n    \n    Keep responses professional but friendly.\n    \n    Input: ",
+        "role": "user"
+      },
+      "parent_id": null,
+      "child_ids": ["96d5455a-fc99-4901-9979-9b8cbb47c864"],
+      "meta": {
+        "timestamp": 1755328111.5504632
+      }
+    },
+    "e87c6e7b-b4ca-432c-af29-ad08f852b964": {
+      "id": "e87c6e7b-b4ca-432c-af29-ad08f852b964",
+      "message": {
+        "content": "You are an account security specialist. Follow these guidelines:\n    1. Always start with \"Account Support Response:\"\n    2. Prioritize account security and verification\n    3. Provide clear steps for account recovery/changes\n    4. Include security tips and warnings\n    5. Set clear expectations for resolution time\n    \n    Maintain a serious, security-focused tone.\n    \n    Input: ",
+        "role": "user"
+      },
+      "parent_id": null,
+      "child_ids": ["1590adac-2089-47e0-ac18-36bf02e7b319"],
+      "meta": {
+        "timestamp": 1755328111.5544636
+      }
+    },
+    "34ed4463-ae2e-46d8-a9db-85724642463e": {
+      "id": "34ed4463-ae2e-46d8-a9db-85724642463e",
+      "message": {
+        "content": "You are a technical support engineer. Follow these guidelines:\n    1. Always start with \"Technical Support Response:\"\n    2. List exact steps to resolve the issue\n    3. Include system requirements if relevant\n    4. Provide workarounds for common problems\n    5. End with escalation path if needed\n    \n    Use clear, numbered steps and technical details.\n    \n    Input: ",
+        "role": "user"
+      },
+      "parent_id": null,
+      "child_ids": ["b3a96ece-3b0b-47b9-9b37-71374b35fa79"],
+      "meta": {
+        "timestamp": 1755328111.558464
+      }
+    },
+    "c5a2ef90-c53a-4810-b341-b1f2a113eaa2": {
+      "id": "c5a2ef90-c53a-4810-b341-b1f2a113eaa2",
+      "message": {
+        "content": "You are a product specialist. Follow these guidelines:\n    1. Always start with \"Product Support Response:\"\n    2. Focus on feature education and best practices\n    3. Include specific examples of usage\n    4. Link to relevant documentation sections\n    5. Suggest related features that might help\n    \n    Be educational and encouraging in tone.\n    \n    Input: ",
+        "role": "user"
+      },
+      "parent_id": null,
+      "child_ids": ["f9a86829-ca1b-4d4a-930a-1f657cf77d72"],
+      "meta": {
+        "timestamp": 1755328111.5614638
+      }
+    },
+    "fa76bc2a-71f4-4cdc-ad82-cba875133d88": {
+      "id": "fa76bc2a-71f4-4cdc-ad82-cba875133d88",
+      "message": {
+        "content": "Support Ticket:\nSubject: Can't access my account\n    Message: Hi, I've been trying to log in for the past hour but keep getting an 'invalid password' error. \n    I'm sure I'm using the right password. Can you help me regain access? This is urgent as I need to \n    submit a report by end of day.\n    - John",
+        "role": "user"
+      },
+      "parent_id": "369e1abe-bebe-49e7-9175-fd5afa90f2a9",
+      "child_ids": ["6c0cd919-61b6-41f7-969d-002dff03a94e"],
+      "meta": {
+        "timestamp": 1755328111.5664628
+      }
+    },
+    "6c0cd919-61b6-41f7-969d-002dff03a94e": {
+      "id": "6c0cd919-61b6-41f7-969d-002dff03a94e",
+      "message": {
+        "content": "Selected Route: account",
+        "role": "assistant"
+      },
+      "parent_id": "fa76bc2a-71f4-4cdc-ad82-cba875133d88",
+      "child_ids": [],
+      "meta": {
+        "timestamp": 1755328114.975256
+      }
+    },
+    "1590adac-2089-47e0-ac18-36bf02e7b319": {
+      "id": "1590adac-2089-47e0-ac18-36bf02e7b319",
+      "message": {
+        "content": "Subject: Can't access my account\n    Message: Hi, I've been trying to log in for the past hour but keep getting an 'invalid password' error. \n    I'm sure I'm using the right password. Can you help me regain access? This is urgent as I need to \n    submit a report by end of day.\n    - John",
+        "role": "user"
+      },
+      "parent_id": "e87c6e7b-b4ca-432c-af29-ad08f852b964",
+      "child_ids": ["4f9d6a6d-d019-4e62-9ca2-8af26ae12719"],
+      "meta": {
+        "timestamp": 1755328114.9852576
+      }
+    },
+    "4f9d6a6d-d019-4e62-9ca2-8af26ae12719": {
+      "id": "4f9d6a6d-d019-4e62-9ca2-8af26ae12719",
+      "message": {
+        "content": "Account Support Response:\n\nDear John,\n\nThank you for reporting your account access issue. For your security, we need to verify your identity before proceeding with account recovery.\n\nPlease follow these steps:\n\n1. Visit our secure password reset page at [secure link]\n2. Click \"Forgot Password\"\n3. Enter your email address associated with the account\n4. Follow the verification instructions sent to your email\n\nImportant Security Notes:\n- Never share your password with anyone\n- Ensure you're on our official website (https://[official domain])\n- The reset link expires in 30 minutes\n- Use a strong, unique password for your new credentials\n\nExpected Resolution Time:\n- Password reset link delivery: 5-10 minutes\n- Account access after successful reset: Immediate\n\nIf you don't receive the reset email within 10 minutes or continue experiencing issues, please contact our security team with your account email and username for additional verification.\n\nSECURITY WARNING: If you notice any suspicious activity on your account, please report it immediately.\n\nBest regards,\nAccount Security Team",
+        "role": "assistant"
+      },
+      "parent_id": "1590adac-2089-47e0-ac18-36bf02e7b319",
+      "child_ids": [],
+      "meta": {
+        "timestamp": 1755328120.0101051
+      }
+    },
+    "6999c783-6f36-49f9-9ea6-d802f7d73a97": {
+      "id": "6999c783-6f36-49f9-9ea6-d802f7d73a97",
+      "message": {
+        "content": "Support Ticket:\nSubject: Unexpected charge on my card\n    Message: Hello, I just noticed a charge of $49.99 on my credit card from your company, but I thought\n    I was on the $29.99 plan. Can you explain this charge and adjust it if it's a mistake?\n    Thanks,\n    Sarah",
+        "role": "user"
+      },
+      "parent_id": "369e1abe-bebe-49e7-9175-fd5afa90f2a9",
+      "child_ids": ["563f9fc6-c4da-436a-894d-493fb57e9495"],
+      "meta": {
+        "timestamp": 1755328120.046628
+      }
+    },
+    "563f9fc6-c4da-436a-894d-493fb57e9495": {
+      "id": "563f9fc6-c4da-436a-894d-493fb57e9495",
+      "message": {
+        "content": "Selected Route: billing",
+        "role": "assistant"
+      },
+      "parent_id": "6999c783-6f36-49f9-9ea6-d802f7d73a97",
+      "child_ids": [],
+      "meta": {
+        "timestamp": 1755328123.2034729
+      }
+    },
+    "96d5455a-fc99-4901-9979-9b8cbb47c864": {
+      "id": "96d5455a-fc99-4901-9979-9b8cbb47c864",
+      "message": {
+        "content": "Subject: Unexpected charge on my card\n    Message: Hello, I just noticed a charge of $49.99 on my credit card from your company, but I thought\n    I was on the $29.99 plan. Can you explain this charge and adjust it if it's a mistake?\n    Thanks,\n    Sarah",
+        "role": "user"
+      },
+      "parent_id": "5b585db0-8d69-4334-b644-859982a12d28",
+      "child_ids": ["a2281499-9e77-4209-9927-72ccc03fc759"],
+      "meta": {
+        "timestamp": 1755328123.2124813
+      }
+    },
+    "a2281499-9e77-4209-9927-72ccc03fc759": {
+      "id": "a2281499-9e77-4209-9927-72ccc03fc759",
+      "message": {
+        "content": "Billing Support Response:\n\nDear Sarah,\n\nThank you for bringing this billing concern to our attention regarding the $49.99 charge instead of your expected $29.99 plan rate.\n\nLet me explain what might have happened:\n- The $29.99 rate is our basic plan price\n- The $49.99 charge typically indicates an automatic upgrade to our premium plan, which sometimes occurs if certain usage thresholds are met\n\nHere are the next steps I'll take to resolve this:\n1. I'll review your account history immediately\n2. If there was no authorized upgrade, I'll process a $20 refund within 1-2 business days\n3. I'll ensure your plan is set back to the $29.99 basic tier\n4. You'll receive an email confirmation once these changes are complete (within 24 hours)\n\nTo prevent future unexpected charges, you can:\n- Monitor your usage through your account dashboard\n- Set up email alerts for plan changes\n- Enable auto-notifications before any automatic upgrades\n\nWould you like me to proceed with reviewing your account? Please provide your account number or the email address associated with your subscription.\n\nBest regards,\nBilling Support Team",
+        "role": "assistant"
+      },
+      "parent_id": "96d5455a-fc99-4901-9979-9b8cbb47c864",
+      "child_ids": [],
+      "meta": {
+        "timestamp": 1755328129.3307602
+      }
+    },
+    "95ec83dd-42e9-4848-9535-decbbd23d2b1": {
+      "id": "95ec83dd-42e9-4848-9535-decbbd23d2b1",
+      "message": {
+        "content": "Support Ticket:\nSubject: How to export data?\n    Message: I need to export all my project data to Excel. I've looked through the docs but can't\n    figure out how to do a bulk export. Is this possible? If so, could you walk me through the steps?\n    Best regards,\n    Mike",
+        "role": "user"
+      },
+      "parent_id": "369e1abe-bebe-49e7-9175-fd5afa90f2a9",
+      "child_ids": ["f6038d5b-b642-4906-95ff-acb6d67de033"],
+      "meta": {
+        "timestamp": 1755328129.3457618
+      }
+    },
+    "f6038d5b-b642-4906-95ff-acb6d67de033": {
+      "id": "f6038d5b-b642-4906-95ff-acb6d67de033",
+      "message": {
+        "content": "Selected Route: technical",
+        "role": "assistant"
+      },
+      "parent_id": "95ec83dd-42e9-4848-9535-decbbd23d2b1",
+      "child_ids": [],
+      "meta": {
+        "timestamp": 1755328132.3035743
+      }
+    },
+    "b3a96ece-3b0b-47b9-9b37-71374b35fa79": {
+      "id": "b3a96ece-3b0b-47b9-9b37-71374b35fa79",
+      "message": {
+        "content": "Subject: How to export data?\n    Message: I need to export all my project data to Excel. I've looked through the docs but can't\n    figure out how to do a bulk export. Is this possible? If so, could you walk me through the steps?\n    Best regards,\n    Mike",
+        "role": "user"
+      },
+      "parent_id": "34ed4463-ae2e-46d8-a9db-85724642463e",
+      "child_ids": ["eaaa1a3e-acc1-44bb-ab08-90d61c8b281b"],
+      "meta": {
+        "timestamp": 1755328132.3135762
+      }
+    },
+    "eaaa1a3e-acc1-44bb-ab08-90d61c8b281b": {
+      "id": "eaaa1a3e-acc1-44bb-ab08-90d61c8b281b",
+      "message": {
+        "content": "Technical Support Response:\n\nHello Mike,\n\nThank you for reaching out about exporting project data to Excel. I'll guide you through the standard bulk export process.\n\nStandard Export Steps:\n1. Log into your project dashboard\n2. Navigate to the \"Project Settings\" or \"Data Management\" section\n3. Look for \"Export\" or \"Download Data\" option\n4. Select \"Bulk Export\" or \"Full Project Export\"\n5. Choose Excel (.xlsx) as your export format\n6. Select the data categories you want to export\n7. Click \"Generate Export\"\n8. Wait for the export to complete\n9. Download the Excel file to your local machine\n\nSystem Requirements:\n- Updated web browser (Chrome, Firefox, or Safari)\n- Microsoft Excel 2010 or newer\n- Sufficient storage space for exported files\n\nCommon Issues and Workarounds:\nA. If export times out:\n   - Try exporting in smaller batches\n   - Use filters to reduce data size\n   \nB. If file is corrupted:\n   - Clear browser cache\n   - Try using a different browser\n   - Export as CSV first, then convert to Excel\n\nEscalation Path:\nIf you continue experiencing issues, please:\n1. Note your browser version and operating system\n2. Document any error messages\n3. Contact our advanced support team at support@company.com with ticket reference \"EXPORT-ASSIST\"\n\nLet me know if you need any clarification on these steps.\n\nBest regards,\nTechnical Support",
+        "role": "assistant"
+      },
+      "parent_id": "b3a96ece-3b0b-47b9-9b37-71374b35fa79",
+      "child_ids": [],
+      "meta": {
+        "timestamp": 1755328139.006369
+      }
+    },
+    "5ae74296-7135-426c-a503-4b41c467f05d": {
+      "id": "5ae74296-7135-426c-a503-4b41c467f05d",
+      "message": {
+        "content": "Support Ticket:\nSubject: Feature request - bulk actions\n    Message: I love using your product! I was wondering if you have any plans to add bulk action features\n    like bulk delete or bulk edit? This would really help with managing large datasets.\n    Also, are there any advanced features I might not know about that could help with my workflow?\n    Thanks!\n    Emma",
+        "role": "user"
+      },
+      "parent_id": "369e1abe-bebe-49e7-9175-fd5afa90f2a9",
+      "child_ids": ["c561a6bf-fee5-4d13-930b-9b869f061c5b"],
+      "meta": {
+        "timestamp": 1755328139.0173686
+      }
+    },
+    "c561a6bf-fee5-4d13-930b-9b869f061c5b": {
+      "id": "c561a6bf-fee5-4d13-930b-9b869f061c5b",
+      "message": {
+        "content": "Selected Route: product",
+        "role": "assistant"
+      },
+      "parent_id": "5ae74296-7135-426c-a503-4b41c467f05d",
+      "child_ids": [],
+      "meta": {
+        "timestamp": 1755328141.8513794
+      }
+    },
+    "f9a86829-ca1b-4d4a-930a-1f657cf77d72": {
+      "id": "f9a86829-ca1b-4d4a-930a-1f657cf77d72",
+      "message": {
+        "content": "Subject: Feature request - bulk actions\n    Message: I love using your product! I was wondering if you have any plans to add bulk action features\n    like bulk delete or bulk edit? This would really help with managing large datasets.\n    Also, are there any advanced features I might not know about that could help with my workflow?\n    Thanks!\n    Emma",
+        "role": "user"
+      },
+      "parent_id": "c5a2ef90-c53a-4810-b341-b1f2a113eaa2",
+      "child_ids": ["7dd81c0b-54db-487d-8d3b-2172180e99ef"],
+      "meta": {
+        "timestamp": 1755328141.8603802
+      }
+    },
+    "7dd81c0b-54db-487d-8d3b-2172180e99ef": {
+      "id": "7dd81c0b-54db-487d-8d3b-2172180e99ef",
+      "message": {
+        "content": "Product Support Response:\n\nHi Emma,\n\nThank you for your enthusiasm about our product! I'm happy to help you with bulk operations and share some power-user features you might find helpful.\n\nCurrently, you can perform bulk actions using these methods:\n- Use Shift+Click to select multiple items for batch operations\n- Ctrl/Cmd+A to select all items in the current view\n- Our filter feature combined with \"Select All\" for targeted bulk actions\n\nPro Tips for Managing Large Datasets:\n1. Smart Filters: Create saved filters for frequently used data segments\n2. Keyboard Shortcuts: \n   - Delete: Shift+Del for multiple selected items\n   - Edit: Ctrl/E to edit selected items\n3. Export/Import: Use CSV bulk editing for large-scale changes\n\nYou might also find these related features useful:\n- Templates for repeated actions\n- Custom views for different workflow needs\n- Automated rules for batch processing\n\nFor detailed instructions, check out:\n📚 Bulk Operations Guide: docs/bulk-actions\n📚 Advanced Features Tutorial: docs/power-user\n📚 Keyboard Shortcuts List: docs/shortcuts\n\nWe're actually working on expanding our bulk action capabilities in our next release. I'll make sure to add your feedback to our feature request tracking.\n\nLet me know if you'd like me to explain any of these features in more detail!\n\nBest regards,\nProduct Support Team",
+        "role": "assistant"
+      },
+      "parent_id": "f9a86829-ca1b-4d4a-930a-1f657cf77d72",
+      "child_ids": [],
+      "meta": {
+        "timestamp": 1755328148.7918386
+      }
+    }
+  }
+}

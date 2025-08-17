@@ -11,7 +11,7 @@ export const MessageNodeComponent: React.FC<Props> = ({ node }) => {
   const content = node.message.content;
 
   return (
-    <div className="rounded-xl border-0 p-2 space-y-3 text-sm leading-relaxed">
+    <div className="rounded-xl border-0 p-2 space-y-3 text-sm leading-relaxed ">
       <div className="flex items-center gap-2 mb-3">
         <div
           className={`w-2 h-2 rounded-full ${
@@ -22,19 +22,25 @@ export const MessageNodeComponent: React.FC<Props> = ({ node }) => {
                 : "bg-gradient-to-r from-gray-400 to-gray-500"
           }`}
         ></div>
-        <div className="text-xs uppercase tracking-wider text-gray-600 font-semibold">
+        <div className="text-xs uppercase tracking-wider text-gray-600 dark:text-gray-400 font-semibold">
           {role}
         </div>
       </div>
-      <div className="overflow-y-auto max-h-96 message-content">
+      <div
+        className="overflow-y-auto max-h-96 message-content cursor-text nodrag"
+        style={{ userSelect: "text" }}
+      >
         {/* Add content here */}
         {typeof content === "string" && (
-          <div className="whitespace-pre-wrap text-gray-800 leading-relaxed">
-            {content}
-          </div>
+          <MessageBlockView
+            block={{
+              text: content,
+              type: "text",
+            }}
+          />
         )}
         {Array.isArray(content) && (
-          <div className="space-y-2">
+          <div className="space-y-2  ">
             {content.map((b, i) => (
               <MessageBlockView key={i} block={b} index={i} />
             ))}
@@ -42,7 +48,7 @@ export const MessageNodeComponent: React.FC<Props> = ({ node }) => {
         )}
       </div>
       {node.meta != null && typeof node.meta["model"] === "string" && (
-        <div className="text-xs text-gray-500 pt-3 border-t border-gray-100 flex items-center gap-1">
+        <div className="text-xs text-gray-500 dark:text-gray-400 pt-3 border-t border-gray-100 dark:border-gray-700 flex items-center gap-1">
           <svg
             className="w-3 h-3"
             fill="none"

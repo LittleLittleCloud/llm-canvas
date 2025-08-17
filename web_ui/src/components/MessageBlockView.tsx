@@ -18,6 +18,10 @@ export const MessageBlockView: React.FC<Props> = ({ block }) => {
     case "tool_result":
       return <ToolResultBlockView block={block} />;
     default:
-      return <div className="text-xs text-gray-400">Unsupported block</div>;
+      return (
+        <div className="text-xs text-gray-400 dark:text-gray-500">
+          Unsupported block
+        </div>
+      );
   }
 };

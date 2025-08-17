@@ -1,7 +1,6 @@
 import dagre from "dagre";
 import React, { useCallback, useEffect, useRef } from "react";
 import ReactFlow, {
-  Background,
   ConnectionMode,
   Controls,
   Edge,
@@ -47,8 +46,10 @@ const CustomMessageNode = ({
     <div
       ref={nodeRef}
       data-node-id={data.id}
-      className={`bg-white shadow-sm hover:shadow-xl border border-gray-100 min-w-[320px] relative transition-all duration-300 hover:scale-[1.02] group ${
-        selected ? "nowheel " : "hover:border-indigo-200"
+      className={`bg-white dark:bg-gray-800 shadow-sm hover:shadow-xl border border-gray-100 dark:border-gray-700 min-w-[320px] relative transition-all duration-300 hover:scale-[1.02] group ${
+        selected
+          ? "nowheel nopan"
+          : "hover:border-indigo-200 dark:hover:border-indigo-600"
       }`}
     >
       {/* header ribbon */}
@@ -583,7 +584,7 @@ const CanvasViewInner: React.FC = () => {
       disableKeyboardA11y
       fitView
       fitViewOptions={{ padding: 0.1 }}
-      className="bg-gradient-to-br from-slate-50 to-indigo-50"
+      className="bg-gradient-to-br from-slate-50 to-indigo-50 dark:from-gray-900 dark:to-gray-800"
       defaultEdgeOptions={{
         type: "simplebezier",
         animated: false,
@@ -605,34 +606,33 @@ const CanvasViewInner: React.FC = () => {
           </linearGradient>
         </defs>
       </svg>
-      <Background color="#e2e8f0" gap={24} size={1} style={{ opacity: 0.4 }} />
-      <Controls className="!bg-white !border-gray-200 !shadow-lg !rounded-xl [&>button]:!bg-white [&>button]:!border-gray-200 [&>button]:!rounded-lg [&>button]:hover:!bg-gray-50 [&>button]:!transition-colors" />
+      <Controls className="bg-white dark:bg-gray-800 !border-gray-200 dark:!border-gray-600 !shadow-lg !rounded-xl [&>button]:!bg-white dark:[&>button]:!bg-gray-700 [&>button]:!border-gray-200 dark:[&>button]:!border-gray-600 [&>button]:!rounded-lg [&>button]:hover:!bg-gray-50 dark:[&>button]:hover:!bg-gray-700 [&>button]:!transition-colors [&>button]:!text-gray-700 dark:[&>button]:!text-gray-300" />
       <MiniMap
         pannable
         zoomable
         nodeColor="#6366f1"
         maskColor="rgba(0, 0, 0, 0.05)"
-        className="!bg-white !border-gray-200 !shadow-lg !rounded-xl !overflow-hidden"
+        className="!bg-white dark:!bg-gray-700 !border-gray-200 dark:!border-gray-600 !shadow-lg !rounded-xl !overflow-hidden"
         style={{ backgroundColor: "rgba(255, 255, 255, 0.95)" }}
       />
       <Panel
         position="top-left"
-        className="bg-white rounded-2xl shadow-lg border border-gray-100 p-4 space-y-3 backdrop-blur-sm bg-white/95"
+        className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 p-4 space-y-3 backdrop-blur-sm bg-white/95 dark:bg-gray-800/95"
       >
         <div className="flex items-center gap-3">
           <div className="w-3 h-3 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full"></div>
-          <div className="font-semibold text-gray-900 text-lg">
+          <div className="font-semibold text-gray-900 dark:text-gray-100 text-lg">
             {data?.title || "Canvas"}
           </div>
         </div>
-        <div className="text-gray-600 text-sm">
+        <div className="text-gray-600 dark:text-gray-400 text-sm">
           {data ? Object.keys(data.nodes).length : 0} messages
         </div>
-        <div className="text-xs text-gray-500 py-2 px-3 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl border border-indigo-100">
+        <div className="text-xs text-gray-500 dark:text-gray-400 py-2 px-3 bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 rounded-xl border border-indigo-100 dark:border-indigo-800">
           💡 Use ↑↓←→ arrow keys to navigate between nodes
         </div>
         <div className="space-y-2">
-          <div className="text-xs font-medium text-gray-700 mb-2">
+          <div className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
             Layout Options
           </div>
           <div className="flex gap-2">
