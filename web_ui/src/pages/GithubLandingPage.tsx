@@ -1,7 +1,10 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import { MarkdownRenderer } from "../components/MarkdownRenderer";
 
 export const GithubLandingPage: React.FC = () => {
+  const navigate = useNavigate();
+
   // Code examples as markdown strings
   const installationCode = `\`\`\`bash
 pip install llm-canvas
@@ -379,8 +382,8 @@ main_branch.commit_message(assistant_message)
                   Browse pre-built canvas examples and explore interactive
                   conversation trees.
                 </p>
-                <a
-                  href="/gallery"
+                <button
+                  onClick={() => navigate("/gallery")}
                   className="inline-flex items-center text-purple-600 hover:text-purple-700 dark:text-purple-400 dark:hover:text-purple-300 font-medium"
                 >
                   Browse Gallery
@@ -397,7 +400,7 @@ main_branch.commit_message(assistant_message)
                       d="M9 5l7 7-7 7"
                     />
                   </svg>
-                </a>
+                </button>
               </div>
             </div>
           </div>
