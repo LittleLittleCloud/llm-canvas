@@ -10,8 +10,12 @@ Canvas management is inspired by Git version control, so if you're familiar with
 
 - **Canvas**: A workspace for your LLM conversations that can contain multiple branches. Each canvas starts with a default branch called 'main'
 - **Branch**: A linear chat history within a canvas. All messages are committed to branches, not directly to the canvas. Each branch has a **Branch Head** that points to the latest message in that branch. When you checkout to a branch, you'll be positioned at the Branch Head by default. You can also work in a **Detached Head** state by using the checkout API with a specific message ID, where you're working from a specific message that isn't necessarily the latest in any branch
-- **Messages**: Individual conversation entries (user or assistant messages) that belong to a specific branch
-- **Commit**: Adding a new message to the current working branch
+- **Commit Message**: Adding a new message to the current working branch
+- **Merge Branch**: Combining conversation paths from multiple branches into a single branch. This allows you to integrate insights, responses, or tool outputs from different conversation threads. Merging preserves the history from all participating branches while creating a unified conversation flow
+
+## Message Types
+
+You can commit messages with various formats and content types to **Canvas**. For detailed information about supported message formats and content types, see [Supported Message Types](support_message_type.md).
 
 ## Getting Started
 
