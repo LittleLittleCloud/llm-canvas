@@ -1,6 +1,6 @@
 [project]
 name = "llm-canvas"
-version = "0.1.1"
+version = "0.1.2"
 description = "Visualize LLM conversations as a navigable canvas"
 authors = [ { name = "LittleLittleCloud" } ]
 readme = "README.md"
