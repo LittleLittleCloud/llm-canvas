@@ -14,7 +14,7 @@ from pathlib import Path
 from typing import Any
 
 import uvicorn
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
@@ -68,6 +68,15 @@ def create_local_server() -> Any:
         @app.get("/")
         def serve_index() -> Any:
             return FileResponse(static_dir / "index.html")
+
+        # Catch-all route for SPA routing - must be after API routes
+        @app.get("/{full_path:path}")
+        def serve_spa(full_path: str) -> Any:
+            # For non-API routes, serve the index.html to let frontend router handle it
+            if not full_path.startswith("api/"):
+                return FileResponse(static_dir / "index.html")
+            # If it's an API route that doesn't exist, let FastAPI handle the 404
+            raise HTTPException(status_code=404, detail="Not found")
 
     return app
 

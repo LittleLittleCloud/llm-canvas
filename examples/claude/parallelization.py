@@ -1,6 +1,7 @@
 from concurrent.futures import ThreadPoolExecutor
 
 from examples.claude.chain import chain
+from examples.claude.utils import llm_call
 from examples.shared_client import get_canvas_client
 from llm_canvas.types import Message
 
@@ -61,9 +62,23 @@ if __name__ == "__main__":
         },
     ]
 
-    parallel(
+    responses = parallel(
         """Analyze how market changes will impact this stakeholder group.
         Provide specific impacts and recommended actions.
         Format with clear sections and priorities.""",
         stakeholders,
     )
+
+    summarize_prompt = """
+    Summarize the key findings and recommendations for each stakeholder group.
+    Format with clear sections and priorities.
+    """
+
+    summarize_message = main_branch.merge_from(
+        [customer_branch.name, employee_branch.name, investor_branch.name, supplier_branch.name],
+        {"role": "user", "content": summarize_prompt},
+    )
+
+    final_response = llm_call("\n".join(responses), summarize_prompt)
+
+    final_response_message = main_branch.commit_message({"content": final_response, "role": "assistant"})

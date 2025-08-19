@@ -101,6 +101,27 @@ class Branch:
             return self._canvas.get_node(self._branch_info["head_node_id"])
         return None
 
+    def merge_from(
+        self,
+        source_branch_names: Union[str, list[str]],
+        merge_message: Message,
+    ) -> MessageNode:
+        """
+        Merge one or more branches into this branch.
+
+        Args:
+            source_branch_names: Name(s) of the branch(es) to merge from (string or list of strings)
+            merge_message: Merge commit message (required)
+
+        Returns:
+            The merge commit MessageNode
+        """
+        return self._canvas.merge(
+            source_branch_names=source_branch_names,
+            merge_message=merge_message,
+            target_branch_name=self.name,
+        )
+
 
 class Canvas:
     """Represents a DAG of message nodes (LLM conversation branches)."""
@@ -274,6 +295,82 @@ class Canvas:
             raise ValueError(f"Branch '{name}' does not exist")
 
         del self._branches[name]
+
+    def merge(
+        self,
+        source_branch_names: Union[str, list[str]],
+        merge_message: Message,
+        target_branch_name: str,
+    ) -> MessageNode:
+        """
+        Merge one or more branches into another using explicit merge strategy.
+
+        Args:
+            source_branch_names: Name(s) of the branch(es) to merge from (string or list of strings)
+            merge_message: Merge commit message (required)
+            target_branch_name: Name of the branch to merge into (required)
+
+        Returns:
+            The merge commit MessageNode
+
+        Raises:
+            ValueError: If branches don't exist or merge is not possible
+
+        The merge creates an explicit merge commit that references all source branches,
+        preserving the full conversation history and branch structure.
+        """
+        # Normalize source_branch_names to a list
+        if isinstance(source_branch_names, str):
+            source_branch_names = [source_branch_names]
+
+        if not source_branch_names:
+            raise ValueError("At least one source branch must be specified")
+
+        # Validate all source branches
+        for source_branch_name in source_branch_names:
+            if source_branch_name not in self._branches:
+                raise ValueError(f"Source branch '{source_branch_name}' does not exist")
+
+        # Validate target branch
+        if target_branch_name not in self._branches:
+            raise ValueError(f"Target branch '{target_branch_name}' does not exist")
+
+        # Get target branch
+        target_branch = self._branches[target_branch_name]
+        target_head_id = target_branch["head_node_id"]
+
+        # Collect source branch information
+        source_branches = []
+        source_head_ids = []
+
+        for source_branch_name in source_branch_names:
+            source_branch = self._branches[source_branch_name]
+            source_head_id = source_branch["head_node_id"]
+
+            if not source_head_id:
+                raise ValueError(f"Source branch '{source_branch_name}' has no commits")
+
+            source_branches.append(source_branch)
+            source_head_ids.append(source_head_id)
+
+        # Create explicit merge commit that references all branches
+        merge_node = self.add_message(
+            message=merge_message,
+            parent_node_id=target_head_id,
+        )
+
+        # Add all source HEADs as additional parents (for visualization)
+        for source_head_id in source_head_ids:
+            if source_head_id and source_head_id in self._nodes:
+                source_node = self._nodes[source_head_id]
+                if merge_node["id"] not in source_node["child_ids"]:
+                    source_node["child_ids"].append(merge_node["id"])
+                    self.update_message(source_head_id, source_node)
+
+        # Update target branch HEAD
+        target_branch["head_node_id"] = merge_node["id"]
+
+        return merge_node
 
     def add_message(
         self,
