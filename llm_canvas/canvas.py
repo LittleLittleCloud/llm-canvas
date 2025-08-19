@@ -365,6 +365,7 @@ class Canvas:
                 source_node = self._nodes[source_head_id]
                 if merge_node["id"] not in source_node["child_ids"]:
                     source_node["child_ids"].append(merge_node["id"])
+                    self.update_message(source_head_id, source_node)
 
         # Update target branch HEAD
         target_branch["head_node_id"] = merge_node["id"]

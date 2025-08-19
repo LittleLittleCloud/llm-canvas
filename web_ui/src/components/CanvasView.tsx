@@ -249,9 +249,11 @@ const CanvasViewInner: React.FC = () => {
 
     // Create edges
     Object.entries(data.nodes).forEach(([nodeId, node]) => {
+      // check if child node.parent_id is equal to the current nodeId
       node.child_ids.forEach(childId => {
+        const is_parent = data.nodes[childId]?.parent_id === nodeId;
         edges.push({
-          id: `${nodeId}-${childId}`,
+          id: `${nodeId}-${childId}`, // from -> to
           source: nodeId,
           target: childId,
           sourceHandle: "bottom",
@@ -261,6 +263,7 @@ const CanvasViewInner: React.FC = () => {
           style: {
             stroke: "#6366f1",
             strokeWidth: 3,
+            strokeDasharray: is_parent ? undefined : "5,5",
           },
           markerEnd: {
             type: MarkerType.ArrowClosed,
