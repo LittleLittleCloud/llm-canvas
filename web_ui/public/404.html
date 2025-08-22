@@ -5,46 +5,53 @@
     <title>LLM Canvas</title>
     <script type="text/javascript">
       // Single Page Apps for GitHub Pages
-      // MIT License
-      // https://github.com/rafgraph/spa-github-pages
-      // This script takes the current url and converts the path and query
-      // string into just a query string, and then redirects the browser
-      // to the new url with only a query string and hash fragment,
-      // e.g. https://www.foo.tld/one/two?a=b&c=d#qwe, becomes
-      // https://www.foo.tld/?/one/two&a=b~and~c=d#qwe
-      // Note: this 404.html file must be at least 512 bytes for it to work
-      // with Internet Explorer (it is currently > 512 bytes)
+      // This script handles 404 redirects for client-side routing
 
-      // If you're creating a Project Pages site and NOT using a custom domain,
-      // then set pathSegmentsToKeep to 1 (enterprise users may need to set it to > 1).
-      // This way the code will only replace the route part of the path, and not
-      // the real directory in which the app resides, for example:
-      // https://username.github.io/repo-name/one/two?a=b&c=d#qwe becomes
-      // https://username.github.io/repo-name/?/one/two&a=b~and~c=d#qwe
-      // Otherwise, leave pathSegmentsToKeep as 0.
-      var pathSegmentsToKeep = 1;
-
+      // Get the current location
       var l = window.location;
-      l.replace(
-        l.protocol +
+
+      // For GitHub Pages project sites (username.github.io/repo-name/...)
+      // we need to preserve the repo name and redirect the rest
+      var pathSegments = l.pathname.split("/").filter(function (segment) {
+        return segment !== "";
+      });
+
+      // The first segment should be the repo name (llm-canvas)
+      var repoName = pathSegments[0] || "";
+
+      // Everything after the repo name becomes the client-side route
+      var clientRoute = pathSegments.slice(1).join("/");
+
+      // Only redirect if there's actually a client route to handle
+      if (clientRoute) {
+        // Build the redirect URL: /repo-name/?/client-route
+        var baseUrl =
+          l.protocol +
           "//" +
           l.hostname +
           (l.port ? ":" + l.port : "") +
-          l.pathname
-            .split("/")
-            .slice(0, 1 + pathSegmentsToKeep)
-            .join("/") +
-          "/?/" +
-          l.pathname
-            .slice(1)
-            .split("/")
-            .slice(pathSegmentsToKeep)
-            .join("/")
-            .replace(/&/g, "~and~") +
-          (l.search ? "&" + l.search.slice(1).replace(/&/g, "~and~") : "") +
-          l.hash
-      );
+          "/" +
+          repoName +
+          "/";
+
+        var queryString = "?/" + clientRoute;
+
+        // Preserve any existing query parameters (encode & as ~and~)
+        if (l.search) {
+          queryString += "&" + l.search.slice(1).replace(/&/g, "~and~");
+        }
+
+        // Preserve hash
+        var hash = l.hash || "";
+
+        var redirectUrl = baseUrl + queryString + hash;
+
+        // Redirect to the main app with the route in query parameters
+        l.replace(redirectUrl);
+      }
     </script>
   </head>
-  <body></body>
+  <body>
+    <!-- This page handles 404 redirects for GitHub Pages SPA -->
+  </body>
 </html>

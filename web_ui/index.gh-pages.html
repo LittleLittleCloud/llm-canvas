@@ -7,22 +7,30 @@
     <!-- GitHub Pages SPA redirect script -->
     <script type="text/javascript">
       // Single Page Apps for GitHub Pages
-      // https://github.com/rafgraph/spa-github-pages
-      // Check to see if a redirect is present in the query string
+      // Check if this is a redirect from the 404 page
       (function (l) {
-        if (l.search[1] === "/") {
-          var decoded = l.search
+        // Look for the redirect pattern: ?/some/route
+        if (l.search && l.search[1] === "/") {
+          // Extract the route from the query string
+          var searchParams = l.search.slice(1); // Remove the ?
+          var parts = searchParams.split("&");
+          var route = parts[0].slice(1); // Remove the leading /
+
+          // Restore any other query parameters
+          var otherParams = parts
             .slice(1)
-            .split("&")
-            .map(function (s) {
-              return s.replace(/~and~/g, "&");
+            .map(function (param) {
+              return param.replace(/~and~/g, "&");
             })
-            .join("?");
-          window.history.replaceState(
-            null,
-            null,
-            l.pathname.slice(0, -1) + decoded + l.hash
-          );
+            .join("&");
+
+          // Build the clean URL
+          var cleanPath = l.pathname + route;
+          var cleanSearch = otherParams ? "?" + otherParams : "";
+          var cleanUrl = cleanPath + cleanSearch + l.hash;
+
+          // Replace the current URL without causing a page reload
+          window.history.replaceState(null, null, cleanUrl);
         }
       })(window.location);
     </script>
