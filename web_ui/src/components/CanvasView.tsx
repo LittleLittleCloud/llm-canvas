@@ -114,7 +114,7 @@ dagreGraph.setDefaultEdgeLabel(() => ({}));
 const getLayoutedElements = (
   nodes: Node[],
   edges: Edge[],
-  direction = "TB",
+  direction = "LR",
   dataNodes: Record<string, MessageNode> = {}
 ) => {
   const isVertical = direction === "TB";
@@ -241,7 +241,7 @@ const CanvasViewInner: React.FC = () => {
           ...node,
           hasParent,
           hasChildren,
-          direction: "TB",
+          direction: "LR",
         },
         style: { width: 320 },
       });
@@ -284,8 +284,8 @@ const CanvasViewInner: React.FC = () => {
     if (nodes.length > 0 && data) {
       // Use setTimeout to ensure nodes are rendered before layout
       const timeoutId = setTimeout(() => {
-        // Get current direction from the first node, default to TB
-        const currentDirection = nodes[0]?.data?.direction || "TB";
+        // Get current direction from the first node, default to LR
+        const currentDirection = nodes[0]?.data?.direction || "LR";
         const { nodes: layoutedNodes, edges: layoutedEdges } =
           getLayoutedElements(nodes, edges, currentDirection, data.nodes);
 
@@ -569,8 +569,8 @@ const CanvasViewInner: React.FC = () => {
   );
 
   const onReLayout = useCallback(() => {
-    // Get current direction from the first node, default to TB
-    const currentDirection = nodes[0]?.data?.direction || "TB";
+    // Get current direction from the first node, default to LR
+    const currentDirection = nodes[0]?.data?.direction || "LR";
     onLayout(currentDirection);
   }, [nodes, onLayout]);
 
