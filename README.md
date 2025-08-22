@@ -1,14 +1,21 @@
-# LLM Canvas
+<p align="center">
+    <img src="web_ui/public/logo-icon-badge.svg" width="120" height="120" alt="LLM Canvas logo" />
+  
+</p>
 
-**Visualize complex LLM conversation flows like never before.**
+<h1 align="center">LLM Canvas</h1>
+
+<p align="center"><strong>Visualize complex LLM conversation flows in infinite canvas.</strong></p>
+
+<p align="center">
+    <a href="https://pypi.org/project/llm-canvas/"><img src="https://img.shields.io/pypi/v/llm-canvas" alt="PyPI" /></a>
+    <img src="https://img.shields.io/badge/License-MIT-green" alt="License MIT" />
+    <img src="https://img.shields.io/badge/Python-3.9%2B-blue" alt="Python 3.9+" />
+</p>
 
 As LLM applications evolve, conversation flows become increasingly complex. Conversations may branch into multiple paths, run in parallel, or require summarization across different threads. Managing and understanding these intricate conversation flows becomes a significant challenge in LLM ops.
 
 LLM Canvas solves this by providing a powerful visualization tool for complex conversation flows. Create branching conversation trees, explore different response paths, and visualize tool interactions through an intuitive web interface — all while maintaining complete privacy with local deployment.
-
-[![PyPI](https://img.shields.io/pypi/v/llm-canvas)](https://pypi.org/project/llm-canvas/)
-![License](https://img.shields.io/badge/License-MIT-green)
-![Python](https://img.shields.io/badge/Python-3.9%2B-blue)
 
 ## 📰 News
 
@@ -96,7 +103,7 @@ We welcome contributions! LLM Canvas is open source and community-driven.
 
 - 🐛 **Bug Reports**: [GitHub Issues](https://github.com/LittleLittleCloud/llm_canvas/issues)
 - 💡 **Feature Requests**: [GitHub Discussions](https://github.com/LittleLittleCloud/llm_canvas/discussions)
-- � **Pull Requests**: See our [Contributing Guide](CONTRIBUTING.md)
+- 🔀 **Pull Requests**: See our [Contributing Guide](CONTRIBUTING.md)
 - 📖 **Documentation**: Help improve our docs
 
 ## LLM Canvas: Story Behind
