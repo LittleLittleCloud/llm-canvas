@@ -6,6 +6,7 @@ import config from "./config";
 import "./index.css";
 import { CanvasPage } from "./pages/CanvasPage";
 import { GalleryPage } from "./pages/GalleryPage";
+import { GithubGalleryPage } from "./pages/GithubGalleryPage";
 import { GithubLandingPage } from "./pages/GithubLandingPage";
 
 export const App: React.FC = () => {
@@ -24,7 +25,7 @@ export const App: React.FC = () => {
                 element={isGithubMode ? <GithubLandingPage /> : <GalleryPage />}
               />
               {isGithubMode && (
-                <Route path="/gallery" element={<GalleryPage />} />
+                <Route path="/gallery" element={<GithubGalleryPage />} />
               )}
               <Route path="/canvas/:id" element={<CanvasPage />} />
               <Route

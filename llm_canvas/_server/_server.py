@@ -99,7 +99,6 @@ def start_local_server(host: str = "127.0.0.1", port: int = 8000, log_level: str
     logger.warning("   • Data is lost when server restarts")
     logger.warning("   • No backup or recovery mechanisms")
     logger.warning("   • Session-based storage only")
-    logger.info("   For permanent storage, consider cloud plans")
 
     app = create_local_server()
 
