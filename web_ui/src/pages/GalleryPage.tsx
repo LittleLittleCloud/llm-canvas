@@ -1,9 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { canvasExampleService } from "../api/canvasExampleService";
 import { canvasService } from "../api/canvasService";
 import { CanvasGallery } from "../components/CanvasGallery";
-import { config } from "../config";
 import { CanvasSummary } from "../types";
 
 export const GalleryPage: React.FC = () => {
@@ -14,14 +12,8 @@ export const GalleryPage: React.FC = () => {
 
   const loadCanvases = async () => {
     try {
-      // Use example service when in gh-page mode, otherwise use regular API service
-      if (config.build.mode === "gh-page") {
-        const examples = await canvasExampleService.listExamples();
-        setCanvasSummaries(examples);
-      } else {
-        const response = await canvasService.listCanvases();
-        setCanvasSummaries(response.canvases);
-      }
+      const response = await canvasService.listCanvases();
+      setCanvasSummaries(response.canvases);
       setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load canvases");
@@ -38,20 +30,14 @@ export const GalleryPage: React.FC = () => {
     // Load canvases immediately
     loadCanvasesWrapper();
 
-    // Only set up periodic refresh for local mode (not gh-page mode)
-    // Examples are static, so no need to refresh them
-    let refreshInterval = null;
-    if (config.build.mode === "local") {
-      refreshInterval = setInterval(() => {
-        loadCanvases();
-      }, 5000);
-    }
+    // Set up periodic refresh
+    const refreshInterval = setInterval(() => {
+      loadCanvases();
+    }, 5000);
 
     // Cleanup interval on component unmount
     return () => {
-      if (refreshInterval) {
-        clearInterval(refreshInterval);
-      }
+      clearInterval(refreshInterval);
     };
   }, []);
 
@@ -60,11 +46,6 @@ export const GalleryPage: React.FC = () => {
   };
 
   const handleCreateCanvas = async (title?: string, description?: string) => {
-    // Disable canvas creation in gh-page mode (example mode)
-    if (config.build.mode === "gh-page") {
-      throw new Error("Canvas creation is not available in example mode");
-    }
-
     try {
       const response = await canvasService.createCanvas({
         title: title || null,
@@ -84,11 +65,6 @@ export const GalleryPage: React.FC = () => {
   };
 
   const handleDeleteCanvas = async (canvasId: string) => {
-    // Disable canvas deletion in gh-page mode (example mode)
-    if (config.build.mode === "gh-page") {
-      throw new Error("Canvas deletion is not available in example mode");
-    }
-
     try {
       await canvasService.deleteCanvas(canvasId);
       // Refresh the canvas list after deletion
@@ -237,8 +213,8 @@ export const GalleryPage: React.FC = () => {
       onOpen={handleOpenCanvas}
       onCreate={handleCreateCanvas}
       onDelete={handleDeleteCanvas}
-      showCreateButton={config.build.mode !== "gh-page"} // Hide Create Canvas button in gh-page mode
-      showDeleteButton={config.build.mode !== "gh-page"} // Hide delete button in gh-page mode
+      showCreateButton={true}
+      showDeleteButton={true}
     />
   );
 };
