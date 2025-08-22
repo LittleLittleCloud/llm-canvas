@@ -15,7 +15,7 @@ export const LLMCanvasPrimaryLogo = ({
   // Use centralized theme store to determine current actual theme
   const actualTheme = useThemeStore(s => s.actualTheme);
   const base = import.meta.env.BASE_URL || "/";
-  const iconSrc = `${base}${actualTheme === "dark" ? "logo-icon-dark.svg" : "logo-icon-light.svg"}`;
+  const iconSrc = `${base}${actualTheme === "dark" ? "assets/logo-icon-dark.svg" : "assets/logo-icon-light.svg"}`;
 
   return (
     <div className={`inline-flex items-center gap-3 ${className}`}>

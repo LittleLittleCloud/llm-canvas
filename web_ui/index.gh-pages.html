@@ -4,18 +4,29 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>LLM Canvas</title>
-    <link id="favicon" rel="icon" type="image/svg+xml" href="/logo-icon-light.svg" />
+    <link
+      id="favicon"
+      rel="icon"
+      type="image/svg+xml"
+      href="/assets/logo-icon-light.svg"
+    />
     <script type="module">
       const base = import.meta.env.BASE_URL || "/";
       const link = document.getElementById("favicon");
-      const setFavicon = (mode) => {
-        const name = mode === "dark" ? "logo-icon-dark.svg" : "logo-icon-light.svg";
+      const setFavicon = mode => {
+        const name =
+          mode === "dark"
+            ? "assets/logo-icon-dark.svg"
+            : "assets/logo-icon-light.svg";
         link.href = `${base}${name}`;
       };
-      const mq = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)");
+      const mq =
+        window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)");
       setFavicon(mq && mq.matches ? "dark" : "light");
-      mq?.addEventListener("change", (e) => setFavicon(e.matches ? "dark" : "light"));
-      window.addEventListener("llmcanvas:theme", (e) => {
+      mq?.addEventListener("change", e =>
+        setFavicon(e.matches ? "dark" : "light")
+      );
+      window.addEventListener("llmcanvas:theme", e => {
         const mode = e.detail?.actualTheme;
         if (mode === "light" || mode === "dark") setFavicon(mode);
       });

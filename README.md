@@ -1,5 +1,5 @@
 <p align="center">
-    <img src="web_ui/public/logo-icon-badge.svg" width="120" height="120" alt="LLM Canvas logo" />
+    <img src="web_ui/public/assets/logo-icon-badge.svg" width="120" height="120" alt="LLM Canvas logo" />
   
 </p>
 
