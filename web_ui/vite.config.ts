@@ -24,8 +24,20 @@ export default defineConfig(({ mode }) => {
           );
         },
         writeBundle() {
-          // Copy 404.html to dist folder for GitHub Pages SPA support
           const distDir = resolve(__dirname, "dist");
+
+          // Copy index.gh-pages.html to index.html
+          const ghPagesIndexSrc = resolve(distDir, "index.gh-pages.html");
+          const indexDest = resolve(distDir, "index.html");
+
+          if (existsSync(ghPagesIndexSrc)) {
+            copyFileSync(ghPagesIndexSrc, indexDest);
+            console.log(
+              "Copied index.gh-pages.html to index.html for GitHub Pages"
+            );
+          }
+
+          // Copy 404.html to dist folder for GitHub Pages SPA support
           const srcFile = resolve(__dirname, "public", "404.html");
           const destFile = resolve(distDir, "404.html");
 
