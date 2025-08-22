@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="256" height="256" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg" role="img"
+    aria-label="LLM Canvas minimap icon - dark">
+    <defs>
+        <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
+            <feOffset dy="2" in="SourceAlpha" result="off" />
+            <feGaussianBlur in="off" stdDeviation="2" result="blur" />
+            <feColorMatrix in="blur" type="matrix" values="0 0 0 0 0   0 0 0 0 0   0 0 0 0 0   0 0 0 0.25 0" />
+            <feBlend in="SourceGraphic" mode="normal" />
+        </filter>
+        <clipPath id="clip-rounded">
+            <rect x="8" y="8" width="240" height="240" rx="28" ry="28" />
+        </clipPath>
+        <!-- Glow filters -->
+        <filter id="glowBlue" x="-50%" y="-50%" width="200%" height="200%">
+            <feDropShadow dx="0" dy="0" stdDeviation="3" flood-color="#60A5FA" flood-opacity="0.7" />
+            <feDropShadow dx="0" dy="0" stdDeviation="6" flood-color="#60A5FA" flood-opacity="0.35" />
+        </filter>
+        <filter id="glowGreen" x="-50%" y="-50%" width="200%" height="200%">
+            <feDropShadow dx="0" dy="0" stdDeviation="3" flood-color="#34D399" flood-opacity="0.7" />
+            <feDropShadow dx="0" dy="0" stdDeviation="6" flood-color="#34D399" flood-opacity="0.35" />
+        </filter>
+        <filter id="glowPurple" x="-50%" y="-50%" width="200%" height="200%">
+            <feDropShadow dx="0" dy="0" stdDeviation="3" flood-color="#A78BFA" flood-opacity="0.7" />
+            <feDropShadow dx="0" dy="0" stdDeviation="6" flood-color="#A78BFA" flood-opacity="0.35" />
+        </filter>
+        <filter id="glowOrange" x="-50%" y="-50%" width="200%" height="200%">
+            <feDropShadow dx="0" dy="0" stdDeviation="3" flood-color="#F59E0B" flood-opacity="0.7" />
+            <feDropShadow dx="0" dy="0" stdDeviation="6" flood-color="#F59E0B" flood-opacity="0.35" />
+        </filter>
+        <filter id="glowEdge" x="-50%" y="-50%" width="200%" height="200%">
+            <feDropShadow dx="0" dy="0" stdDeviation="2.5" flood-color="#22D3EE" flood-opacity="0.6" />
+        </filter>
+        <filter id="glowCyan" x="-50%" y="-50%" width="200%" height="200%">
+            <feDropShadow dx="0" dy="0" stdDeviation="3.5" flood-color="#22D3EE" flood-opacity="0.9" />
+        </filter>
+    </defs>
+
+    <!-- No border or background -->
+
+    <g clip-path="url(#clip-rounded)">
+        <!-- Subtle grid -->
+        <g stroke="rgba(255,255,255,0.06)" stroke-width="1">
+            <path d="M48 24 V232 M80 24 V232 M112 24 V232 M144 24 V232 M176 24 V232 M208 24 V232" />
+            <path d="M24 48 H232 M24 80 H232 M24 112 H232 M24 144 H232 M24 176 H232 M24 208 H232" />
+        </g>
+
+        <!-- Edges -->
+        <g stroke="#94A3B8" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" opacity="0.9"
+            filter="url(#glowEdge)">
+            <path d="M76 76 C 92 96, 114 104, 136 120" />
+            <path d="M184 68 C 164 88, 148 100, 136 120" />
+            <path d="M138 156 C 120 168, 104 176, 84 188" />
+            <!-- C -> Cyan node (connect to left-center of cyan node at x=170,y=198) -->
+            <path d="M147 137 C 168 150, 182 170, 170 198" />
+        </g>
+
+        <!-- Nodes -->
+        <g>
+            <g filter="url(#glowBlue)">
+                <rect x="36" y="44" width="72" height="38" rx="10" fill="#60A5FA" />
+            </g>
+            <g filter="url(#glowGreen)">
+                <rect x="148" y="36" width="62" height="34" rx="9" fill="#34D399" />
+            </g>
+            <g filter="url(#glowPurple)">
+                <rect x="104" y="116" width="86" height="42" rx="11" fill="#A78BFA" />
+            </g>
+            <g filter="url(#glowOrange)">
+                <rect x="52" y="172" width="66" height="36" rx="9" fill="#F59E0B" />
+            </g>
+            <!-- New cyan node (replaces tiny focus dot) -->
+            <g filter="url(#glowCyan)">
+                <rect x="170" y="188" width="40" height="20" rx="6" fill="#22D3EE" />
+            </g>
+        </g>
+    </g>
+
+    <!-- subtle highlights on nodes -->
+    <g opacity="0.25" fill="#FFFFFF">
+        <rect x="40" y="48" width="64" height="4" rx="2" />
+        <rect x="152" y="40" width="54" height="3" rx="1.5" />
+        <rect x="108" y="120" width="78" height="4" rx="2" />
+        <rect x="56" y="176" width="58" height="3" rx="1.5" />
+    </g>
+
+    <!-- removed tiny focus dot; replaced by cyan node above -->
+</svg>

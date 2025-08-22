@@ -25,11 +25,17 @@ const getActualTheme = (theme: Theme): "light" | "dark" => {
 };
 
 const applyTheme = (actualTheme: "light" | "dark") => {
-  if (typeof document === "undefined") return;
-
-  const root = document.documentElement;
-  root.classList.remove("light", "dark");
-  root.classList.add(actualTheme);
+  if (typeof document !== "undefined") {
+    const root = document.documentElement;
+    root.classList.remove("light", "dark");
+    root.classList.add(actualTheme);
+  }
+  // Notify listeners (e.g., favicon swapper in index.html)
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(
+      new CustomEvent("llmcanvas:theme", { detail: { actualTheme } })
+    );
+  }
 };
 
 export const useThemeStore = create<ThemeState>()(
