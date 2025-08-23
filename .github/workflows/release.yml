@@ -141,13 +141,10 @@ jobs:
 
           cat release_notes.md
 
-          # Read release_notes to $RELEASE_NOTES
-          RELEASE_NOTES=$(cat release_notes.md)
-
           # Use a unique delimiter to avoid conflicts with content
-          echo "release_notes<<EOF" >> $GITHUB_OUTPUT
           echo "tag_name=$TAG_NAME" >> $GITHUB_OUTPUT
-          cat "$RELEASE_NOTES" >> $GITHUB_OUTPUT
+          echo "release_notes<<EOF" >> $GITHUB_OUTPUT
+          cat release_notes.md >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Create GitHub Release
