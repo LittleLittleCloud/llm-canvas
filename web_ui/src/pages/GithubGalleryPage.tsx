@@ -3,12 +3,14 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { canvasExampleService } from "../api/canvasExampleService";
 import { ExampleCard } from "../components/ExampleCard";
-import { getSourceCodeForCanvas } from "../examples/sourceCode";
-import { CanvasData, CanvasSummary } from "../types";
+import {
+  getGithubLinkForCanvas,
+  getSourceCodeForCanvas,
+} from "../examples/sourceCode";
+import { CanvasData } from "../types";
 
 export const GithubGalleryPage: React.FC = () => {
   const navigate = useNavigate();
-  const [canvasSummaries, setCanvasSummaries] = useState<CanvasSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [canvasDatas, setCanvasDatas] = useState<CanvasData[]>([]);
@@ -23,7 +25,6 @@ export const GithubGalleryPage: React.FC = () => {
         const data = await canvasExampleService.fetchExample(example.canvas_id);
         canvasDatas.push(data!);
       }
-      setCanvasSummaries(examples);
       setCanvasDatas(canvasDatas);
       setError(null);
     } catch (err) {
@@ -171,6 +172,7 @@ export const GithubGalleryPage: React.FC = () => {
             canvas={canvas}
             sourceCode={getSourceCodeForCanvas(canvas.title || "")}
             onOpenCanvas={handleOpenCanvas}
+            sourceCodeLink={getGithubLinkForCanvas(canvas.title || "")}
           />
         ))}
       </div>
