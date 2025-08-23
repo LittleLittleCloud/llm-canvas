@@ -63,9 +63,9 @@ export const ExampleCard: React.FC<ExampleCardProps> = ({
           <div className="p-6 h-full flex flex-col">
             <CanvasView
               canvas={canvas}
-              showControls={false}
+              showControls={true}
               showMiniMap={true}
-              showPanel={false}
+              showPanel={true}
             />
           </div>
         ) : (
