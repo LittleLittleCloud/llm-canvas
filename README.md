@@ -9,6 +9,7 @@
 
 <p align="center">
     <a href="https://pypi.org/project/llm-canvas/"><img src="https://img.shields.io/pypi/v/llm-canvas" alt="PyPI" /></a>
+    <a href="https://littlelittlecloud.github.io/llm-canvas/"><img src="https://img.shields.io/badge/Website-LLM_Canvas-blue" alt="Website" /></a>
     <img src="https://img.shields.io/badge/License-MIT-green" alt="License MIT" />
     <img src="https://img.shields.io/badge/Python-3.9%2B-blue" alt="Python 3.9+" />
 </p>

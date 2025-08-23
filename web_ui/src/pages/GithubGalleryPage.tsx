@@ -171,7 +171,6 @@ export const GithubGalleryPage: React.FC = () => {
             key={canvas.canvas_id}
             canvas={canvas}
             sourceCode={getSourceCodeForCanvas(canvas.title || "")}
-            onOpenCanvas={handleOpenCanvas}
             sourceCodeLink={getGithubLinkForCanvas(canvas.title || "")}
           />
         ))}
