@@ -62,5 +62,12 @@ export const CanvasPage: React.FC = () => {
     );
   }
 
-  return <CanvasView />;
+  return (
+    <CanvasView
+      canvas={canvas}
+      showControls={true}
+      showMiniMap={true}
+      showPanel={true}
+    />
+  );
 };
