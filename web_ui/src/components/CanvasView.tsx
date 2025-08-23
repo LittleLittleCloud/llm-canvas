@@ -1,4 +1,5 @@
 import dagre from "dagre";
+import { ArrowDown, ArrowRight, RotateCcw } from "lucide-react";
 import React, { useCallback, useEffect, useRef } from "react";
 import ReactFlow, {
   ConnectionMode,
@@ -12,14 +13,21 @@ import ReactFlow, {
   Position,
   ReactFlowProvider,
   useEdgesState,
-  useNodes,
   useNodesState,
   useReactFlow,
 } from "reactflow";
 import "reactflow/dist/style.css";
-import { useCanvasStore } from "../store/canvasStore";
-import { MessageNode } from "../types";
+import { CanvasData, MessageNode } from "../types";
 import { MessageNodeComponent } from "./MessageNode";
+
+// Define the Canvas type based on the structure used in the store
+// Props interface for the CanvasView component
+export interface CanvasViewProps {
+  canvas?: CanvasData;
+  showMiniMap?: boolean;
+  showControls?: boolean;
+  showPanel?: boolean;
+}
 
 // Custom node component for React Flow
 const CustomMessageNode = ({
@@ -36,10 +44,6 @@ const CustomMessageNode = ({
   const { hasParent = false, hasChildren = false, direction = "TB" } = data;
   const isVertical = direction === "TB";
   const nodeRef = useRef<HTMLDivElement>(null);
-
-  // Get all nodes and find the current node instance
-  const nodes = useNodes();
-  const currentNode = nodes.find(node => node.id === data.id);
 
   // Add data attribute for easier DOM querying
   return (
@@ -146,10 +150,10 @@ const getLayoutedElements = (
 
   dagreGraph.setGraph({
     rankdir: direction,
-    nodesep: 50,
-    ranksep: 100,
-    marginx: 10,
-    marginy: 10,
+    nodesep: 30,
+    ranksep: 60,
+    marginx: 5,
+    marginy: 5,
   });
 
   // Set nodes with calculated dimensions
@@ -203,24 +207,41 @@ const getLayoutedElements = (
   return { nodes, edges: updatedEdges };
 };
 
-export const CanvasView: React.FC = () => {
+export const CanvasView: React.FC<CanvasViewProps> = ({
+  canvas: externalCanvas,
+  showMiniMap = true,
+  showControls = true,
+  showPanel = true,
+}) => {
   return (
     <div className="h-full w-full">
       <ReactFlowProvider>
-        <CanvasViewInner />
+        <CanvasViewInner
+          canvas={externalCanvas}
+          showMiniMap={showMiniMap}
+          showControls={showControls}
+          showPanel={showPanel}
+        />
       </ReactFlowProvider>
     </div>
   );
 };
 
-const CanvasViewInner: React.FC = () => {
-  const data = useCanvasStore(s => s.canvas);
+const CanvasViewInner: React.FC<CanvasViewProps> = ({
+  canvas,
+  showMiniMap = true,
+  showControls = true,
+  showPanel = true,
+}) => {
   const reactFlowInstance = useReactFlow();
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+  const [viewport, setViewport] = React.useState({ x: 0, y: 0, zoom: 1 });
+  const [isFocused, setIsFocused] = React.useState(false);
+  const flowRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!data) {
+    if (!canvas) {
       setNodes([]);
       setEdges([]);
       return;
@@ -229,7 +250,7 @@ const CanvasViewInner: React.FC = () => {
     const edges: Edge[] = [];
 
     // Create nodes with parent/children information
-    Object.entries(data.nodes).forEach(([nodeId, node]) => {
+    Object.entries(canvas.nodes).forEach(([nodeId, node]) => {
       const hasParent = node.parent_id != null;
       const hasChildren = node.child_ids.length > 0;
 
@@ -248,10 +269,10 @@ const CanvasViewInner: React.FC = () => {
     });
 
     // Create edges
-    Object.entries(data.nodes).forEach(([nodeId, node]) => {
+    Object.entries(canvas.nodes).forEach(([nodeId, node]) => {
       // check if child node.parent_id is equal to the current nodeId
       node.child_ids.forEach(childId => {
-        const is_parent = data.nodes[childId]?.parent_id === nodeId;
+        const is_parent = canvas.nodes[childId]?.parent_id === nodeId;
         edges.push({
           id: `${nodeId}-${childId}`, // from -> to
           source: nodeId,
@@ -266,9 +287,9 @@ const CanvasViewInner: React.FC = () => {
             strokeDasharray: is_parent ? undefined : "5,5",
           },
           markerEnd: {
-            type: MarkerType.ArrowClosed,
-            width: 20,
-            height: 20,
+            type: MarkerType.Arrow,
+            width: 15,
+            height: 15,
             color: "#6366f1",
           },
         });
@@ -277,41 +298,35 @@ const CanvasViewInner: React.FC = () => {
 
     setNodes(nodes);
     setEdges(edges);
-  }, [data, setNodes, setEdges]);
+  }, [canvas, setNodes, setEdges]);
 
   // Separate effect to trigger re-layout after nodes are set
   useEffect(() => {
-    if (nodes.length > 0 && data) {
+    if (nodes.length > 0 && canvas) {
       // Use setTimeout to ensure nodes are rendered before layout
       const timeoutId = setTimeout(() => {
         // Get current direction from the first node, default to LR
         const currentDirection = nodes[0]?.data?.direction || "LR";
         const { nodes: layoutedNodes, edges: layoutedEdges } =
-          getLayoutedElements(nodes, edges, currentDirection, data.nodes);
+          getLayoutedElements(nodes, edges, currentDirection, canvas.nodes);
 
         setNodes([...layoutedNodes]);
         setEdges([...layoutedEdges]);
 
-        // Center the view on the root node
-        // find the root nodes from data.nodes
-        // a root node is one that has no parent_id
-        const root_ids = Object.values(data.nodes)
-          .filter(node => node.parent_id == null)
-          .map(node => node.id);
-        const rootNode = layoutedNodes.find(node => node.id === root_ids[0]);
-        if (rootNode) {
-          const x = rootNode.position.x + (rootNode.width || 320) / 2;
-          const y = rootNode.position.y + (rootNode.height || 150) / 2;
-          reactFlowInstance.setCenter(x, y, {
-            zoom: reactFlowInstance.getZoom(),
+        // Fit view to show all nodes with some padding
+        setTimeout(() => {
+          reactFlowInstance.fitView({
+            padding: 0.1,
             duration: 800,
+            maxZoom: 1.5,
+            minZoom: 0.1,
           });
-        }
+        }, 50);
       }, 100);
 
       return () => clearTimeout(timeoutId);
     }
-  }, [nodes.length, data]); // Only trigger when nodes.length changes and we have data
+  }, [nodes.length, canvas]); // Only trigger when nodes.length changes and we have data
 
   // Node navigation functions
   const shakeNode = useCallback((nodeId: string) => {
@@ -463,8 +478,9 @@ const CanvasViewInner: React.FC = () => {
 
   const handleKeyDown = useCallback(
     (event: KeyboardEvent) => {
-      // Only handle arrow keys and only if focus is on the flow
+      // Only handle arrow keys if this canvas is focused
       if (
+        !isFocused ||
         !["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(event.key)
       ) {
         return;
@@ -517,7 +533,7 @@ const CanvasViewInner: React.FC = () => {
         shakeNode(selectedNode.id);
       }
     },
-    [nodes, selectNode, findClosestNode, shakeNode]
+    [nodes, selectNode, findClosestNode, shakeNode, isFocused]
   );
 
   // Add keyboard event listener
@@ -531,6 +547,10 @@ const CanvasViewInner: React.FC = () => {
   const handleNodeClick = useCallback(
     (event: React.MouseEvent, node: Node) => {
       selectNode(node.id);
+      // Focus the canvas when a node is clicked
+      if (flowRef.current) {
+        flowRef.current.focus();
+      }
     },
     [selectNode]
   );
@@ -543,12 +563,25 @@ const CanvasViewInner: React.FC = () => {
         selected: false,
       }))
     );
+    // Focus the canvas when pane is clicked
+    if (flowRef.current) {
+      flowRef.current.focus();
+    }
   }, [setNodes]);
+
+  // Handle focus events
+  const handleFocus = useCallback(() => {
+    setIsFocused(true);
+  }, []);
+
+  const handleBlur = useCallback(() => {
+    setIsFocused(false);
+  }, []);
 
   // Enhanced layout function that can use React Flow's getNodes for actual dimensions
   const onLayout = useCallback(
     (direction: string) => {
-      if (!data) return;
+      if (!canvas) return;
 
       // Update nodes with new direction information
       const updatedNodes = nodes.map(node => ({
@@ -560,12 +593,12 @@ const CanvasViewInner: React.FC = () => {
       }));
 
       const { nodes: layoutedNodes, edges: layoutedEdges } =
-        getLayoutedElements(updatedNodes, edges, direction, data.nodes);
+        getLayoutedElements(updatedNodes, edges, direction, canvas.nodes);
 
       setNodes([...layoutedNodes]);
       setEdges([...layoutedEdges]);
     },
-    [nodes, edges, setNodes, setEdges, data]
+    [nodes, edges, setNodes, setEdges, canvas]
   );
 
   const onReLayout = useCallback(() => {
@@ -574,140 +607,135 @@ const CanvasViewInner: React.FC = () => {
     onLayout(currentDirection);
   }, [nodes, onLayout]);
 
+  // Handle viewport changes
+  const onMove = useCallback(() => {
+    if (reactFlowInstance) {
+      const currentViewport = reactFlowInstance.getViewport();
+      setViewport(currentViewport);
+    }
+  }, [reactFlowInstance]);
+
+  // Initialize viewport on mount
+  useEffect(() => {
+    if (reactFlowInstance) {
+      const initialViewport = reactFlowInstance.getViewport();
+      setViewport(initialViewport);
+    }
+  }, [reactFlowInstance]);
+
   return (
-    <ReactFlow
-      nodes={nodes}
-      edges={edges}
-      onNodesChange={onNodesChange}
-      onEdgesChange={onEdgesChange}
-      onNodeClick={handleNodeClick}
-      onPaneClick={handlePaneClick}
-      nodeTypes={nodeTypes}
-      connectionMode={ConnectionMode.Loose}
-      disableKeyboardA11y
-      fitView
-      fitViewOptions={{ padding: 0.1 }}
-      className="bg-gradient-to-br from-slate-50 to-indigo-50 dark:from-gray-900 dark:to-gray-800"
-      defaultEdgeOptions={{
-        type: "simplebezier",
-        animated: false,
-        style: { strokeWidth: 3, stroke: "#6366f1" },
-        markerEnd: { type: MarkerType.ArrowClosed, color: "#6366f1" },
-      }}
-      deleteKeyCode={["Backspace", "Delete"]}
-      multiSelectionKeyCode={["Meta", "Ctrl"]}
+    <div
+      ref={flowRef}
+      className="h-full w-full focus:outline-none"
       tabIndex={0}
-      style={{ outline: "none" }}
+      onFocus={handleFocus}
+      onBlur={handleBlur}
     >
-      <svg
-        style={{ position: "absolute", top: 0, left: 0, width: 0, height: 0 }}
+      <ReactFlow
+        nodes={nodes}
+        edges={edges}
+        onNodesChange={onNodesChange}
+        onEdgesChange={onEdgesChange}
+        onNodeClick={handleNodeClick}
+        onPaneClick={handlePaneClick}
+        onMove={onMove}
+        nodeTypes={nodeTypes}
+        connectionMode={ConnectionMode.Loose}
+        disableKeyboardA11y
+        fitView
+        fitViewOptions={{ padding: 0.1 }}
+        minZoom={0.1}
+        maxZoom={2}
+        className="bg-gradient-to-br from-slate-50 to-indigo-50 dark:from-gray-900 dark:to-gray-800"
+        defaultEdgeOptions={{
+          type: "simplebezier",
+          animated: false,
+          style: { strokeWidth: 3, stroke: "#6366f1" },
+          markerEnd: { type: MarkerType.ArrowClosed, color: "#6366f1" },
+        }}
+        deleteKeyCode={["Backspace", "Delete"]}
+        multiSelectionKeyCode={["Meta", "Ctrl"]}
       >
-        <defs>
-          <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="#6366f1" />
-            <stop offset="100%" stopColor="#8b5cf6" />
-          </linearGradient>
-        </defs>
-      </svg>
-      <Controls className="bg-white dark:bg-gray-800 !border-gray-200 dark:!border-gray-600 !shadow-lg !rounded-xl [&>button]:!bg-white dark:[&>button]:!bg-gray-700 [&>button]:!border-gray-200 dark:[&>button]:!border-gray-600 [&>button]:!rounded-lg [&>button]:hover:!bg-gray-50 dark:[&>button]:hover:!bg-gray-700 [&>button]:!transition-colors [&>button]:!text-gray-700 dark:[&>button]:!text-gray-300" />
-      <MiniMap
-        pannable
-        zoomable
-        nodeColor="#6366f1"
-        maskColor="rgba(0, 0, 0, 0.05)"
-        className="!bg-white dark:!bg-gray-700 !border-gray-200 dark:!border-gray-600 !shadow-lg !rounded-xl !overflow-hidden"
-        style={{ backgroundColor: "rgba(255, 255, 255, 0.95)" }}
-      />
-      <Panel
-        position="top-left"
-        className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 p-4 space-y-3 backdrop-blur-sm bg-white/95 dark:bg-gray-800/95"
-      >
-        <div className="flex items-center gap-3">
-          <div className="w-3 h-3 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full"></div>
-          <div className="font-semibold text-gray-900 dark:text-gray-100 text-lg">
-            {data?.title || "Canvas"}
-          </div>
-        </div>
-        <div className="text-gray-600 dark:text-gray-400 text-sm">
-          {data ? Object.keys(data.nodes).length : 0} messages
-        </div>
-        <div className="text-xs text-gray-500 dark:text-gray-400 py-2 px-3 bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 rounded-xl border border-indigo-100 dark:border-indigo-800">
-          💡 Use ↑↓←→ arrow keys to navigate between nodes
-        </div>
-        <div className="space-y-2">
-          <div className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
-            Layout Options
-          </div>
-          <div className="flex gap-2">
-            <button
-              onClick={() => onLayout("TB")}
-              className="group relative overflow-hidden px-3 py-2 text-xs bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-medium rounded-xl shadow-sm hover:shadow-md transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-1 transition-all duration-200"
-            >
-              <span className="relative z-10 flex items-center">
-                <svg
-                  className="w-3 h-3 mr-1"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M19 14l-7 7m0 0l-7-7m7 7V3"
-                  />
-                </svg>
-                Vertical
-              </span>
-              <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 to-purple-600 opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
-            </button>
-            <button
-              onClick={() => onLayout("LR")}
-              className="group relative overflow-hidden px-3 py-2 text-xs bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-medium rounded-xl shadow-sm hover:shadow-md transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-1 transition-all duration-200"
-            >
-              <span className="relative z-10 flex items-center">
-                <svg
-                  className="w-3 h-3 mr-1"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M14 5l7 7m0 0l-7 7m7-7H3"
-                  />
-                </svg>
-                Horizontal
-              </span>
-              <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 to-purple-600 opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
-            </button>
-          </div>
-          <button
-            onClick={onReLayout}
-            className="w-full group relative overflow-hidden px-3 py-2 text-xs bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-medium rounded-xl shadow-sm hover:shadow-md transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-1 transition-all duration-200"
+        <svg
+          style={{ position: "absolute", top: 0, left: 0, width: 0, height: 0 }}
+        >
+          <defs>
+            <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor="#6366f1" />
+              <stop offset="100%" stopColor="#8b5cf6" />
+            </linearGradient>
+          </defs>
+        </svg>
+        {showControls && (
+          <Controls className="bg-white dark:bg-gray-800 !border-gray-200 dark:!border-gray-600 !shadow-lg !rounded-xl [&>button]:!bg-white dark:[&>button]:!bg-gray-700 [&>button]:!border-gray-200 dark:[&>button]:!border-gray-600 [&>button]:!rounded-lg [&>button]:hover:!bg-gray-50 dark:[&>button]:hover:!bg-gray-700 [&>button]:!transition-colors [&>button]:!text-gray-700 dark:[&>button]:!text-gray-300" />
+        )}
+        {showMiniMap && (
+          <MiniMap
+            pannable
+            zoomable
+            nodeColor="#6366f1"
+            maskColor="rgba(0, 0, 0, 0.05)"
+            className="!bg-white dark:!bg-gray-700 !border-gray-200 dark:!border-gray-600 !shadow-lg !rounded-xl !overflow-hidden"
+            style={{ backgroundColor: "rgba(255, 255, 255, 0.95)" }}
+          />
+        )}
+        {showPanel && (
+          <Panel
+            position="top-left"
+            className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 p-3 space-y-2 backdrop-blur-sm bg-white/95 dark:bg-gray-800/95"
           >
-            <span className="relative z-10 flex items-center justify-center">
-              <svg
-                className="w-3 h-3 mr-1"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                />
-              </svg>
-              Re-layout
-            </span>
-            <div className="absolute inset-0 bg-gradient-to-r from-emerald-600 to-teal-600 opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
-          </button>
-        </div>
-      </Panel>
-    </ReactFlow>
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full"></div>
+              <div className="font-semibold text-gray-900 dark:text-gray-100 text-base">
+                {canvas?.title || "Canvas"}
+              </div>
+            </div>
+            <div className="text-gray-600 dark:text-gray-400 text-xs">
+              {canvas ? Object.keys(canvas.nodes).length : 0} messages
+            </div>
+            <div className="text-xs text-gray-500 dark:text-gray-400 py-1.5 px-2 bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 rounded-lg border border-indigo-100 dark:border-indigo-800">
+              💡 Use ↑↓←→ arrow keys to navigate
+            </div>
+            <div className="space-y-1.5">
+              <div className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Layout Options
+              </div>
+              <div className="flex gap-1">
+                <button
+                  onClick={() => onLayout("TB")}
+                  className="group relative overflow-hidden px-1.5 py-1.5 text-xs bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-medium rounded-lg shadow-sm hover:shadow-md transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-1 transition-all duration-200 flex-1"
+                  title="Vertical Layout"
+                >
+                  <span className="relative z-10 flex items-center justify-center">
+                    <ArrowDown className="w-3 h-3" />
+                  </span>
+                  <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 to-purple-600 opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
+                </button>
+                <button
+                  onClick={() => onLayout("LR")}
+                  className="group relative overflow-hidden px-1.5 py-1.5 text-xs bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-medium rounded-lg shadow-sm hover:shadow-md transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-1 transition-all duration-200 flex-1"
+                  title="Horizontal Layout"
+                >
+                  <span className="relative z-10 flex items-center justify-center">
+                    <ArrowRight className="w-3 h-3" />
+                  </span>
+                  <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 to-purple-600 opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
+                </button>
+                <button
+                  onClick={onReLayout}
+                  className="group relative overflow-hidden px-1.5 py-1.5 text-xs bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-medium rounded-lg shadow-sm hover:shadow-md transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-1 transition-all duration-200 flex-1"
+                  title="Re-layout Canvas"
+                >
+                  <span className="relative z-10 flex items-center justify-center">
+                    <RotateCcw className="w-3 h-3" />
+                  </span>
+                  <div className="absolute inset-0 bg-gradient-to-r from-emerald-600 to-teal-600 opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
+                </button>
+              </div>
+            </div>
+          </Panel>
+        )}
+      </ReactFlow>
+    </div>
   );
 };

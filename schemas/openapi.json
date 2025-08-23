@@ -1059,6 +1059,9 @@
                     },
                     {
                       "$ref": "#/components/schemas/ToolResultBlockParam"
+                    },
+                    {
+                      "$ref": "#/components/schemas/ImageBlockParam"
                     }
                   ]
                 },

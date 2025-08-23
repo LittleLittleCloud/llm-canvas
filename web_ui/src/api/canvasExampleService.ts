@@ -2,11 +2,13 @@ import type { CanvasData, CanvasSummary } from "../client";
 
 // Import the example canvas JSON files
 import chainExample from "../examples/chain.json";
+import imageExample from "../examples/image.json";
 import parallelizationExample from "../examples/parallelization.json";
 import routingExample from "../examples/routing.json";
 
 class CanvasExampleService {
   private examples: CanvasData[] = [
+    imageExample as CanvasData,
     chainExample as CanvasData,
     parallelizationExample as CanvasData,
     routingExample as CanvasData,

@@ -8,12 +8,12 @@ from __future__ import annotations
 
 from typing import Any, Literal, TypedDict, Union
 
-from anthropic.types import TextBlockParam, ToolResultBlockParam, ToolUseBlockParam
+from anthropic.types import ImageBlockParam, TextBlockParam, ToolResultBlockParam, ToolUseBlockParam
 
 # ---- Core Data Types ----
 
 # Union type for message blocks matching TypeScript
-MessageBlock = Union[TextBlockParam, ToolUseBlockParam, ToolResultBlockParam]
+MessageBlock = Union[TextBlockParam, ToolUseBlockParam, ToolResultBlockParam, ImageBlockParam]
 
 
 class Message(TypedDict):

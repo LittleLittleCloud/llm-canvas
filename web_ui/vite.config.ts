@@ -2,6 +2,7 @@ import react from "@vitejs/plugin-react";
 import { copyFileSync, existsSync, writeFileSync } from "fs";
 import { resolve } from "path";
 import { defineConfig, loadEnv } from "vite";
+import { exampleSourceLoader } from "./vite-plugins/example-source-loader";
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
@@ -13,6 +14,7 @@ export default defineConfig(({ mode }) => {
     base: isGithubPages ? "/llm-canvas/" : "/",
     plugins: [
       react(),
+      exampleSourceLoader(),
       // Custom plugin to handle GitHub Pages specific files
       isGithubPages && {
         name: "github-pages-spa",

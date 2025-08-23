@@ -1,6 +1,6 @@
 [project]
 name = "llm-canvas"
-version = "0.1.5"
+version = "0.1.6"
 description = "Visualize complex LLM conversation flows in infinite canvases"
 authors = [ { name = "LittleLittleCloud" } ]
 readme = "README.md"
@@ -145,6 +145,7 @@ ignore = [
     "TRY003",  # Avoid specifying long messages outside the exception class
     "PLR0915",  # too-many-statements
     "TC001",
+    "TC002",
     "TC003",
     "EM102",
     "EM101",

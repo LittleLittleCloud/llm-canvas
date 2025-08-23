@@ -21,6 +21,9 @@ export const $Message = {
               {
                 type: "ToolResultBlockParam",
               },
+              {
+                type: "ImageBlockParam",
+              },
             ],
           },
         },
