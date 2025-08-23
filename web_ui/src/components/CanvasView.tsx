@@ -237,6 +237,8 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [viewport, setViewport] = React.useState({ x: 0, y: 0, zoom: 1 });
+  const [isFocused, setIsFocused] = React.useState(false);
+  const flowRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!canvas) {
@@ -476,8 +478,9 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({
 
   const handleKeyDown = useCallback(
     (event: KeyboardEvent) => {
-      // Only handle arrow keys and only if focus is on the flow
+      // Only handle arrow keys if this canvas is focused
       if (
+        !isFocused ||
         !["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(event.key)
       ) {
         return;
@@ -530,7 +533,7 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({
         shakeNode(selectedNode.id);
       }
     },
-    [nodes, selectNode, findClosestNode, shakeNode]
+    [nodes, selectNode, findClosestNode, shakeNode, isFocused]
   );
 
   // Add keyboard event listener
@@ -544,6 +547,10 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({
   const handleNodeClick = useCallback(
     (event: React.MouseEvent, node: Node) => {
       selectNode(node.id);
+      // Focus the canvas when a node is clicked
+      if (flowRef.current) {
+        flowRef.current.focus();
+      }
     },
     [selectNode]
   );
@@ -556,7 +563,20 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({
         selected: false,
       }))
     );
+    // Focus the canvas when pane is clicked
+    if (flowRef.current) {
+      flowRef.current.focus();
+    }
   }, [setNodes]);
+
+  // Handle focus events
+  const handleFocus = useCallback(() => {
+    setIsFocused(true);
+  }, []);
+
+  const handleBlur = useCallback(() => {
+    setIsFocused(false);
+  }, []);
 
   // Enhanced layout function that can use React Flow's getNodes for actual dimensions
   const onLayout = useCallback(
@@ -604,112 +624,118 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({
   }, [reactFlowInstance]);
 
   return (
-    <ReactFlow
-      nodes={nodes}
-      edges={edges}
-      onNodesChange={onNodesChange}
-      onEdgesChange={onEdgesChange}
-      onNodeClick={handleNodeClick}
-      onPaneClick={handlePaneClick}
-      onMove={onMove}
-      nodeTypes={nodeTypes}
-      connectionMode={ConnectionMode.Loose}
-      disableKeyboardA11y
-      fitView
-      fitViewOptions={{ padding: 0.1 }}
-      minZoom={0.1}
-      maxZoom={2}
-      className="bg-gradient-to-br from-slate-50 to-indigo-50 dark:from-gray-900 dark:to-gray-800"
-      defaultEdgeOptions={{
-        type: "simplebezier",
-        animated: false,
-        style: { strokeWidth: 3, stroke: "#6366f1" },
-        markerEnd: { type: MarkerType.ArrowClosed, color: "#6366f1" },
-      }}
-      deleteKeyCode={["Backspace", "Delete"]}
-      multiSelectionKeyCode={["Meta", "Ctrl"]}
+    <div
+      ref={flowRef}
+      className="h-full w-full focus:outline-none"
       tabIndex={0}
-      style={{ outline: "none" }}
+      onFocus={handleFocus}
+      onBlur={handleBlur}
     >
-      <svg
-        style={{ position: "absolute", top: 0, left: 0, width: 0, height: 0 }}
+      <ReactFlow
+        nodes={nodes}
+        edges={edges}
+        onNodesChange={onNodesChange}
+        onEdgesChange={onEdgesChange}
+        onNodeClick={handleNodeClick}
+        onPaneClick={handlePaneClick}
+        onMove={onMove}
+        nodeTypes={nodeTypes}
+        connectionMode={ConnectionMode.Loose}
+        disableKeyboardA11y
+        fitView
+        fitViewOptions={{ padding: 0.1 }}
+        minZoom={0.1}
+        maxZoom={2}
+        className="bg-gradient-to-br from-slate-50 to-indigo-50 dark:from-gray-900 dark:to-gray-800"
+        defaultEdgeOptions={{
+          type: "simplebezier",
+          animated: false,
+          style: { strokeWidth: 3, stroke: "#6366f1" },
+          markerEnd: { type: MarkerType.ArrowClosed, color: "#6366f1" },
+        }}
+        deleteKeyCode={["Backspace", "Delete"]}
+        multiSelectionKeyCode={["Meta", "Ctrl"]}
       >
-        <defs>
-          <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="#6366f1" />
-            <stop offset="100%" stopColor="#8b5cf6" />
-          </linearGradient>
-        </defs>
-      </svg>
-      {showControls && (
-        <Controls className="bg-white dark:bg-gray-800 !border-gray-200 dark:!border-gray-600 !shadow-lg !rounded-xl [&>button]:!bg-white dark:[&>button]:!bg-gray-700 [&>button]:!border-gray-200 dark:[&>button]:!border-gray-600 [&>button]:!rounded-lg [&>button]:hover:!bg-gray-50 dark:[&>button]:hover:!bg-gray-700 [&>button]:!transition-colors [&>button]:!text-gray-700 dark:[&>button]:!text-gray-300" />
-      )}
-      {showMiniMap && (
-        <MiniMap
-          pannable
-          zoomable
-          nodeColor="#6366f1"
-          maskColor="rgba(0, 0, 0, 0.05)"
-          className="!bg-white dark:!bg-gray-700 !border-gray-200 dark:!border-gray-600 !shadow-lg !rounded-xl !overflow-hidden"
-          style={{ backgroundColor: "rgba(255, 255, 255, 0.95)" }}
-        />
-      )}
-      {showPanel && (
-        <Panel
-          position="top-left"
-          className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 p-3 space-y-2 backdrop-blur-sm bg-white/95 dark:bg-gray-800/95"
+        <svg
+          style={{ position: "absolute", top: 0, left: 0, width: 0, height: 0 }}
         >
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full"></div>
-            <div className="font-semibold text-gray-900 dark:text-gray-100 text-base">
-              {canvas?.title || "Canvas"}
+          <defs>
+            <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor="#6366f1" />
+              <stop offset="100%" stopColor="#8b5cf6" />
+            </linearGradient>
+          </defs>
+        </svg>
+        {showControls && (
+          <Controls className="bg-white dark:bg-gray-800 !border-gray-200 dark:!border-gray-600 !shadow-lg !rounded-xl [&>button]:!bg-white dark:[&>button]:!bg-gray-700 [&>button]:!border-gray-200 dark:[&>button]:!border-gray-600 [&>button]:!rounded-lg [&>button]:hover:!bg-gray-50 dark:[&>button]:hover:!bg-gray-700 [&>button]:!transition-colors [&>button]:!text-gray-700 dark:[&>button]:!text-gray-300" />
+        )}
+        {showMiniMap && (
+          <MiniMap
+            pannable
+            zoomable
+            nodeColor="#6366f1"
+            maskColor="rgba(0, 0, 0, 0.05)"
+            className="!bg-white dark:!bg-gray-700 !border-gray-200 dark:!border-gray-600 !shadow-lg !rounded-xl !overflow-hidden"
+            style={{ backgroundColor: "rgba(255, 255, 255, 0.95)" }}
+          />
+        )}
+        {showPanel && (
+          <Panel
+            position="top-left"
+            className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 p-3 space-y-2 backdrop-blur-sm bg-white/95 dark:bg-gray-800/95"
+          >
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full"></div>
+              <div className="font-semibold text-gray-900 dark:text-gray-100 text-base">
+                {canvas?.title || "Canvas"}
+              </div>
             </div>
-          </div>
-          <div className="text-gray-600 dark:text-gray-400 text-xs">
-            {canvas ? Object.keys(canvas.nodes).length : 0} messages
-          </div>
-          <div className="text-xs text-gray-500 dark:text-gray-400 py-1.5 px-2 bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 rounded-lg border border-indigo-100 dark:border-indigo-800">
-            💡 Use ↑↓←→ arrow keys to navigate
-          </div>
-          <div className="space-y-1.5">
-            <div className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Layout Options
+            <div className="text-gray-600 dark:text-gray-400 text-xs">
+              {canvas ? Object.keys(canvas.nodes).length : 0} messages
             </div>
-            <div className="flex gap-1">
-              <button
-                onClick={() => onLayout("TB")}
-                className="group relative overflow-hidden px-1.5 py-1.5 text-xs bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-medium rounded-lg shadow-sm hover:shadow-md transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-1 transition-all duration-200 flex-1"
-                title="Vertical Layout"
-              >
-                <span className="relative z-10 flex items-center justify-center">
-                  <ArrowDown className="w-3 h-3" />
-                </span>
-                <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 to-purple-600 opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
-              </button>
-              <button
-                onClick={() => onLayout("LR")}
-                className="group relative overflow-hidden px-1.5 py-1.5 text-xs bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-medium rounded-lg shadow-sm hover:shadow-md transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-1 transition-all duration-200 flex-1"
-                title="Horizontal Layout"
-              >
-                <span className="relative z-10 flex items-center justify-center">
-                  <ArrowRight className="w-3 h-3" />
-                </span>
-                <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 to-purple-600 opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
-              </button>
-              <button
-                onClick={onReLayout}
-                className="group relative overflow-hidden px-1.5 py-1.5 text-xs bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-medium rounded-lg shadow-sm hover:shadow-md transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-1 transition-all duration-200 flex-1"
-                title="Re-layout Canvas"
-              >
-                <span className="relative z-10 flex items-center justify-center">
-                  <RotateCcw className="w-3 h-3" />
-                </span>
-                <div className="absolute inset-0 bg-gradient-to-r from-emerald-600 to-teal-600 opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
-              </button>
+            <div className="text-xs text-gray-500 dark:text-gray-400 py-1.5 px-2 bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 rounded-lg border border-indigo-100 dark:border-indigo-800">
+              💡 Use ↑↓←→ arrow keys to navigate
             </div>
-          </div>
-        </Panel>
-      )}
-    </ReactFlow>
+            <div className="space-y-1.5">
+              <div className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Layout Options
+              </div>
+              <div className="flex gap-1">
+                <button
+                  onClick={() => onLayout("TB")}
+                  className="group relative overflow-hidden px-1.5 py-1.5 text-xs bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-medium rounded-lg shadow-sm hover:shadow-md transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-1 transition-all duration-200 flex-1"
+                  title="Vertical Layout"
+                >
+                  <span className="relative z-10 flex items-center justify-center">
+                    <ArrowDown className="w-3 h-3" />
+                  </span>
+                  <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 to-purple-600 opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
+                </button>
+                <button
+                  onClick={() => onLayout("LR")}
+                  className="group relative overflow-hidden px-1.5 py-1.5 text-xs bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-medium rounded-lg shadow-sm hover:shadow-md transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-1 transition-all duration-200 flex-1"
+                  title="Horizontal Layout"
+                >
+                  <span className="relative z-10 flex items-center justify-center">
+                    <ArrowRight className="w-3 h-3" />
+                  </span>
+                  <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 to-purple-600 opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
+                </button>
+                <button
+                  onClick={onReLayout}
+                  className="group relative overflow-hidden px-1.5 py-1.5 text-xs bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-medium rounded-lg shadow-sm hover:shadow-md transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-1 transition-all duration-200 flex-1"
+                  title="Re-layout Canvas"
+                >
+                  <span className="relative z-10 flex items-center justify-center">
+                    <RotateCcw className="w-3 h-3" />
+                  </span>
+                  <div className="absolute inset-0 bg-gradient-to-r from-emerald-600 to-teal-600 opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
+                </button>
+              </div>
+            </div>
+          </Panel>
+        )}
+      </ReactFlow>
+    </div>
   );
 };
