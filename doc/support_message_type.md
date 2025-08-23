@@ -29,7 +29,14 @@ Messages can contain a list of different block types for more complex interactio
 ```python
 message = {
     "content": [
-        {"type": "text", "text": "I'll check the weather for you."},
+        {"type": "text", "text": "I'll analyze this image and check the weather for you."},
+        {
+            "type": "image",
+            "source": {
+                "type": "url",
+                "url": "https://example.com/weather-map.jpg"
+            }
+        },
         {"type": "tool_use", "id": "weather_001", "name": "get_weather", "input": {"location": "San Francisco"}}
     ],
     "role": "assistant"
@@ -38,7 +45,7 @@ message = {
 
 ## Supported Block Types
 
-LLM Canvas supports three main types of message blocks, compatible with Anthropic's message format:
+LLM Canvas supports four main types of message blocks, compatible with Anthropic's message format:
 
 1. **TextBlockParam**: Plain text content
 
@@ -58,11 +65,35 @@ LLM Canvas supports three main types of message blocks, compatible with Anthropi
    ```
 
 3. **ToolResultBlockParam**: Contains the results returned from tool executions
+
    ```python
    {
        "type": "tool_result",
        "tool_use_id": "unique_tool_call_id",
        "content": "Tool execution result"
+   }
+   ```
+
+4. **ImageBlockParam**: Represents image content, supporting both base64-encoded images and URL references
+
+   ```python
+   # Base64 encoded image
+   {
+       "type": "image",
+       "source": {
+           "type": "base64",
+           "media_type": "image/jpeg",  # or "image/png", "image/gif", "image/webp"
+           "data": "base64_encoded_image_data"
+       }
+   }
+
+   # URL-referenced image
+   {
+       "type": "image",
+       "source": {
+           "type": "url",
+           "url": "https://example.com/image.jpg"
+       }
    }
    ```
 
@@ -84,6 +115,41 @@ This flexible message structure allows LLM Canvas to visualize complex tool-base
 user_message = {
     "content": "What's the weather like today?",
     "role": "user"
+}
+```
+
+### Image Message
+
+```python
+# Message with base64 encoded image
+image_message = {
+    "content": [
+        {"type": "text", "text": "Here's a screenshot of the issue:"},
+        {
+            "type": "image",
+            "source": {
+                "type": "base64",
+                "media_type": "image/png",
+                "data": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg=="
+            }
+        }
+    ],
+    "role": "user"
+}
+
+# Message with URL image
+url_image_message = {
+    "content": [
+        {"type": "text", "text": "Check out this diagram:"},
+        {
+            "type": "image",
+            "source": {
+                "type": "url",
+                "url": "https://example.com/diagram.jpg"
+            }
+        }
+    ],
+    "role": "assistant"
 }
 ```
 
@@ -125,4 +191,4 @@ assistant_response = {
 }
 ```
 
-This message structure enables LLM Canvas to provide rich visualization of tool interactions and complex conversation flows in its web interface.
+This message structure enables LLM Canvas to provide rich visualization of tool interactions, image content, and complex conversation flows in its web interface.

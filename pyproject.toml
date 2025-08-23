@@ -145,6 +145,7 @@ ignore = [
     "TRY003",  # Avoid specifying long messages outside the exception class
     "PLR0915",  # too-many-statements
     "TC001",
+    "TC002",
     "TC003",
     "EM102",
     "EM101",

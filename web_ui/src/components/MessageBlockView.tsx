@@ -1,5 +1,6 @@
 import React from "react";
 import { MessageBlock } from "../types";
+import { ImageBlockView } from "./ImageBlockView";
 import { TextBlockView } from "./TextBlockView";
 import { ToolResultBlockView } from "./ToolResultBlockView";
 import { ToolUseBlockView } from "./ToolUseBlockView";
@@ -17,6 +18,8 @@ export const MessageBlockView: React.FC<Props> = ({ block }) => {
       return <ToolUseBlockView block={block} />;
     case "tool_result":
       return <ToolResultBlockView block={block} />;
+    case "image":
+      return <ImageBlockView block={block} />;
     default:
       return (
         <div className="text-xs text-gray-400 dark:text-gray-500">

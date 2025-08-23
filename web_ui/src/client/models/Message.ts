@@ -1,3 +1,4 @@
+import type { ImageBlockParam } from "./ImageBlockParam";
 import type { TextBlockParam } from "./TextBlockParam";
 import type { ToolResultBlockParam } from "./ToolResultBlockParam";
 import type { ToolUseBlockParam } from "./ToolUseBlockParam";
@@ -8,6 +9,11 @@ import type { ToolUseBlockParam } from "./ToolUseBlockParam";
 export type Message = {
   content:
     | string
-    | Array<TextBlockParam | ToolUseBlockParam | ToolResultBlockParam>;
+    | Array<
+        | TextBlockParam
+        | ToolUseBlockParam
+        | ToolResultBlockParam
+        | ImageBlockParam
+      >;
   role: "user" | "assistant" | "system";
 };

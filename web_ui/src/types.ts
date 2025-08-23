@@ -1,4 +1,5 @@
 import {
+  ImageBlockParam,
   TextBlockParam,
   ToolResultBlockParam,
   ToolUseBlockParam,
@@ -11,4 +12,5 @@ export * from "./client";
 export type MessageBlock =
   | TextBlockParam
   | ToolUseBlockParam
-  | ToolResultBlockParam;
+  | ToolResultBlockParam
+  | ImageBlockParam;

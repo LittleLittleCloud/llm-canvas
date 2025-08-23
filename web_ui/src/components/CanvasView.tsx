@@ -266,9 +266,9 @@ const CanvasViewInner: React.FC = () => {
             strokeDasharray: is_parent ? undefined : "5,5",
           },
           markerEnd: {
-            type: MarkerType.ArrowClosed,
-            width: 20,
-            height: 20,
+            type: MarkerType.Arrow,
+            width: 15,
+            height: 15,
             color: "#6366f1",
           },
         });

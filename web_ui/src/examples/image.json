@@ -1,0 +1,72 @@
+{
+  "title": "Image Comparison",
+  "last_updated": 1755967771.9893734,
+  "description": "\n        This canvas demonstrates Claude's image comparison capabilities.\n\n        The example shows a simple one-turn conversation where Claude compares\n        two insect images (an ant and a bee) and explains their differences.\n\n        This showcases how to use ImageBlockParam with URL sources to send\n        multiple images in a single message to Claude for comparison analysis.\n        ",
+  "canvas_id": "590b4bc3-2abf-45a1-8e41-682d82381bfd",
+  "created_at": 1755967683.1786473,
+  "nodes": {
+    "5109875e-c282-4ed7-ae0d-b31892f96d55": {
+      "id": "5109875e-c282-4ed7-ae0d-b31892f96d55",
+      "message": {
+        "content": "You are a helpful assistant that provides image comparisons. Respond only in English.",
+        "role": "system"
+      },
+      "parent_id": null,
+      "child_ids": ["356d8ee8-0d66-4e99-9b93-fb3cbe635ac4"],
+      "meta": {
+        "timestamp": 1755967683.1834462
+      }
+    },
+    "356d8ee8-0d66-4e99-9b93-fb3cbe635ac4": {
+      "id": "356d8ee8-0d66-4e99-9b93-fb3cbe635ac4",
+      "message": {
+        "content": [
+          {
+            "text": "Image 1:",
+            "type": "text"
+          },
+          {
+            "source": {
+              "type": "url",
+              "url": "https://upload.wikimedia.org/wikipedia/commons/a/a7/Camponotus_flavomarginatus_ant.jpg"
+            },
+            "type": "image"
+          },
+          {
+            "text": "Image 2:",
+            "type": "text"
+          },
+          {
+            "source": {
+              "type": "url",
+              "url": "https://upload.wikimedia.org/wikipedia/commons/b/b5/Iridescent.green.sweat.bee1.jpg"
+            },
+            "type": "image"
+          },
+          {
+            "text": "How are these images different?",
+            "type": "text"
+          }
+        ],
+        "role": "user"
+      },
+      "parent_id": "5109875e-c282-4ed7-ae0d-b31892f96d55",
+      "child_ids": ["998d4bb9-7b75-4fc0-81a0-dcc2c6315d37"],
+      "meta": {
+        "timestamp": 1755967683.1889277
+      }
+    },
+    "998d4bb9-7b75-4fc0-81a0-dcc2c6315d37": {
+      "id": "998d4bb9-7b75-4fc0-81a0-dcc2c6315d37",
+      "message": {
+        "content": "These images show two very different insects captured in macro photography, with several distinct differences:\n\n1. Species:\n- Image 1 shows an ant, with its characteristic segmented body and long legs\n- Image 2 shows a metallic green bee or sweat bee, covered in pollen\n\n2. Color:\n- The ant is primarily black/dark colored\n- The bee has a brilliant metallic green coloration with golden pollen covering its body\n\n3. Background/Setting:\n- The ant is photographed on a plain, beige surface with a soft brown background\n- The bee is photographed against a warm orange background, appearing to be on what looks like a flower or plant surface\n\n4. Composition:\n- The ant is captured in profile view, showing its full body length\n- The bee is captured at a closer angle, focusing more on its upper body and wings\n\n5. Lighting:\n- The ant photo has subtle, neutral lighting\n- The bee photo has dramatic warm lighting that creates a golden glow effect\n\nBoth images are excellent examples of macro insect photography but showcase very different subjects and photographic styles.",
+        "role": "assistant"
+      },
+      "parent_id": "356d8ee8-0d66-4e99-9b93-fb3cbe635ac4",
+      "child_ids": [],
+      "meta": {
+        "timestamp": 1755967690.7753675
+      }
+    }
+  }
+}
