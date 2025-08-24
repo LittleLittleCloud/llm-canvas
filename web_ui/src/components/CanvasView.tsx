@@ -17,6 +17,7 @@ import ReactFlow, {
   useReactFlow,
 } from "reactflow";
 import "reactflow/dist/style.css";
+import { useIsMobile } from "../hooks";
 import { CanvasData, MessageNode } from "../types";
 import { MessageNodeComponent } from "./MessageNode";
 
@@ -29,99 +30,96 @@ export interface CanvasViewProps {
   showPanel?: boolean;
 }
 
-// Custom node component for React Flow
-const CustomMessageNode = ({
-  data,
-  selected,
-}: {
-  data: MessageNode & {
-    hasParent?: boolean;
-    hasChildren?: boolean;
-    direction?: string;
-  };
-  selected?: boolean;
-}) => {
-  const { hasParent = false, hasChildren = false, direction = "TB" } = data;
-  const isVertical = direction === "TB";
-  const nodeRef = useRef<HTMLDivElement>(null);
+// Custom node component for React Flow - memoized to prevent unnecessary re-renders
+const CustomMessageNode = React.memo(
+  ({
+    data,
+    selected,
+  }: {
+    data: MessageNode & {
+      hasParent?: boolean;
+      hasChildren?: boolean;
+      direction?: string;
+    };
+    selected?: boolean;
+  }) => {
+    const { hasParent = false, hasChildren = false, direction = "TB" } = data;
+    const isVertical = direction === "TB";
 
-  // Add data attribute for easier DOM querying
-  return (
-    <div
-      ref={nodeRef}
-      data-node-id={data.id}
-      className={`bg-white dark:bg-gray-800 shadow-sm hover:shadow-xl border border-gray-100 dark:border-gray-700 min-w-[320px] relative transition-all duration-300 hover:scale-[1.02] group ${
-        selected
-          ? "nowheel nopan"
-          : "hover:border-indigo-200 dark:hover:border-indigo-600"
-      }`}
-    >
-      {/* header ribbon */}
+    // Add data attribute for easier DOM querying
+    return (
       <div
-        className={`h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-t-2xl transition-opacity duration-300 ${
-          selected ? "opacity-100" : "opacity-0"
+        data-node-id={data.id}
+        className={`nowheel nopan bg-white dark:bg-gray-800 shadow-sm hover:shadow-xl border border-gray-100 dark:border-gray-700 min-w-[280px] sm:min-w-[320px] relative transition-all duration-300 hover:scale-[1.02] group ${
+          selected ? "" : "hover:border-indigo-200 dark:hover:border-indigo-600"
         }`}
-      />
-      {/* Node content */}
-      {/* Target handle - only show if node has parent */}
-      {hasParent && (
-        <Handle
-          type="target"
-          position={isVertical ? Position.Top : Position.Left}
-          id={isVertical ? "top" : "left"}
-          style={{
-            background: "linear-gradient(135deg, #6366f1, #8b5cf6)",
-            border: "2px solid white",
-            width: "12px",
-            height: "12px",
-            borderRadius: "50%",
-          }}
-          isConnectable={false}
+      >
+        {/* header ribbon */}
+        <div
+          className={`h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-t-2xl transition-opacity duration-300 ${
+            selected ? "opacity-100" : "opacity-0"
+          }`}
         />
-      )}
-      <div className="p-1">
-        <MessageNodeComponent node={data} />
+        {/* Node content */}
+        {/* Target handle - only show if node has parent */}
+        {hasParent && (
+          <Handle
+            type="target"
+            position={isVertical ? Position.Top : Position.Left}
+            id={isVertical ? "top" : "left"}
+            style={{
+              background: "linear-gradient(135deg, #6366f1, #8b5cf6)",
+              border: "2px solid white",
+              width: "12px",
+              height: "12px",
+              borderRadius: "50%",
+            }}
+            isConnectable={false}
+          />
+        )}
+        <div className="p-1">
+          <MessageNodeComponent node={data} />
+        </div>
+        <div
+          className={`absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-b-2xl transition-opacity duration-300 ${
+            selected ? "opacity-100" : "opacity-0"
+          }`}
+        />
+        {/* Source handle - only show if node has children */}
+        {hasChildren && (
+          <Handle
+            type="source"
+            position={isVertical ? Position.Bottom : Position.Right}
+            id={isVertical ? "bottom" : "right"}
+            style={{
+              background: "linear-gradient(135deg, #6366f1, #8b5cf6)",
+              border: "2px solid white",
+              width: "12px",
+              height: "12px",
+            }}
+            isConnectable={false}
+          />
+        )}
       </div>
-      <div
-        className={`absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-b-2xl transition-opacity duration-300 ${
-          selected ? "opacity-100" : "opacity-0"
-        }`}
-      />
-      {/* Source handle - only show if node has children */}
-      {hasChildren && (
-        <Handle
-          type="source"
-          position={isVertical ? Position.Bottom : Position.Right}
-          id={isVertical ? "bottom" : "right"}
-          style={{
-            background: "linear-gradient(135deg, #6366f1, #8b5cf6)",
-            border: "2px solid white",
-            width: "12px",
-            height: "12px",
-          }}
-          isConnectable={false}
-        />
-      )}
-    </div>
-  );
-};
+    );
+  }
+);
+
+CustomMessageNode.displayName = "CustomMessageNode";
 
 // Define nodeTypes outside component to prevent recreation on every render
 const nodeTypes = {
   messageNode: CustomMessageNode,
 };
-
-// Dagre layout configuration
 const dagreGraph = new dagre.graphlib.Graph();
 dagreGraph.setDefaultEdgeLabel(() => ({}));
-
 const getLayoutedElements = (
   nodes: Node[],
   edges: Edge[],
-  direction = "LR",
-  dataNodes: Record<string, MessageNode> = {}
+  direction = "LR"
 ) => {
   const isVertical = direction === "TB";
+  // Dagre layout configuration
 
   // Function to get node dimensions with fallbacks
   const getNodeDimensions = (node: Node) => {
@@ -133,37 +131,19 @@ const getLayoutedElements = (
       };
     }
 
-    // Try to get dimensions from DOM
-    const nodeElement = document.querySelector(`[data-node-id="${node.id}"]`);
-    if (nodeElement) {
-      const rect = nodeElement.getBoundingClientRect();
-      if (rect.width > 0 && rect.height > 0) {
-        return {
-          width: rect.width,
-          height: rect.height,
-        };
-      }
-    }
-
     throw new Error(`Node ${node.id} has no valid dimensions`);
   };
 
   dagreGraph.setGraph({
     rankdir: direction,
-    nodesep: 30,
-    ranksep: 60,
-    marginx: 5,
-    marginy: 5,
+    nodesep: 100,
+    ranksep: 150,
   });
 
   // Set nodes with calculated dimensions
   nodes.forEach(node => {
     const dimensions = getNodeDimensions(node);
     dagreGraph.setNode(node.id, dimensions);
-
-    // Update node with dimensions for later use
-    node.width = dimensions.width;
-    node.height = dimensions.height;
   });
 
   edges.forEach(edge => {
@@ -175,12 +155,6 @@ const getLayoutedElements = (
   nodes.forEach(node => {
     // Now we're guaranteed to have width and height
     const nodeWithPosition = dagreGraph.node(node.id);
-    const originalNode = dataNodes[node.id];
-
-    // Determine if node has parent and children
-    const hasParent = originalNode?.parent_id != null;
-    const hasChildren = originalNode?.child_ids?.length > 0;
-
     node.targetPosition = isVertical ? Position.Top : Position.Left;
     node.sourcePosition = isVertical ? Position.Bottom : Position.Right;
     node.position = {
@@ -191,8 +165,6 @@ const getLayoutedElements = (
     // Update node data with handle information
     node.data = {
       ...node.data,
-      hasParent,
-      hasChildren,
       direction,
     };
   });
@@ -238,10 +210,11 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [viewport, setViewport] = React.useState({ x: 0, y: 0, zoom: 1 });
   const [isFocused, setIsFocused] = React.useState(false);
+  const isMobile = useIsMobile(768);
   const flowRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!canvas) {
+    if (!canvas || isMobile === undefined) {
       setNodes([]);
       setEdges([]);
       return;
@@ -262,13 +235,16 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({
           ...node,
           hasParent,
           hasChildren,
-          direction: "LR",
+          direction: isMobile ? "TB" : "LR",
         },
-        style: { width: 320 },
+        style: {
+          width: 280,
+        },
       });
     });
 
     // Create edges
+    const isVerticalLayout = isMobile; // TB layout on mobile, LR on desktop
     Object.entries(canvas.nodes).forEach(([nodeId, node]) => {
       // check if child node.parent_id is equal to the current nodeId
       node.child_ids.forEach(childId => {
@@ -277,8 +253,8 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({
           id: `${nodeId}-${childId}`, // from -> to
           source: nodeId,
           target: childId,
-          sourceHandle: "bottom",
-          targetHandle: "top",
+          sourceHandle: isVerticalLayout ? "bottom" : "right",
+          targetHandle: isVerticalLayout ? "top" : "left",
           type: "simplebezier",
           animated: false,
           style: {
@@ -298,35 +274,39 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({
 
     setNodes(nodes);
     setEdges(edges);
-  }, [canvas, setNodes, setEdges]);
+  }, [canvas, setNodes, setEdges, isMobile]);
 
   // Separate effect to trigger re-layout after nodes are set
   useEffect(() => {
-    if (nodes.length > 0 && canvas) {
+    const needsLayout =
+      isMobile !== undefined &&
+      canvas &&
+      nodes.some(node => node.position.x === 0 && node.position.y === 0) &&
+      nodes.every(
+        node => node.height !== undefined && node.width !== undefined
+      );
+    if (needsLayout) {
       // Use setTimeout to ensure nodes are rendered before layout
-      const timeoutId = setTimeout(() => {
-        // Get current direction from the first node, default to LR
-        const currentDirection = nodes[0]?.data?.direction || "LR";
-        const { nodes: layoutedNodes, edges: layoutedEdges } =
-          getLayoutedElements(nodes, edges, currentDirection, canvas.nodes);
+      // Get current direction from the first node, default based on mobile state
+      const currentDirection =
+        nodes[0]?.data?.direction || (isMobile ? "TB" : "LR");
+      const { nodes: layoutedNodes, edges: layoutedEdges } =
+        getLayoutedElements(nodes, edges, currentDirection);
 
-        setNodes([...layoutedNodes]);
-        setEdges([...layoutedEdges]);
+      setNodes([...layoutedNodes]);
+      setEdges([...layoutedEdges]);
 
-        // Fit view to show all nodes with some padding
-        setTimeout(() => {
-          reactFlowInstance.fitView({
-            padding: 0.1,
-            duration: 800,
-            maxZoom: 1.5,
-            minZoom: 0.1,
-          });
-        }, 50);
-      }, 100);
-
-      return () => clearTimeout(timeoutId);
+      // Fit view to show all nodes with some padding
+      setTimeout(() => {
+        reactFlowInstance.fitView({
+          padding: 0.1,
+          duration: 800,
+          maxZoom: 2,
+          minZoom: 0.1,
+        });
+      }, 150);
     }
-  }, [nodes.length, canvas]); // Only trigger when nodes.length changes and we have data
+  }, [nodes, edges, isMobile, canvas]); // Only trigger when nodes.length changes and we have data
 
   // Node navigation functions
   const shakeNode = useCallback((nodeId: string) => {
@@ -586,26 +566,26 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({
       // Update nodes with new direction information
       const updatedNodes = nodes.map(node => ({
         ...node,
+        width: undefined,
+        height: undefined, // Let React Flow recalculate height
+        position: { x: 0, y: 0 }, // Reset position for re-layout
         data: {
           ...node.data,
           direction,
         },
       }));
 
-      const { nodes: layoutedNodes, edges: layoutedEdges } =
-        getLayoutedElements(updatedNodes, edges, direction, canvas.nodes);
-
-      setNodes([...layoutedNodes]);
-      setEdges([...layoutedEdges]);
+      setNodes([...updatedNodes]);
     },
     [nodes, edges, setNodes, setEdges, canvas]
   );
 
   const onReLayout = useCallback(() => {
-    // Get current direction from the first node, default to LR
-    const currentDirection = nodes[0]?.data?.direction || "LR";
+    // Get current direction from the first node, default based on mobile state
+    const currentDirection =
+      nodes[0]?.data?.direction || (isMobile ? "TB" : "LR");
     onLayout(currentDirection);
-  }, [nodes, onLayout]);
+  }, [nodes, onLayout, reactFlowInstance, isMobile]);
 
   // Handle viewport changes
   const onMove = useCallback(() => {
@@ -669,7 +649,7 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({
         {showControls && (
           <Controls className="bg-white dark:bg-gray-800 !border-gray-200 dark:!border-gray-600 !shadow-lg !rounded-xl [&>button]:!bg-white dark:[&>button]:!bg-gray-700 [&>button]:!border-gray-200 dark:[&>button]:!border-gray-600 [&>button]:!rounded-lg [&>button]:hover:!bg-gray-50 dark:[&>button]:hover:!bg-gray-700 [&>button]:!transition-colors [&>button]:!text-gray-700 dark:[&>button]:!text-gray-300" />
         )}
-        {showMiniMap && (
+        {showMiniMap && !isMobile && (
           <MiniMap
             pannable
             zoomable
@@ -682,57 +662,89 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({
         {showPanel && (
           <Panel
             position="top-left"
-            className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 p-3 space-y-2 backdrop-blur-sm bg-white/95 dark:bg-gray-800/95"
+            className={`bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 backdrop-blur-sm bg-white/95 dark:bg-gray-800/95 ${
+              isMobile ? "p-2" : "p-3 space-y-2"
+            }`}
           >
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full"></div>
-              <div className="font-semibold text-gray-900 dark:text-gray-100 text-base">
-                {canvas?.title || "Canvas"}
-              </div>
-            </div>
-            <div className="text-gray-600 dark:text-gray-400 text-xs">
-              {canvas ? Object.keys(canvas.nodes).length : 0} messages
-            </div>
-            <div className="text-xs text-gray-500 dark:text-gray-400 py-1.5 px-2 bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 rounded-lg border border-indigo-100 dark:border-indigo-800">
-              💡 Use ↑↓←→ arrow keys to navigate
-            </div>
-            <div className="space-y-1.5">
-              <div className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Layout Options
-              </div>
-              <div className="flex gap-1">
+            {isMobile ? (
+              // Slim mobile version
+              <div className="flex flex-col gap-1">
                 <button
                   onClick={() => onLayout("TB")}
-                  className="group relative overflow-hidden px-1.5 py-1.5 text-xs bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-medium rounded-lg shadow-sm hover:shadow-md transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-1 transition-all duration-200 flex-1"
+                  className="w-8 h-8 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-lg shadow-sm hover:shadow-md transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-1 transition-all duration-200 flex items-center justify-center"
                   title="Vertical Layout"
                 >
-                  <span className="relative z-10 flex items-center justify-center">
-                    <ArrowDown className="w-3 h-3" />
-                  </span>
-                  <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 to-purple-600 opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
+                  <ArrowDown className="w-4 h-4" />
                 </button>
                 <button
                   onClick={() => onLayout("LR")}
-                  className="group relative overflow-hidden px-1.5 py-1.5 text-xs bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-medium rounded-lg shadow-sm hover:shadow-md transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-1 transition-all duration-200 flex-1"
+                  className="w-8 h-8 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-lg shadow-sm hover:shadow-md transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-1 transition-all duration-200 flex items-center justify-center"
                   title="Horizontal Layout"
                 >
-                  <span className="relative z-10 flex items-center justify-center">
-                    <ArrowRight className="w-3 h-3" />
-                  </span>
-                  <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 to-purple-600 opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
+                  <ArrowRight className="w-4 h-4" />
                 </button>
                 <button
                   onClick={onReLayout}
-                  className="group relative overflow-hidden px-1.5 py-1.5 text-xs bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-medium rounded-lg shadow-sm hover:shadow-md transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-1 transition-all duration-200 flex-1"
+                  className="w-8 h-8 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-lg shadow-sm hover:shadow-md transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-1 transition-all duration-200 flex items-center justify-center"
                   title="Re-layout Canvas"
                 >
-                  <span className="relative z-10 flex items-center justify-center">
-                    <RotateCcw className="w-3 h-3" />
-                  </span>
-                  <div className="absolute inset-0 bg-gradient-to-r from-emerald-600 to-teal-600 opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
+                  <RotateCcw className="w-4 h-4" />
                 </button>
               </div>
-            </div>
+            ) : (
+              // Full desktop version
+              <>
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full"></div>
+                  <div className="font-semibold text-gray-900 dark:text-gray-100 text-base">
+                    {canvas?.title || "Canvas"}
+                  </div>
+                </div>
+                <div className="text-gray-600 dark:text-gray-400 text-xs">
+                  {canvas ? Object.keys(canvas.nodes).length : 0} messages
+                </div>
+                <div className="text-xs text-gray-500 dark:text-gray-400 py-1.5 px-2 bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 rounded-lg border border-indigo-100 dark:border-indigo-800">
+                  💡 Use ↑↓←→ arrow keys to navigate
+                </div>
+                <div className="space-y-1.5">
+                  <div className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Layout Options
+                  </div>
+                  <div className="flex gap-1">
+                    <button
+                      onClick={() => onLayout("TB")}
+                      className="group relative overflow-hidden px-1.5 py-1.5 text-xs bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-medium rounded-lg shadow-sm hover:shadow-md transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-1 transition-all duration-200 flex-1"
+                      title="Vertical Layout"
+                    >
+                      <span className="relative z-10 flex items-center justify-center">
+                        <ArrowDown className="w-3 h-3" />
+                      </span>
+                      <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 to-purple-600 opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
+                    </button>
+                    <button
+                      onClick={() => onLayout("LR")}
+                      className="group relative overflow-hidden px-1.5 py-1.5 text-xs bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-medium rounded-lg shadow-sm hover:shadow-md transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-1 transition-all duration-200 flex-1"
+                      title="Horizontal Layout"
+                    >
+                      <span className="relative z-10 flex items-center justify-center">
+                        <ArrowRight className="w-3 h-3" />
+                      </span>
+                      <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 to-purple-600 opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
+                    </button>
+                    <button
+                      onClick={onReLayout}
+                      className="group relative overflow-hidden px-1.5 py-1.5 text-xs bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-medium rounded-lg shadow-sm hover:shadow-md transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-1 transition-all duration-200 flex-1"
+                      title="Re-layout Canvas"
+                    >
+                      <span className="relative z-10 flex items-center justify-center">
+                        <RotateCcw className="w-3 h-3" />
+                      </span>
+                      <div className="absolute inset-0 bg-gradient-to-r from-emerald-600 to-teal-600 opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
           </Panel>
         )}
       </ReactFlow>

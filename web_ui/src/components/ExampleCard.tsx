@@ -1,5 +1,6 @@
 import { Code } from "lucide-react";
 import React, { useState } from "react";
+import { Link } from "react-router-dom";
 import { CanvasData } from "../types";
 import { CanvasView } from "./CanvasView";
 import { CopyButton } from "./CopyButton";
@@ -22,9 +23,11 @@ export const ExampleCard: React.FC<ExampleCardProps> = ({
     <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden border border-gray-200 dark:border-gray-700 transition-all duration-300">
       {/* Header */}
       <div className="p-6 pb-0  border-gray-200 dark:border-gray-700">
-        <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-3">
-          {canvas.title}
-        </h3>
+        <Link to={`/canvas/${canvas.canvas_id}`} className="block group">
+          <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-3 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 group-hover:underline transition-all duration-200 cursor-pointer">
+            {canvas.title}
+          </h3>
+        </Link>
         {canvas.description && (
           <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-3 leading-relaxed">
             {canvas.description.trim()}
