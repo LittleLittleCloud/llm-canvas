@@ -28,6 +28,28 @@
         }
       }
     },
+    "/api/v1/sse/documentation": {
+      "get": {
+        "tags": [
+          "v1"
+        ],
+        "summary": "Sse Documentation",
+        "description": "SSE documentation endpoint that describes available event types.\n\nYou should never call this, this endpoint is to make openapi generator happy",
+        "operationId": "sse_documentation_api_v1_sse_documentation_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SSEDocumentationResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/canvas/list": {
       "get": {
         "tags": [
@@ -301,18 +323,38 @@
         }
       }
     },
-    "/api/v1/canvas/stream": {
+    "/api/v1/canvas/sse": {
       "get": {
         "tags": [
           "v1"
         ],
-        "summary": "Stream",
-        "description": "Stream canvas updates via Server-Sent Events.\nArgs:\n    canvas_id: Canvas UUID to stream\nReturns:\n    StreamingResponse with SSE events\nRaises:\n    HTTPException: 404 if canvas not found",
-        "operationId": "stream_api_v1_canvas_stream_get",
+        "summary": "Canvas Sse",
+        "description": "Server-Sent Events endpoint for global canvas updates.\n\nSends events when canvases are created, updated, or deleted.\nEvents include:\n- canvas_created: When a new canvas is created\n- canvas_updated: When a canvas is updated\n- canvas_deleted: When a canvas is deleted\n\nReturns:\n    StreamingResponse with SSE events",
+        "operationId": "canvas_sse_api_v1_canvas_sse_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/canvas/{canvas_id}/sse": {
+      "get": {
+        "tags": [
+          "v1"
+        ],
+        "summary": "Canvas Message Sse",
+        "description": "Server-Sent Events endpoint for canvas message updates.\n\nSends events when messages are added, updated, or deleted in a specific canvas.\nEvents include:\n- message_committed: When a new message is added to the canvas\n- message_updated: When an existing message is updated\n- message_deleted: When a message is deleted\n\nArgs:\n    canvas_id: Canvas UUID to stream events for\nReturns:\n    StreamingResponse with SSE events\nRaises:\n    HTTPException: 404 if canvas not found",
+        "operationId": "canvas_message_sse_api_v1_canvas__canvas_id__sse_get",
         "parameters": [
           {
             "name": "canvas_id",
-            "in": "query",
+            "in": "path",
             "required": true,
             "schema": {
               "type": "string",
@@ -327,9 +369,7 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {
-                  "title": "Response Stream Api V1 Canvas Stream Get"
-                }
+                "schema": {}
               }
             }
           },
@@ -1138,6 +1178,293 @@
         ],
         "title": "MessageNode",
         "description": "Node in the canvas conversation graph."
+      },
+      "SSECanvasCreatedEvent": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "canvas_created",
+            "title": "Type"
+          },
+          "timestamp": {
+            "type": "number",
+            "title": "Timestamp"
+          },
+          "data": {
+            "$ref": "#/components/schemas/CanvasSummary"
+          }
+        },
+        "type": "object",
+        "required": [
+          "type",
+          "timestamp",
+          "data"
+        ],
+        "title": "SSECanvasCreatedEvent",
+        "description": "SSE event data for canvas creation."
+      },
+      "SSECanvasDeletedEvent": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "canvas_deleted",
+            "title": "Type"
+          },
+          "timestamp": {
+            "type": "number",
+            "title": "Timestamp"
+          },
+          "data": {
+            "$ref": "#/components/schemas/SSECanvasDeletedEventData"
+          }
+        },
+        "type": "object",
+        "required": [
+          "type",
+          "timestamp",
+          "data"
+        ],
+        "title": "SSECanvasDeletedEvent",
+        "description": "SSE event data for canvas deletion."
+      },
+      "SSECanvasDeletedEventData": {
+        "properties": {
+          "canvas_id": {
+            "type": "string",
+            "title": "Canvas Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "canvas_id"
+        ],
+        "title": "SSECanvasDeletedEventData",
+        "description": "Data payload for canvas deleted events."
+      },
+      "SSECanvasUpdatedEvent": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "canvas_updated",
+            "title": "Type"
+          },
+          "timestamp": {
+            "type": "number",
+            "title": "Timestamp"
+          },
+          "data": {
+            "$ref": "#/components/schemas/CanvasSummary"
+          }
+        },
+        "type": "object",
+        "required": [
+          "type",
+          "timestamp",
+          "data"
+        ],
+        "title": "SSECanvasUpdatedEvent",
+        "description": "SSE event data for canvas updates."
+      },
+      "SSEDocumentationResponse": {
+        "properties": {
+          "events": {
+            "items": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/SSECanvasCreatedEvent"
+                },
+                {
+                  "$ref": "#/components/schemas/SSECanvasUpdatedEvent"
+                },
+                {
+                  "$ref": "#/components/schemas/SSECanvasDeletedEvent"
+                },
+                {
+                  "$ref": "#/components/schemas/SSEHeartbeatEvent"
+                },
+                {
+                  "$ref": "#/components/schemas/SSEErrorEvent"
+                },
+                {
+                  "$ref": "#/components/schemas/SSEMessageCommittedEvent"
+                },
+                {
+                  "$ref": "#/components/schemas/SSEMessageUpdatedEvent"
+                },
+                {
+                  "$ref": "#/components/schemas/SSEMessageDeletedEvent"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Events"
+          }
+        },
+        "type": "object",
+        "required": [
+          "events"
+        ],
+        "title": "SSEDocumentationResponse",
+        "description": "Response type for GET /api/v1/sse/documentation"
+      },
+      "SSEErrorEvent": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "error",
+            "title": "Type"
+          },
+          "timestamp": {
+            "type": "number",
+            "title": "Timestamp"
+          },
+          "data": {
+            "$ref": "#/components/schemas/SSEErrorEventData"
+          }
+        },
+        "type": "object",
+        "required": [
+          "type",
+          "timestamp",
+          "data"
+        ],
+        "title": "SSEErrorEvent",
+        "description": "SSE error event for stream errors."
+      },
+      "SSEErrorEventData": {
+        "properties": {
+          "error": {
+            "type": "string",
+            "title": "Error"
+          }
+        },
+        "type": "object",
+        "required": [
+          "error"
+        ],
+        "title": "SSEErrorEventData",
+        "description": "Data payload for error events."
+      },
+      "SSEHeartbeatEvent": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "heartbeat",
+            "title": "Type"
+          },
+          "timestamp": {
+            "type": "number",
+            "title": "Timestamp"
+          }
+        },
+        "type": "object",
+        "required": [
+          "type",
+          "timestamp"
+        ],
+        "title": "SSEHeartbeatEvent",
+        "description": "SSE heartbeat event to keep connections alive."
+      },
+      "SSEMessageCommittedEvent": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "message_committed",
+            "title": "Type"
+          },
+          "timestamp": {
+            "type": "number",
+            "title": "Timestamp"
+          },
+          "canvas_id": {
+            "type": "string",
+            "title": "Canvas Id"
+          },
+          "data": {
+            "$ref": "#/components/schemas/MessageNode"
+          }
+        },
+        "type": "object",
+        "required": [
+          "type",
+          "timestamp",
+          "canvas_id",
+          "data"
+        ],
+        "title": "SSEMessageCommittedEvent",
+        "description": "SSE event data for message commits."
+      },
+      "SSEMessageDeletedEvent": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "message_deleted",
+            "title": "Type"
+          },
+          "timestamp": {
+            "type": "number",
+            "title": "Timestamp"
+          },
+          "canvas_id": {
+            "type": "string",
+            "title": "Canvas Id"
+          },
+          "data": {
+            "$ref": "#/components/schemas/SSEMessageDeletedEventData"
+          }
+        },
+        "type": "object",
+        "required": [
+          "type",
+          "timestamp",
+          "canvas_id",
+          "data"
+        ],
+        "title": "SSEMessageDeletedEvent",
+        "description": "SSE event data for message deletion."
+      },
+      "SSEMessageDeletedEventData": {
+        "properties": {
+          "message_id": {
+            "type": "string",
+            "title": "Message Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "message_id"
+        ],
+        "title": "SSEMessageDeletedEventData",
+        "description": "Data payload for message deleted events."
+      },
+      "SSEMessageUpdatedEvent": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "message_updated",
+            "title": "Type"
+          },
+          "timestamp": {
+            "type": "number",
+            "title": "Timestamp"
+          },
+          "canvas_id": {
+            "type": "string",
+            "title": "Canvas Id"
+          },
+          "data": {
+            "$ref": "#/components/schemas/MessageNode"
+          }
+        },
+        "type": "object",
+        "required": [
+          "type",
+          "timestamp",
+          "canvas_id",
+          "data"
+        ],
+        "title": "SSEMessageUpdatedEvent",
+        "description": "SSE event data for message updates."
       },
       "SearchResultBlockParam": {
         "properties": {

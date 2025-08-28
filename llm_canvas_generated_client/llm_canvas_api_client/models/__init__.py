@@ -31,6 +31,18 @@ from .message_node import MessageNode
 from .message_node_meta_type_0 import MessageNodeMetaType0
 from .message_role import MessageRole
 from .search_result_block_param import SearchResultBlockParam
+from .sse_canvas_created_event import SSECanvasCreatedEvent
+from .sse_canvas_deleted_event import SSECanvasDeletedEvent
+from .sse_canvas_deleted_event_data import SSECanvasDeletedEventData
+from .sse_canvas_updated_event import SSECanvasUpdatedEvent
+from .sse_documentation_response import SSEDocumentationResponse
+from .sse_error_event import SSEErrorEvent
+from .sse_error_event_data import SSEErrorEventData
+from .sse_heartbeat_event import SSEHeartbeatEvent
+from .sse_message_committed_event import SSEMessageCommittedEvent
+from .sse_message_deleted_event import SSEMessageDeletedEvent
+from .sse_message_deleted_event_data import SSEMessageDeletedEventData
+from .sse_message_updated_event import SSEMessageUpdatedEvent
 from .text_block_param import TextBlockParam
 from .tool_result_block_param import ToolResultBlockParam
 from .tool_use_block_param import ToolUseBlockParam
@@ -70,6 +82,18 @@ __all__ = (
     "MessageNodeMetaType0",
     "MessageRole",
     "SearchResultBlockParam",
+    "SSECanvasCreatedEvent",
+    "SSECanvasDeletedEvent",
+    "SSECanvasDeletedEventData",
+    "SSECanvasUpdatedEvent",
+    "SSEDocumentationResponse",
+    "SSEErrorEvent",
+    "SSEErrorEventData",
+    "SSEHeartbeatEvent",
+    "SSEMessageCommittedEvent",
+    "SSEMessageDeletedEvent",
+    "SSEMessageDeletedEventData",
+    "SSEMessageUpdatedEvent",
     "TextBlockParam",
     "ToolResultBlockParam",
     "ToolUseBlockParam",

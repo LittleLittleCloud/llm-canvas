@@ -6,23 +6,15 @@ import httpx
 from ... import errors
 from ...client import AuthenticatedClient, Client
 from ...models.http_validation_error import HTTPValidationError
-from ...types import UNSET, Response
+from ...types import Response
 
 
 def _get_kwargs(
-    *,
     canvas_id: str,
 ) -> dict[str, Any]:
-    params: dict[str, Any] = {}
-
-    params["canvas_id"] = canvas_id
-
-    params = {k: v for k, v in params.items() if v is not UNSET and v is not None}
-
     _kwargs: dict[str, Any] = {
         "method": "get",
-        "url": "/api/v1/canvas/stream",
-        "params": params,
+        "url": f"/api/v1/canvas/{canvas_id}/sse",
     }
 
     return _kwargs
@@ -56,15 +48,22 @@ def _build_response(
 
 
 def sync_detailed(
+    canvas_id: str,
     *,
     client: Union[AuthenticatedClient, Client],
-    canvas_id: str,
 ) -> Response[Union[Any, HTTPValidationError]]:
-    """Stream
+    """Canvas Message Sse
 
-     Stream canvas updates via Server-Sent Events.
+     Server-Sent Events endpoint for canvas message updates.
+
+    Sends events when messages are added, updated, or deleted in a specific canvas.
+    Events include:
+    - message_committed: When a new message is added to the canvas
+    - message_updated: When an existing message is updated
+    - message_deleted: When a message is deleted
+
     Args:
-        canvas_id: Canvas UUID to stream
+        canvas_id: Canvas UUID to stream events for
     Returns:
         StreamingResponse with SSE events
     Raises:
@@ -93,15 +92,22 @@ def sync_detailed(
 
 
 def sync(
+    canvas_id: str,
     *,
     client: Union[AuthenticatedClient, Client],
-    canvas_id: str,
 ) -> Optional[Union[Any, HTTPValidationError]]:
-    """Stream
+    """Canvas Message Sse
 
-     Stream canvas updates via Server-Sent Events.
+     Server-Sent Events endpoint for canvas message updates.
+
+    Sends events when messages are added, updated, or deleted in a specific canvas.
+    Events include:
+    - message_committed: When a new message is added to the canvas
+    - message_updated: When an existing message is updated
+    - message_deleted: When a message is deleted
+
     Args:
-        canvas_id: Canvas UUID to stream
+        canvas_id: Canvas UUID to stream events for
     Returns:
         StreamingResponse with SSE events
     Raises:
@@ -119,21 +125,28 @@ def sync(
     """
 
     return sync_detailed(
-        client=client,
         canvas_id=canvas_id,
+        client=client,
     ).parsed
 
 
 async def asyncio_detailed(
+    canvas_id: str,
     *,
     client: Union[AuthenticatedClient, Client],
-    canvas_id: str,
 ) -> Response[Union[Any, HTTPValidationError]]:
-    """Stream
+    """Canvas Message Sse
 
-     Stream canvas updates via Server-Sent Events.
+     Server-Sent Events endpoint for canvas message updates.
+
+    Sends events when messages are added, updated, or deleted in a specific canvas.
+    Events include:
+    - message_committed: When a new message is added to the canvas
+    - message_updated: When an existing message is updated
+    - message_deleted: When a message is deleted
+
     Args:
-        canvas_id: Canvas UUID to stream
+        canvas_id: Canvas UUID to stream events for
     Returns:
         StreamingResponse with SSE events
     Raises:
@@ -160,15 +173,22 @@ async def asyncio_detailed(
 
 
 async def asyncio(
+    canvas_id: str,
     *,
     client: Union[AuthenticatedClient, Client],
-    canvas_id: str,
 ) -> Optional[Union[Any, HTTPValidationError]]:
-    """Stream
+    """Canvas Message Sse
 
-     Stream canvas updates via Server-Sent Events.
+     Server-Sent Events endpoint for canvas message updates.
+
+    Sends events when messages are added, updated, or deleted in a specific canvas.
+    Events include:
+    - message_committed: When a new message is added to the canvas
+    - message_updated: When an existing message is updated
+    - message_deleted: When a message is deleted
+
     Args:
-        canvas_id: Canvas UUID to stream
+        canvas_id: Canvas UUID to stream events for
     Returns:
         StreamingResponse with SSE events
     Raises:
@@ -187,7 +207,7 @@ async def asyncio(
 
     return (
         await asyncio_detailed(
-            client=client,
             canvas_id=canvas_id,
+            client=client,
         )
     ).parsed

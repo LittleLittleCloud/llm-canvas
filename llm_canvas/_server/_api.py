@@ -14,6 +14,7 @@ from fastapi import APIRouter, HTTPException, Path, Query
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
+from llm_canvas._server._types import SSEEvent
 from llm_canvas.canvas import Canvas
 from llm_canvas.types import (
     CanvasCommitMessageEvent,
@@ -115,6 +116,12 @@ class DeleteMessageResponse(BaseModel):
     message: str
 
 
+class SSEDocumentationResponse(BaseModel):
+    """Response type for GET /api/v1/sse/documentation"""
+
+    events: list[SSEEvent]
+
+
 logger = logging.getLogger(__name__)
 registry = get_local_registry()
 event_dispatcher = get_event_dispatcher()
@@ -142,6 +149,17 @@ v1_router = APIRouter(
 def health_check() -> HealthCheckResponse:
     """Health check endpoint to verify server is running."""
     return HealthCheckResponse(status="healthy", server_type="local", timestamp=None)
+
+
+@v1_router.get("/sse/documentation")
+def sse_documentation() -> SSEDocumentationResponse:
+    """
+    SSE documentation endpoint that describes available event types.
+
+    You should never call this, this endpoint is to make openapi generator happy
+    """
+
+    return SSEDocumentationResponse(events=[])
 
 
 @v1_router.get("/canvas/list")

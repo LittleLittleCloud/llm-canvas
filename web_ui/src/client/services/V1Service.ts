@@ -6,6 +6,7 @@ import type { CreateMessageResponse } from "../models/CreateMessageResponse";
 import type { DeleteCanvasResponse } from "../models/DeleteCanvasResponse";
 import type { GetCanvasResponse } from "../models/GetCanvasResponse";
 import type { HealthCheckResponse } from "../models/HealthCheckResponse";
+import type { SSEDocumentationResponse } from "../models/SSEDocumentationResponse";
 import type { UpdateMessageRequest } from "../models/UpdateMessageRequest";
 import type { CancelablePromise } from "../core/CancelablePromise";
 import { OpenAPI } from "../core/OpenAPI";
@@ -44,7 +45,7 @@ export type TDataUpdateMessageApiV1CanvasCanvasIdMessagesMessageIdPut = {
   messageId: string;
   requestBody: UpdateMessageRequest;
 };
-export type TDataStreamApiV1CanvasStreamGet = {
+export type TDataCanvasMessageSseApiV1CanvasCanvasIdSseGet = {
   /**
    * Canvas UUID
    */
@@ -62,6 +63,21 @@ export class V1Service {
     return __request(OpenAPI, {
       method: "GET",
       url: "/api/v1/health",
+    });
+  }
+
+  /**
+   * Sse Documentation
+   * SSE documentation endpoint that describes available event types.
+   *
+   * You should never call this, this endpoint is to make openapi generator happy
+   * @returns SSEDocumentationResponse Successful Response
+   * @throws ApiError
+   */
+  public static sseDocumentationApiV1SseDocumentationGet(): CancelablePromise<SSEDocumentationResponse> {
+    return __request(OpenAPI, {
+      method: "GET",
+      url: "/api/v1/sse/documentation",
     });
   }
 
@@ -226,10 +242,39 @@ export class V1Service {
   }
 
   /**
-   * Stream
-   * Stream canvas updates via Server-Sent Events.
+   * Canvas Sse
+   * Server-Sent Events endpoint for global canvas updates.
+   *
+   * Sends events when canvases are created, updated, or deleted.
+   * Events include:
+   * - canvas_created: When a new canvas is created
+   * - canvas_updated: When a canvas is updated
+   * - canvas_deleted: When a canvas is deleted
+   *
+   * Returns:
+   * StreamingResponse with SSE events
+   * @returns unknown Successful Response
+   * @throws ApiError
+   */
+  public static canvasSseApiV1CanvasSseGet(): CancelablePromise<unknown> {
+    return __request(OpenAPI, {
+      method: "GET",
+      url: "/api/v1/canvas/sse",
+    });
+  }
+
+  /**
+   * Canvas Message Sse
+   * Server-Sent Events endpoint for canvas message updates.
+   *
+   * Sends events when messages are added, updated, or deleted in a specific canvas.
+   * Events include:
+   * - message_committed: When a new message is added to the canvas
+   * - message_updated: When an existing message is updated
+   * - message_deleted: When a message is deleted
+   *
    * Args:
-   * canvas_id: Canvas UUID to stream
+   * canvas_id: Canvas UUID to stream events for
    * Returns:
    * StreamingResponse with SSE events
    * Raises:
@@ -237,14 +282,14 @@ export class V1Service {
    * @returns unknown Successful Response
    * @throws ApiError
    */
-  public static streamApiV1CanvasStreamGet(
-    data: TDataStreamApiV1CanvasStreamGet
+  public static canvasMessageSseApiV1CanvasCanvasIdSseGet(
+    data: TDataCanvasMessageSseApiV1CanvasCanvasIdSseGet
   ): CancelablePromise<unknown> {
     const { canvasId } = data;
     return __request(OpenAPI, {
       method: "GET",
-      url: "/api/v1/canvas/stream",
-      query: {
+      url: "/api/v1/canvas/{canvas_id}/sse",
+      path: {
         canvas_id: canvasId,
       },
       errors: {
