@@ -1,14 +1,23 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { canvasService } from "../api/canvasService";
 import { CanvasGallery } from "../components/CanvasGallery";
-import { CanvasSummary } from "../types";
+import { config } from "../config";
+import {
+  CanvasSummary,
+  SSECanvasCreatedEvent,
+  SSECanvasDeletedEvent,
+  SSECanvasUpdatedEvent,
+  SSEErrorEvent,
+} from "../types";
 
 export const GalleryPage: React.FC = () => {
   const navigate = useNavigate();
   const [canvasSummaries, setCanvasSummaries] = useState<CanvasSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [sseConnected, setSseConnected] = useState(false);
+  const eventSourceRef = useRef<EventSource | null>(null);
 
   const loadCanvases = async () => {
     try {
@@ -18,6 +27,104 @@ export const GalleryPage: React.FC = () => {
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load canvases");
     }
+  };
+
+  // SSE event handlers
+  const handleSSEEvent = (event: MessageEvent) => {
+    console.log("SSE event received:", event.data);
+    try {
+      const data = JSON.parse(event.data);
+      console.log("SSE event received:", data);
+
+      switch (data.type) {
+        case "canvas_created": {
+          console.log("Canvas created:", data);
+          const createdEvent = data as SSECanvasCreatedEvent;
+          setCanvasSummaries(prev => [createdEvent.data, ...prev]);
+          break;
+        }
+        case "canvas_deleted": {
+          const deletedEvent = data as SSECanvasDeletedEvent;
+          setCanvasSummaries(prev =>
+            prev.filter(
+              canvas => canvas.canvas_id !== deletedEvent.data.canvas_id
+            )
+          );
+          break;
+        }
+        case "canvas_updated": {
+          const updatedEvent = data as SSECanvasUpdatedEvent;
+          setCanvasSummaries(prev =>
+            prev.map(canvas =>
+              canvas.canvas_id === updatedEvent.data.canvas_id
+                ? updatedEvent.data
+                : canvas
+            )
+          );
+          break;
+        }
+        case "heartbeat": {
+          // Handle heartbeat to keep connection alive
+          console.debug("SSE heartbeat received");
+          break;
+        }
+        case "error": {
+          const errorEvent = data as SSEErrorEvent;
+          console.error("SSE error:", errorEvent.data);
+          setError(`SSE error: ${errorEvent.data.error || "Unknown error"}`);
+          break;
+        }
+        default:
+          console.warn("Unknown SSE event type:", data.type);
+      }
+    } catch (err) {
+      console.error("Failed to parse SSE event:", err);
+    }
+  };
+
+  const connectSSE = () => {
+    // Close existing connection if any
+    if (eventSourceRef.current) {
+      eventSourceRef.current.close();
+    }
+
+    const sseUrl = `${config.api.baseUrl}/api/v1/canvas/sse`;
+    const eventSource = new EventSource(sseUrl);
+    eventSourceRef.current = eventSource;
+
+    eventSource.onopen = () => {
+      console.log("SSE connection opened");
+      setSseConnected(true);
+      setError(null);
+    };
+    eventSource.addEventListener("canvas_created", event => {
+      const data = JSON.parse(event.data);
+      console.log("Canvas created:", data);
+      setCanvasSummaries(prev => [data.data, ...prev]);
+    });
+    eventSource.addEventListener("canvas_deleted", event => {
+      const data = JSON.parse(event.data);
+      console.log("Canvas deleted:", data);
+      setCanvasSummaries(prev =>
+        prev.filter(canvas => canvas.canvas_id !== data.data.canvas_id)
+      );
+    });
+    eventSource.addEventListener("canvas_updated", event => {
+      const data = JSON.parse(event.data);
+      console.log("Canvas updated:", data);
+      setCanvasSummaries(prev =>
+        prev.map(canvas =>
+          canvas.canvas_id === data.data.canvas_id ? data.data : canvas
+        )
+      );
+    });
+    eventSource.onerror = err => {
+      console.error("SSE connection error:", err);
+      setSseConnected(false);
+      setError("Lost connection to server. Retrying...");
+    };
+
+    return eventSource;
   };
 
   useEffect(() => {
@@ -30,14 +137,18 @@ export const GalleryPage: React.FC = () => {
     // Load canvases immediately
     loadCanvasesWrapper();
 
-    // Set up periodic refresh
-    const refreshInterval = setInterval(() => {
-      loadCanvases();
-    }, 5000);
+    // Set up SSE connection
+    const eventSource = connectSSE();
+    eventSourceRef.current = eventSource;
 
-    // Cleanup interval on component unmount
+    // Cleanup on component unmount
     return () => {
-      clearInterval(refreshInterval);
+      if (eventSourceRef.current) {
+        console.log("Closing SSE connection");
+        eventSourceRef.current.close();
+        eventSourceRef.current = null;
+      }
+      setSseConnected(false);
     };
   }, []);
 
@@ -51,8 +162,7 @@ export const GalleryPage: React.FC = () => {
         title: title || null,
         description: description || null,
       });
-      // Refresh the canvas list after creation
-      await loadCanvases();
+      // SSE will handle updating the canvas list automatically
       // Optionally navigate to the new canvas
       if (response.canvas_id) {
         navigate(`/canvas/${encodeURIComponent(response.canvas_id)}`);
@@ -67,8 +177,9 @@ export const GalleryPage: React.FC = () => {
   const handleDeleteCanvas = async (canvasId: string) => {
     try {
       await canvasService.deleteCanvas(canvasId);
-      // Refresh the canvas list after deletion
-      await loadCanvases();
+      setCanvasSummaries(prev =>
+        prev.filter(canvas => canvas.canvas_id !== canvasId)
+      );
     } catch (err) {
       throw new Error(
         err instanceof Error ? err.message : "Failed to delete canvas"
@@ -86,7 +197,10 @@ export const GalleryPage: React.FC = () => {
                 <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
                   Canvas Gallery
                 </h1>
-                <p className="text-gray-600 mt-2">Loading your canvases...</p>
+                <p className="text-gray-600 mt-2">
+                  Loading your canvases...
+                  {!sseConnected && " (Connecting to live updates...)"}
+                </p>
               </div>
               <button
                 disabled
@@ -150,10 +264,19 @@ export const GalleryPage: React.FC = () => {
                 <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
                   Canvas Gallery
                 </h1>
-                <p className="text-red-600 mt-2">Failed to load canvases</p>
+                <p className="text-red-600 mt-2">
+                  Failed to load canvases
+                  {!sseConnected && " • Live updates disconnected"}
+                </p>
               </div>
               <button
-                onClick={() => loadCanvases()}
+                onClick={() => {
+                  loadCanvases();
+                  // Also try to reconnect SSE if needed
+                  if (!sseConnected) {
+                    connectSSE();
+                  }
+                }}
                 className="px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-medium rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-all duration-200"
               >
                 <svg
@@ -194,7 +317,13 @@ export const GalleryPage: React.FC = () => {
                 </h3>
                 <p className="text-red-600 mb-4">{error}</p>
                 <button
-                  onClick={() => loadCanvases()}
+                  onClick={() => {
+                    loadCanvases();
+                    // Also try to reconnect SSE if needed
+                    if (!sseConnected) {
+                      connectSSE();
+                    }
+                  }}
                   className="inline-flex items-center px-4 py-2 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors"
                 >
                   Try again

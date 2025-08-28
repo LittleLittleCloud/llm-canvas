@@ -45,6 +45,9 @@ class SSEEventDispatcher:
         # Lock for thread-safe operations
         self._lock = asyncio.Lock()
 
+        # Shutdown event to signal all connections to close
+        self._shutdown_event = asyncio.Event()
+
     async def add_global_connection(self, queue: asyncio.Queue[str]) -> None:
         """Add a connection for global canvas events."""
         async with self._lock:
@@ -166,6 +169,41 @@ class SSEEventDispatcher:
             ),
         )
 
+    async def shutdown(self) -> None:
+        """Signal all connections to close and clean up."""
+        logger.info("Shutting down SSE event dispatcher")
+        self._shutdown_event.set()
+
+        async with self._lock:
+            # Send shutdown message to all connections
+            shutdown_message = 'event: shutdown\ndata: {"message": "Server shutting down"}\n\n'
+
+            # Notify all global connections
+            for queue in self._global_connections.copy():
+                with contextlib.suppress(RuntimeError, ValueError):
+                    queue.put_nowait(shutdown_message)
+
+            # Notify all canvas connections
+            for canvas_connections in self._canvas_connections.values():
+                for queue in canvas_connections.copy():
+                    with contextlib.suppress(RuntimeError, ValueError):
+                        queue.put_nowait(shutdown_message)
+
+            # Clear all connections
+            self._global_connections.clear()
+            self._canvas_connections.clear()
+
+        logger.info("SSE event dispatcher shutdown complete")
+
+    @property
+    def is_shutdown(self) -> bool:
+        """Check if shutdown has been initiated."""
+        return self._shutdown_event.is_set()
+
+    async def wait_for_shutdown(self) -> None:
+        """Wait for shutdown event to be set."""
+        await self._shutdown_event.wait()
+
 
 # Global event dispatcher instance
 _event_dispatcher: SSEEventDispatcher | None = None
@@ -181,13 +219,16 @@ def get_event_dispatcher() -> SSEEventDispatcher:
 
 async def create_sse_stream(queue: asyncio.Queue[str]) -> AsyncGenerator[str, None]:
     """Create an SSE stream from a queue."""
-    try:
-        while True:
-            # Wait for the next event with a timeout to handle client disconnections
-            message_task = asyncio.create_task(queue.get())
-            timeout_task = asyncio.create_task(asyncio.sleep(30.0))
+    event_dispatcher = get_event_dispatcher()
 
-            done, pending = await asyncio.wait([message_task, timeout_task], return_when=asyncio.FIRST_COMPLETED)
+    try:
+        while not event_dispatcher.is_shutdown:
+            # Create tasks for message, timeout, and shutdown
+            message_task = asyncio.create_task(queue.get())
+            timeout_task = asyncio.create_task(asyncio.sleep(10.0))
+            shutdown_task = asyncio.create_task(event_dispatcher.wait_for_shutdown())
+
+            done, pending = await asyncio.wait([message_task, timeout_task, shutdown_task], return_when=asyncio.FIRST_COMPLETED)
 
             # Cancel any pending tasks
             for task in pending:
@@ -195,9 +236,17 @@ async def create_sse_stream(queue: asyncio.Queue[str]) -> AsyncGenerator[str, No
                 with contextlib.suppress(asyncio.CancelledError):
                     await task
 
-            if message_task in done:
+            if shutdown_task in done:
+                # Shutdown requested, break the loop
+                logger.info("SSE stream received shutdown signal")
+                break
+            elif message_task in done:
                 # We received a message
                 message = message_task.result()
+                # Check if it's a shutdown message
+                if "event: shutdown" in message:
+                    yield message
+                    break
                 yield message
             else:
                 # Timeout occurred, send heartbeat
@@ -205,6 +254,9 @@ async def create_sse_stream(queue: asyncio.Queue[str]) -> AsyncGenerator[str, No
 
     except asyncio.CancelledError:
         logger.info("SSE stream cancelled")
+        raise
     except (RuntimeError, ValueError):
         logger.exception("Error in SSE stream")
         yield f"event: error\ndata: {json.dumps({'error': 'stream error'})}\n\n"
+    finally:
+        logger.info("SSE stream ended")

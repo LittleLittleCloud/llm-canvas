@@ -8,7 +8,7 @@ from __future__ import annotations
 import asyncio
 import logging
 from collections.abc import AsyncGenerator
-from typing import Any, Literal, Union
+from typing import Literal, Union
 
 from fastapi import APIRouter, HTTPException, Path, Query
 from fastapi.responses import StreamingResponse
@@ -127,16 +127,6 @@ registry = get_local_registry()
 event_dispatcher = get_event_dispatcher()
 API_PREFIX = "/api/v1"
 
-# Background tasks set to prevent garbage collection
-background_tasks: set[asyncio.Task[Any]] = set()
-
-
-def create_background_task(coro: Any) -> None:
-    """Create a background task and manage its lifecycle."""
-    task = asyncio.create_task(coro)
-    background_tasks.add(task)
-    task.add_done_callback(background_tasks.discard)
-
 
 v1_router = APIRouter(
     prefix=API_PREFIX,
@@ -195,7 +185,7 @@ def get_canvas(canvas_id: str = Query(..., description="Canvas UUID")) -> GetCan
 
 
 @v1_router.post("/canvas")
-def create_canvas(request: CreateCanvasRequest) -> CreateCanvasResponse:
+async def create_canvas(request: CreateCanvasRequest) -> CreateCanvasResponse:
     """Create a new canvas.
     Args:
         request: Canvas creation request with optional title and description
@@ -208,13 +198,13 @@ def create_canvas(request: CreateCanvasRequest) -> CreateCanvasResponse:
     logger.info(f"Created canvas {canvas.canvas_id}")
 
     # Trigger canvas created event
-    create_background_task(event_dispatcher.canvas_created(canvas.to_summary()))
+    await event_dispatcher.canvas_created(canvas.to_summary())
 
     return CreateCanvasResponse(canvas_id=canvas.canvas_id, message="Canvas created successfully")
 
 
 @v1_router.delete("/canvas/{canvas_id}")
-def delete_canvas(canvas_id: str = Path(..., description="Canvas UUID to delete")) -> DeleteCanvasResponse:
+async def delete_canvas(canvas_id: str = Path(..., description="Canvas UUID to delete")) -> DeleteCanvasResponse:
     """Delete a canvas by ID.
     Args:
         canvas_id: Canvas UUID to delete
@@ -233,13 +223,13 @@ def delete_canvas(canvas_id: str = Path(..., description="Canvas UUID to delete"
     logger.info(f"Deleted canvas {canvas_id}")
 
     # Trigger canvas deleted event
-    create_background_task(event_dispatcher.canvas_deleted(canvas_id))
+    await event_dispatcher.canvas_deleted(canvas_id)
 
     return DeleteCanvasResponse(canvas_id=canvas_id, message="Canvas deleted successfully")
 
 
 @v1_router.post("/canvas/{canvas_id}/messages")
-def commit_message(
+async def commit_message(
     request: CommitMessageRequest,
     canvas_id: str = Path(..., description="Canvas UUID"),
 ) -> CreateMessageResponse:
@@ -273,7 +263,7 @@ def commit_message(
     logger.info(f"Committed message {node_data['id']} to canvas {canvas_id}")
 
     # Trigger message committed event
-    create_background_task(event_dispatcher.message_committed(canvas_id, node_data))
+    await event_dispatcher.message_committed(canvas_id, node_data)
 
     return CreateMessageResponse(
         message_id=node_data["id"],
@@ -283,7 +273,7 @@ def commit_message(
 
 
 @v1_router.put("/canvas/{canvas_id}/messages/{message_id}")
-def update_message(
+async def update_message(
     request: UpdateMessageRequest,
     canvas_id: str = Path(..., description="Canvas UUID"),
     message_id: str = Path(..., description="Message ID to update"),
@@ -320,7 +310,7 @@ def update_message(
     logger.info(f"Updated message {message_id} in canvas {canvas_id}")
 
     # Trigger message updated event
-    create_background_task(event_dispatcher.message_updated(canvas_id, node_data))
+    await event_dispatcher.message_updated(canvas_id, node_data)
 
     return CreateMessageResponse(
         message_id=message_id,
@@ -358,7 +348,13 @@ async def canvas_sse() -> StreamingResponse:
     async def wrapped_stream() -> AsyncGenerator[str, None]:
         try:
             async for chunk in stream:
+                logger.info(f"Sending SSE chunk: {chunk.strip()}")
                 yield chunk
+        except asyncio.CancelledError:
+            logger.info("SSE global stream cancelled by client")
+            raise
+        except Exception:
+            logger.exception("Error in SSE global stream")
         finally:
             await cleanup()
 
@@ -370,6 +366,7 @@ async def canvas_sse() -> StreamingResponse:
             "Connection": "keep-alive",
             "Access-Control-Allow-Origin": "*",
             "Access-Control-Allow-Headers": "Cache-Control",
+            "X-Accel-Buffering": "no",  # Disable nginx buffering
         },
     )
 
@@ -416,6 +413,11 @@ async def canvas_message_sse(canvas_id: str = Path(..., description="Canvas UUID
         try:
             async for chunk in stream:
                 yield chunk
+        except asyncio.CancelledError:
+            logger.info(f"SSE canvas stream for {canvas_id} cancelled by client")
+            raise
+        except Exception:
+            logger.exception(f"Error in SSE canvas stream for {canvas_id}")
         finally:
             await cleanup()
 
@@ -427,5 +429,6 @@ async def canvas_message_sse(canvas_id: str = Path(..., description="Canvas UUID
             "Connection": "keep-alive",
             "Access-Control-Allow-Origin": "*",
             "Access-Control-Allow-Headers": "Cache-Control",
+            "X-Accel-Buffering": "no",  # Disable nginx buffering
         },
     )
