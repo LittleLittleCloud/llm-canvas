@@ -13,7 +13,7 @@ import asyncio
 import logging
 import signal
 from pathlib import Path
-from typing import Any, Union
+from typing import Any, Literal
 
 import uvicorn
 from fastapi import FastAPI, HTTPException
@@ -52,7 +52,7 @@ async def lifespan(_app: FastAPI) -> Any:
     for sig in (signal.SIGINT, signal.SIGTERM):
         original_signal_handlers[sig] = signal.getsignal(sig)
 
-    def new_signal_handler(sig: Union[signal.Signals.SIGINT, signal.Signals.SIGTERM], frame: signal.FrameType) -> None:
+    def new_signal_handler(sig: Literal[signal.Signals.SIGINT, signal.Signals.SIGTERM], frame: signal.FrameType) -> None:  # type: ignore  # noqa: PGH003
         logger.info(f"Received signal {sig} - shutting down...")
         asyncio.create_task(shutdown_handler())  # noqa: RUF006
 
@@ -63,7 +63,7 @@ async def lifespan(_app: FastAPI) -> Any:
 
     # Register new signal handlers
     for sig in (signal.SIGINT, signal.SIGTERM):
-        signal.signal(sig, new_signal_handler)
+        signal.signal(sig, new_signal_handler)  # type: ignore # noqa: PGH003
 
     try:
         yield
