@@ -11,8 +11,9 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import signal
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 import uvicorn
 from fastapi import FastAPI, HTTPException
@@ -44,6 +45,25 @@ async def shutdown_handler() -> None:
 @asynccontextmanager
 async def lifespan(_app: FastAPI) -> Any:
     """Handle application lifespan - startup and shutdown."""
+    logger.info("Server startup initiated by Uvicorn...")
+
+    # get the original signal handlers
+    original_signal_handlers = {}
+    for sig in (signal.SIGINT, signal.SIGTERM):
+        original_signal_handlers[sig] = signal.getsignal(sig)
+
+    def new_signal_handler(sig: Literal[signal.SIGINT, signal.SIGTERM], frame: signal.FrameType) -> None:
+        logger.info(f"Received signal {sig} - shutting down...")
+        asyncio.create_task(shutdown_handler())  # noqa: RUF006
+
+        # call original signal handler if it exists and it's callable
+        original_handler = original_signal_handlers[sig]
+        if original_handler and callable(original_handler):
+            original_handler(sig, frame)
+
+    # Register new signal handlers
+    for sig in (signal.SIGINT, signal.SIGTERM):
+        signal.signal(sig, new_signal_handler)
 
     try:
         yield

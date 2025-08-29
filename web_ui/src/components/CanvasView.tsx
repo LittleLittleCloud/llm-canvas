@@ -15,10 +15,19 @@ import ReactFlow, {
   useEdgesState,
   useNodesState,
   useReactFlow,
+  useUpdateNodeInternals,
 } from "reactflow";
 import "reactflow/dist/style.css";
-import { useIsMobile } from "../hooks";
-import { CanvasData, MessageNode } from "../types";
+import { canvasService } from "../api/canvasService";
+import { config } from "../config";
+import { useIsGithubPages, useIsMobile } from "../hooks";
+import {
+  CanvasData,
+  MessageNode,
+  SSEErrorEvent,
+  SSEMessageCommittedEvent,
+  SSEMessageUpdatedEvent,
+} from "../types";
 import { MessageNodeComponent } from "./MessageNode";
 
 // Define the Canvas type based on the structure used in the store
@@ -29,6 +38,118 @@ export interface CanvasViewProps {
   showControls?: boolean;
   showPanel?: boolean;
 }
+
+// Custom hook for SSE management
+const useCanvasSSE = (
+  canvasId: string | undefined,
+  onCanvasUpdate: (updater: (currentCanvas: CanvasData) => CanvasData) => void,
+  disabled: boolean = false
+) => {
+  const eventSourceRef = useRef<EventSource | null>(null);
+
+  const refetchCanvas = useCallback(
+    async (id: string) => {
+      try {
+        const freshCanvas = await canvasService.fetchCanvas(id);
+        onCanvasUpdate(() => freshCanvas);
+      } catch (error) {
+        console.error("Failed to refetch canvas:", error);
+      }
+    },
+    [onCanvasUpdate]
+  );
+
+  const connectSSE = useCallback(
+    (id: string) => {
+      // Close existing connection if any
+      if (eventSourceRef.current) {
+        eventSourceRef.current.close();
+      }
+
+      const sseUrl = `${config.api.baseUrl}/api/v1/canvas/${encodeURIComponent(id)}/sse`;
+      const eventSource = new EventSource(sseUrl);
+      eventSourceRef.current = eventSource;
+
+      eventSource.onopen = () => {
+        console.log(`SSE connection opened for canvas ${id}`);
+      };
+
+      eventSource.addEventListener("message_committed", event => {
+        try {
+          const data = JSON.parse(event.data) as SSEMessageCommittedEvent;
+          console.log("Message committed:", data);
+
+          // Refetch the entire canvas to avoid race conditions
+          refetchCanvas(id);
+        } catch (err) {
+          console.error("Failed to parse message_committed event:", err);
+        }
+      });
+
+      eventSource.addEventListener("message_updated", event => {
+        try {
+          const data = JSON.parse(event.data) as SSEMessageUpdatedEvent;
+          console.log("Message updated:", data);
+
+          // Refetch the entire canvas to avoid race conditions
+          refetchCanvas(id);
+        } catch (err) {
+          console.error("Failed to parse message_updated event:", err);
+        }
+      });
+
+      eventSource.addEventListener("heartbeat", () => {
+        console.debug("SSE heartbeat received for canvas", id);
+      });
+
+      eventSource.addEventListener("error", event => {
+        try {
+          const data = JSON.parse(
+            (event as MessageEvent).data
+          ) as SSEErrorEvent;
+          console.error("SSE error:", data.data);
+        } catch {
+          // If we can't parse the error event, it's likely a connection error
+          console.error("SSE connection error for canvas", id);
+        }
+      });
+
+      eventSource.onerror = () => {
+        console.error("SSE connection error for canvas", id);
+      };
+
+      return eventSource;
+    },
+    [refetchCanvas]
+  );
+
+  useEffect(() => {
+    if (disabled) {
+      console.log("SSE disabled - running in GitHub Pages mode");
+      return;
+    }
+
+    if (canvasId && !disabled) {
+      connectSSE(canvasId);
+    }
+
+    return () => {
+      if (eventSourceRef.current) {
+        eventSourceRef.current.close();
+        eventSourceRef.current = null;
+      }
+    };
+  }, [canvasId, connectSSE, disabled]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (eventSourceRef.current) {
+        eventSourceRef.current.close();
+      }
+    };
+  }, []);
+};
 
 // Custom node component for React Flow - memoized to prevent unnecessary re-renders
 const CustomMessageNode = React.memo(
@@ -66,7 +187,7 @@ const CustomMessageNode = React.memo(
           <Handle
             type="target"
             position={isVertical ? Position.Top : Position.Left}
-            id={isVertical ? "top" : "left"}
+            id="target"
             style={{
               background: "linear-gradient(135deg, #6366f1, #8b5cf6)",
               border: "2px solid white",
@@ -90,7 +211,7 @@ const CustomMessageNode = React.memo(
           <Handle
             type="source"
             position={isVertical ? Position.Bottom : Position.Right}
-            id={isVertical ? "bottom" : "right"}
+            id="source"
             style={{
               background: "linear-gradient(135deg, #6366f1, #8b5cf6)",
               border: "2px solid white",
@@ -172,8 +293,8 @@ const getLayoutedElements = (
   // Update edges with correct handle IDs
   const updatedEdges = edges.map(edge => ({
     ...edge,
-    sourceHandle: isVertical ? "bottom" : "right",
-    targetHandle: isVertical ? "top" : "left",
+    sourceHandle: "source",
+    targetHandle: "target",
   }));
 
   return { nodes, edges: updatedEdges };
@@ -200,7 +321,7 @@ export const CanvasView: React.FC<CanvasViewProps> = ({
 };
 
 const CanvasViewInner: React.FC<CanvasViewProps> = ({
-  canvas,
+  canvas: externalCanvas,
   showMiniMap = true,
   showControls = true,
   showPanel = true,
@@ -210,11 +331,36 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [viewport, setViewport] = React.useState({ x: 0, y: 0, zoom: 1 });
   const [isFocused, setIsFocused] = React.useState(false);
+  const [localCanvas, setLocalCanvas] = React.useState<CanvasData | undefined>(
+    externalCanvas
+  );
+  const updateNodeInternals = useUpdateNodeInternals();
   const isMobile = useIsMobile(768);
+  const isGithubPages = useIsGithubPages();
   const flowRef = useRef<HTMLDivElement>(null);
 
+  // Update local canvas when external canvas changes
   useEffect(() => {
-    if (!canvas || isMobile === undefined) {
+    setLocalCanvas(externalCanvas);
+  }, [externalCanvas]);
+
+  // Wrapper function for SSE updates
+  const handleCanvasUpdate = useCallback(
+    (updater: (currentCanvas: CanvasData) => CanvasData) => {
+      setLocalCanvas(prevCanvas => {
+        if (!prevCanvas) return prevCanvas;
+        return updater(prevCanvas);
+      });
+    },
+    []
+  );
+
+  // SSE hook for real-time updates
+  useCanvasSSE(localCanvas?.canvas_id, handleCanvasUpdate, isGithubPages);
+
+  // Create/Update nodes and edges when localCanvas or isMobile changes
+  useEffect(() => {
+    if (!localCanvas || isMobile === undefined) {
       setNodes([]);
       setEdges([]);
       return;
@@ -223,7 +369,7 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({
     const edges: Edge[] = [];
 
     // Create nodes with parent/children information
-    Object.entries(canvas.nodes).forEach(([nodeId, node]) => {
+    Object.entries(localCanvas.nodes).forEach(([nodeId, node]) => {
       const hasParent = node.parent_id != null;
       const hasChildren = node.child_ids.length > 0;
 
@@ -244,17 +390,16 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({
     });
 
     // Create edges
-    const isVerticalLayout = isMobile; // TB layout on mobile, LR on desktop
-    Object.entries(canvas.nodes).forEach(([nodeId, node]) => {
+    Object.entries(localCanvas.nodes).forEach(([nodeId, node]) => {
       // check if child node.parent_id is equal to the current nodeId
       node.child_ids.forEach(childId => {
-        const is_parent = canvas.nodes[childId]?.parent_id === nodeId;
+        const is_parent = localCanvas.nodes[childId]?.parent_id === nodeId;
         edges.push({
           id: `${nodeId}-${childId}`, // from -> to
           source: nodeId,
           target: childId,
-          sourceHandle: isVerticalLayout ? "bottom" : "right",
-          targetHandle: isVerticalLayout ? "top" : "left",
+          sourceHandle: "source",
+          targetHandle: "target",
           type: "simplebezier",
           animated: false,
           style: {
@@ -272,15 +417,34 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({
       });
     });
 
-    setNodes(nodes);
-    setEdges(edges);
-  }, [canvas, setNodes, setEdges, isMobile]);
+    setNodes(prev_nodes => {
+      return nodes.map(node => {
+        const prev_node = prev_nodes.find(n => n.id === node.id);
+        return {
+          ...(prev_node ?? {}),
+          ...node,
+          position: prev_node?.position || node.position,
+        };
+      });
+    });
+    setEdges(prev_edges => {
+      return edges.map(edge => {
+        const prev_edge = prev_edges.find(e => e.id === edge.id);
+        return {
+          ...edge,
+          ...(prev_edge ?? {}),
+        };
+      });
+    });
+
+    updateNodeInternals(nodes.map(n => n.id));
+  }, [localCanvas, setNodes, setEdges, isMobile]);
 
   // Separate effect to trigger re-layout after nodes are set
   useEffect(() => {
     const needsLayout =
       isMobile !== undefined &&
-      canvas &&
+      localCanvas &&
       nodes.some(node => node.position.x === 0 && node.position.y === 0) &&
       nodes.every(
         node => node.height !== undefined && node.width !== undefined
@@ -296,6 +460,8 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({
       setNodes([...layoutedNodes]);
       setEdges([...layoutedEdges]);
 
+      updateNodeInternals([...layoutedNodes.map(n => n.id)]);
+
       // Fit view to show all nodes with some padding
       setTimeout(() => {
         reactFlowInstance.fitView({
@@ -306,7 +472,7 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({
         });
       }, 150);
     }
-  }, [nodes, edges, isMobile, canvas]); // Only trigger when nodes.length changes and we have data
+  }, [nodes, edges, isMobile, localCanvas]); // Only trigger when nodes.length changes and we have data
 
   // Node navigation functions
   const shakeNode = useCallback((nodeId: string) => {
@@ -561,7 +727,7 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({
   // Enhanced layout function that can use React Flow's getNodes for actual dimensions
   const onLayout = useCallback(
     (direction: string) => {
-      if (!canvas) return;
+      if (!localCanvas) return;
 
       // Update nodes with new direction information
       const updatedNodes = nodes.map(node => ({
@@ -576,8 +742,9 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({
       }));
 
       setNodes([...updatedNodes]);
+      updateNodeInternals(updatedNodes.map(n => n.id));
     },
-    [nodes, edges, setNodes, setEdges, canvas]
+    [nodes, edges, setNodes, setEdges, localCanvas]
   );
 
   const onReLayout = useCallback(() => {
@@ -697,11 +864,12 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full"></div>
                   <div className="font-semibold text-gray-900 dark:text-gray-100 text-base">
-                    {canvas?.title || "Canvas"}
+                    {localCanvas?.title || "Canvas"}
                   </div>
                 </div>
                 <div className="text-gray-600 dark:text-gray-400 text-xs">
-                  {canvas ? Object.keys(canvas.nodes).length : 0} messages
+                  {localCanvas ? Object.keys(localCanvas.nodes).length : 0}{" "}
+                  messages
                 </div>
                 <div className="text-xs text-gray-500 dark:text-gray-400 py-1.5 px-2 bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 rounded-lg border border-indigo-100 dark:border-indigo-800">
                   💡 Use ↑↓←→ arrow keys to navigate
