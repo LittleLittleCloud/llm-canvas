@@ -52,7 +52,7 @@ async def lifespan(_app: FastAPI) -> Any:
     for sig in (signal.SIGINT, signal.SIGTERM):
         original_signal_handlers[sig] = signal.getsignal(sig)
 
-    def new_signal_handler(sig: Union[signal.SIGINT, signal.SIGTERM], frame: signal.FrameType) -> None:  # type: ignore
+    def new_signal_handler(sig: Union[signal.Signals.SIGINT, signal.Signals.SIGTERM], frame: signal.FrameType) -> None:
         logger.info(f"Received signal {sig} - shutting down...")
         asyncio.create_task(shutdown_handler())  # noqa: RUF006
 
