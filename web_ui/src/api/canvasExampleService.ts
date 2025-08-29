@@ -24,7 +24,7 @@ class CanvasExampleService {
   /**
    * Fetches a specific canvas example by ID
    */
-  async fetchExample(canvasId: string): Promise<CanvasData | null> {
+  async fetchCanvas(canvasId: string): Promise<CanvasData | null> {
     const example = this.examples.find(canvas => canvas.canvas_id === canvasId);
     return example || null;
   }

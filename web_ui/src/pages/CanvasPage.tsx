@@ -1,7 +1,9 @@
 import React, { useEffect } from "react";
 import { useParams } from "react-router-dom";
+import canvasExampleService from "../api/canvasExampleService";
 import canvasService from "../api/canvasService";
 import { CanvasView } from "../components/CanvasView";
+import { useIsGithubPages } from "../hooks";
 import { useCanvasStore } from "../store/canvasStore";
 
 export const CanvasPage: React.FC = () => {
@@ -10,10 +12,14 @@ export const CanvasPage: React.FC = () => {
   const canvas = useCanvasStore(s => s.canvas);
   const isLoading = useCanvasStore(s => s.isLoading);
   const error = useCanvasStore(s => s.error);
+  const isGithubPage = useIsGithubPages();
 
   useEffect(() => {
     if (id) {
-      canvasService
+      const localCanvasService = !isGithubPage
+        ? canvasService
+        : canvasExampleService;
+      localCanvasService
         .fetchCanvas(id)
         .then(data => {
           if (data) {
@@ -30,7 +36,7 @@ export const CanvasPage: React.FC = () => {
     } else {
       clear();
     }
-  }, [id, setCanvas, clear]);
+  }, [id, setCanvas, clear, isGithubPage]);
 
   if (isLoading) {
     return (

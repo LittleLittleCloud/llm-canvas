@@ -22,7 +22,7 @@ export const GithubGalleryPage: React.FC = () => {
       const canvasDatas: CanvasData[] = [];
 
       for (const example of examples) {
-        const data = await canvasExampleService.fetchExample(example.canvas_id);
+        const data = await canvasExampleService.fetchCanvas(example.canvas_id);
         canvasDatas.push(data!);
       }
       setCanvasDatas(canvasDatas);
