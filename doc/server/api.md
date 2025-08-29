@@ -88,8 +88,15 @@ Common Error Codes:
 
 ## Future / Planned
 
-- SSE/WebSocket channel for live updates per canvas: `/api/v1/canvas/stream?id=...`
+- ~~SSE/WebSocket channel for live updates per canvas~~ ✅ **IMPLEMENTED**: See [SSE API Documentation](sse_api.md)
 - Authn/Z (API keys / tokens) & rate limiting
+
+## Server-Side Events (SSE) Support
+
+Real-time event streaming is now available! See the [SSE API Documentation](sse_api.md) for details on:
+
+- `/api/v1/canvas/sse` - Global canvas events (create, delete)
+- `/api/v1/canvas/{canvas_id}/sse` - Canvas-specific message events (commit, update)
 
 ## Open Questions
 

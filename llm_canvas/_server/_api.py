@@ -5,15 +5,16 @@ Provides API endpoints defined in doc/server/api.md:
 
 from __future__ import annotations
 
-import json
+import asyncio
 import logging
-from collections.abc import Generator
-from typing import Any, Literal, Union
+from collections.abc import AsyncGenerator
+from typing import Literal, Union
 
 from fastapi import APIRouter, HTTPException, Path, Query
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
+from llm_canvas._server._types import SSEEvent
 from llm_canvas.canvas import Canvas
 from llm_canvas.types import (
     CanvasCommitMessageEvent,
@@ -22,6 +23,7 @@ from llm_canvas.types import (
     CanvasUpdateMessageEvent,
 )
 
+from ._events import create_sse_stream, get_event_dispatcher
 from ._registry import get_local_registry
 
 # ---- API Request BaseModel Definitions ----
@@ -114,9 +116,17 @@ class DeleteMessageResponse(BaseModel):
     message: str
 
 
+class SSEDocumentationResponse(BaseModel):
+    """Response type for GET /api/v1/sse/documentation"""
+
+    events: list[SSEEvent]
+
+
 logger = logging.getLogger(__name__)
 registry = get_local_registry()
+event_dispatcher = get_event_dispatcher()
 API_PREFIX = "/api/v1"
+
 
 v1_router = APIRouter(
     prefix=API_PREFIX,
@@ -129,6 +139,17 @@ v1_router = APIRouter(
 def health_check() -> HealthCheckResponse:
     """Health check endpoint to verify server is running."""
     return HealthCheckResponse(status="healthy", server_type="local", timestamp=None)
+
+
+@v1_router.get("/sse/documentation")
+def sse_documentation() -> SSEDocumentationResponse:
+    """
+    SSE documentation endpoint that describes available event types.
+
+    You should never call this, this endpoint is to make openapi generator happy
+    """
+
+    return SSEDocumentationResponse(events=[])
 
 
 @v1_router.get("/canvas/list")
@@ -164,7 +185,7 @@ def get_canvas(canvas_id: str = Query(..., description="Canvas UUID")) -> GetCan
 
 
 @v1_router.post("/canvas")
-def create_canvas(request: CreateCanvasRequest) -> CreateCanvasResponse:
+async def create_canvas(request: CreateCanvasRequest) -> CreateCanvasResponse:
     """Create a new canvas.
     Args:
         request: Canvas creation request with optional title and description
@@ -175,11 +196,15 @@ def create_canvas(request: CreateCanvasRequest) -> CreateCanvasResponse:
     canvas = Canvas(title=request.title, description=request.description)
     registry.add(canvas)
     logger.info(f"Created canvas {canvas.canvas_id}")
+
+    # Trigger canvas created event
+    await event_dispatcher.canvas_created(canvas.to_summary())
+
     return CreateCanvasResponse(canvas_id=canvas.canvas_id, message="Canvas created successfully")
 
 
 @v1_router.delete("/canvas/{canvas_id}")
-def delete_canvas(canvas_id: str = Path(..., description="Canvas UUID to delete")) -> DeleteCanvasResponse:
+async def delete_canvas(canvas_id: str = Path(..., description="Canvas UUID to delete")) -> DeleteCanvasResponse:
     """Delete a canvas by ID.
     Args:
         canvas_id: Canvas UUID to delete
@@ -196,11 +221,15 @@ def delete_canvas(canvas_id: str = Path(..., description="Canvas UUID to delete"
             detail=error_response.dict(),
         )
     logger.info(f"Deleted canvas {canvas_id}")
+
+    # Trigger canvas deleted event
+    await event_dispatcher.canvas_deleted(canvas_id)
+
     return DeleteCanvasResponse(canvas_id=canvas_id, message="Canvas deleted successfully")
 
 
 @v1_router.post("/canvas/{canvas_id}/messages")
-def commit_message(
+async def commit_message(
     request: CommitMessageRequest,
     canvas_id: str = Path(..., description="Canvas UUID"),
 ) -> CreateMessageResponse:
@@ -232,6 +261,10 @@ def commit_message(
     # Commit the message to the canvas
     canvas.nodes[node_data["id"]] = node_data
     logger.info(f"Committed message {node_data['id']} to canvas {canvas_id}")
+
+    # Trigger message committed event
+    await event_dispatcher.message_committed(canvas_id, node_data)
+
     return CreateMessageResponse(
         message_id=node_data["id"],
         canvas_id=canvas_id,
@@ -240,7 +273,7 @@ def commit_message(
 
 
 @v1_router.put("/canvas/{canvas_id}/messages/{message_id}")
-def update_message(
+async def update_message(
     request: UpdateMessageRequest,
     canvas_id: str = Path(..., description="Canvas UUID"),
     message_id: str = Path(..., description="Message ID to update"),
@@ -275,6 +308,10 @@ def update_message(
     # Update the message in the canvas
     canvas.update_message(message_id, node_data)
     logger.info(f"Updated message {message_id} in canvas {canvas_id}")
+
+    # Trigger message updated event
+    await event_dispatcher.message_updated(canvas_id, node_data)
+
     return CreateMessageResponse(
         message_id=message_id,
         canvas_id=canvas_id,
@@ -282,26 +319,116 @@ def update_message(
     )
 
 
-# ---- (Future) Streaming SSE placeholder for spec alignment ----
-@v1_router.get("/canvas/stream")
-def stream(canvas_id: str = Query(..., description="Canvas UUID")) -> Any:
-    """Stream canvas updates via Server-Sent Events.
+# ---- SSE Endpoints ----
+@v1_router.get("/canvas/sse")
+async def canvas_sse() -> StreamingResponse:
+    """Server-Sent Events endpoint for global canvas updates.
+
+    Sends events when canvases are created, updated, or deleted.
+    Events include:
+    - canvas_created: When a new canvas is created
+    - canvas_updated: When a canvas is updated
+    - canvas_deleted: When a canvas is deleted
+
+    Returns:
+        StreamingResponse with SSE events
+    """
+    queue: asyncio.Queue[str] = asyncio.Queue(maxsize=100)
+
+    # Add connection to global event dispatcher
+    await event_dispatcher.add_global_connection(queue)
+
+    async def cleanup() -> None:
+        await event_dispatcher.remove_global_connection(queue)
+
+    # Create the SSE stream
+    stream = create_sse_stream(queue)
+
+    # Wrap the stream to handle cleanup
+    async def wrapped_stream() -> AsyncGenerator[str, None]:
+        try:
+            async for chunk in stream:
+                logger.info(f"Sending SSE chunk: {chunk.strip()}")
+                yield chunk
+        except asyncio.CancelledError:
+            logger.info("SSE global stream cancelled by client")
+            raise
+        except Exception:
+            logger.exception("Error in SSE global stream")
+        finally:
+            await cleanup()
+
+    return StreamingResponse(
+        wrapped_stream(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Headers": "Cache-Control",
+            "X-Accel-Buffering": "no",  # Disable nginx buffering
+        },
+    )
+
+
+@v1_router.get("/canvas/{canvas_id}/sse")
+async def canvas_message_sse(canvas_id: str = Path(..., description="Canvas UUID")) -> StreamingResponse:
+    """Server-Sent Events endpoint for canvas message updates.
+
+    Sends events when messages are added, updated, or deleted in a specific canvas.
+    Events include:
+    - message_committed: When a new message is added to the canvas
+    - message_updated: When an existing message is updated
+    - message_deleted: When a message is deleted
+
     Args:
-        canvas_id: Canvas UUID to stream
+        canvas_id: Canvas UUID to stream events for
     Returns:
         StreamingResponse with SSE events
     Raises:
         HTTPException: 404 if canvas not found
     """
-    c = registry.get(canvas_id)
-    if not c:
+    # Verify canvas exists
+    canvas = registry.get(canvas_id)
+    if not canvas:
         error_response = ErrorResponse(error="canvas_not_found", message="Canvas not found")
         raise HTTPException(
             status_code=404,
             detail=error_response.dict(),
         )
 
-    def event_stream() -> Generator[str, None, None]:  # simple snapshot for now
-        yield f"event: snapshot\ndata: {json.dumps(c.to_canvas_data())}\n\n"
+    queue: asyncio.Queue[str] = asyncio.Queue(maxsize=100)
 
-    return StreamingResponse(event_stream(), media_type="text/event-stream")
+    # Add connection to canvas-specific event dispatcher
+    await event_dispatcher.add_canvas_connection(canvas_id, queue)
+
+    async def cleanup() -> None:
+        await event_dispatcher.remove_canvas_connection(canvas_id, queue)
+
+    # Create the SSE stream
+    stream = create_sse_stream(queue)
+
+    # Wrap the stream to handle cleanup
+    async def wrapped_stream() -> AsyncGenerator[str, None]:
+        try:
+            async for chunk in stream:
+                yield chunk
+        except asyncio.CancelledError:
+            logger.info(f"SSE canvas stream for {canvas_id} cancelled by client")
+            raise
+        except Exception:
+            logger.exception(f"Error in SSE canvas stream for {canvas_id}")
+        finally:
+            await cleanup()
+
+    return StreamingResponse(
+        wrapped_stream(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Headers": "Cache-Control",
+            "X-Accel-Buffering": "no",  # Disable nginx buffering
+        },
+    )

@@ -9,19 +9,67 @@ This module provides the free & open source local server that:
 
 from __future__ import annotations
 
+import asyncio
 import logging
+import signal
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 import uvicorn
 from fastapi import FastAPI, HTTPException
+from fastapi.concurrency import asynccontextmanager
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from ._api import v1_router
+from ._events import get_event_dispatcher
 
 logger = logging.getLogger(__name__)
+
+
+async def shutdown_handler() -> None:
+    """Handle graceful shutdown of the server."""
+    logger.info("Graceful shutdown initiated...")
+
+    # Signal all SSE connections to close
+    event_dispatcher = get_event_dispatcher()
+    await event_dispatcher.shutdown()
+
+    # Give connections a moment to close gracefully
+    await asyncio.sleep(1.0)
+
+    logger.info("Shutdown complete")
+
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI) -> Any:
+    """Handle application lifespan - startup and shutdown."""
+    logger.info("Server startup initiated by Uvicorn...")
+
+    # get the original signal handlers
+    original_signal_handlers = {}
+    for sig in (signal.SIGINT, signal.SIGTERM):
+        original_signal_handlers[sig] = signal.getsignal(sig)
+
+    def new_signal_handler(sig: Literal[signal.Signals.SIGINT, signal.Signals.SIGTERM], frame: signal.FrameType) -> None:  # type: ignore  # noqa: PGH003
+        logger.info(f"Received signal {sig} - shutting down...")
+        asyncio.create_task(shutdown_handler())  # noqa: RUF006
+
+        # call original signal handler if it exists and it's callable
+        original_handler = original_signal_handlers[sig]
+        if original_handler and callable(original_handler):
+            original_handler(sig, frame)
+
+    # Register new signal handlers
+    for sig in (signal.SIGINT, signal.SIGTERM):
+        signal.signal(sig, new_signal_handler)  # type: ignore # noqa: PGH003
+
+    try:
+        yield
+    finally:
+        logger.info("Server shutdown initiated by Uvicorn...")
+        await shutdown_handler()
 
 
 def create_local_server() -> Any:
@@ -41,7 +89,8 @@ def create_local_server() -> Any:
         title="LLM Canvas Local Server",
         version="0.1.0",
         description="Free & Open Source LLM Canvas Local Server - Session-based storage only",
-        separate_input_output_schemas=False,  # Disable separate schemas for input/output
+        separate_input_output_schemas=False,  # Disable separate schemas for input/output,
+        lifespan=lifespan,
     )
 
     app.add_middleware(
@@ -101,6 +150,8 @@ def start_local_server(host: str = "127.0.0.1", port: int = 8000, log_level: str
     logger.warning("   • Session-based storage only")
 
     app = create_local_server()
+    # Note: We don't set up signal handlers here because Uvicorn will override them
+    # Instead, we rely on FastAPI's lifespan context manager for graceful shutdown
 
     try:
         logger.info(f"Server starting at http://{host}:{port}")
@@ -108,3 +159,5 @@ def start_local_server(host: str = "127.0.0.1", port: int = 8000, log_level: str
         uvicorn.run(app, host=host, port=port, log_level=log_level)
     except ImportError:
         logger.exception("uvicorn not installed. Install with: uv add 'llm-canvas[server]'")
+    except KeyboardInterrupt:
+        logger.info("Received shutdown signal")
