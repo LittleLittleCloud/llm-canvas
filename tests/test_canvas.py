@@ -594,3 +594,153 @@ class TestCanvasAPI:
         new_msg = main_branch_after.commit_message({"content": "After merge", "role": "user"})
         assert new_msg["parent_id"] == merge_node["id"]
         assert main_branch_after.head_node_id == new_msg["id"]
+
+    def test_branch_checkout_existing_branch(self, canvas: Canvas) -> None:
+        """Test Branch.checkout() to switch to an existing branch."""
+        # Create initial branches with messages
+        main_branch = canvas.checkout(name="main", create_if_not_exists=True)
+        main_msg = main_branch.commit_message({"content": "Main message", "role": "user"})
+
+        feature_branch = canvas.checkout(name="feature", create_if_not_exists=True)
+        feature_branch.commit_message({"content": "Feature message", "role": "assistant"})
+
+        # Use branch.checkout() to switch to main from feature branch
+        main_from_feature = feature_branch.checkout("main")
+
+        # Verify we're on the correct branch
+        assert main_from_feature.name == "main"
+        assert main_from_feature.head_node_id == main_msg["id"]
+
+    def test_branch_checkout_create_new_branch(self, canvas: Canvas) -> None:
+        """Test Branch.checkout() to create a new branch from current branch HEAD."""
+        # Create a branch with some messages
+        main_branch = canvas.checkout(name="main", create_if_not_exists=True)
+        main_branch.commit_message({"content": "First message", "role": "user"})
+        msg2 = main_branch.commit_message({"content": "Second message", "role": "assistant"})
+
+        # Create new branch from main using branch.checkout()
+        new_branch = main_branch.checkout("new-feature", description="New feature branch", create_if_not_exists=True)
+
+        # Verify the new branch was created correctly
+        assert new_branch.name == "new-feature"
+        assert new_branch.description == "New feature branch"
+        assert new_branch.head_node_id == msg2["id"]  # Should start from main's HEAD
+
+        # Verify the branch exists in canvas
+        branches = canvas.list_branches()
+        branch_names = [b["name"] for b in branches]
+        assert "new-feature" in branch_names
+
+        # Verify we can commit to the new branch
+        new_msg = new_branch.commit_message({"content": "New feature message", "role": "user"})
+        assert new_msg["parent_id"] == msg2["id"]
+        assert new_branch.head_node_id == new_msg["id"]
+
+    def test_branch_checkout_nonexistent_without_create(self, canvas: Canvas) -> None:
+        """Test Branch.checkout() fails when trying to access non-existent branch without create flag."""
+        main_branch = canvas.checkout(name="main", create_if_not_exists=True)
+        main_branch.commit_message({"content": "Main message", "role": "user"})
+
+        # Should raise error when trying to checkout non-existent branch
+        with pytest.raises(ValueError, match="Branch 'nonexistent' does not exist"):
+            main_branch.checkout("nonexistent")
+
+    def test_branch_checkout_creates_branch_from_current_head(self, canvas: Canvas) -> None:
+        """Test that Branch.checkout() creates new branch starting from current branch's HEAD."""
+        # Create a conversation chain
+        main_branch = canvas.checkout(name="main", create_if_not_exists=True)
+        main_branch.commit_message({"content": "Message 1", "role": "user"})
+        main_branch.commit_message({"content": "Message 2", "role": "assistant"})
+        msg3 = main_branch.commit_message({"content": "Message 3", "role": "user"})
+
+        # Create new branch from main's current HEAD
+        branch_from_head = main_branch.checkout("from-head", create_if_not_exists=True)
+
+        # Verify it starts from the correct point (main's HEAD)
+        assert branch_from_head.head_node_id == msg3["id"]
+
+        # Add a message to verify the branching point
+        new_msg = branch_from_head.commit_message({"content": "Branched message", "role": "assistant"})
+        assert new_msg["parent_id"] == msg3["id"]
+
+        # Verify that adding to the new branch doesn't affect main
+        assert main_branch.head_node_id == msg3["id"]  # Main unchanged
+        assert branch_from_head.head_node_id == new_msg["id"]  # New branch updated
+
+    def test_branch_checkout_with_empty_branch(self, canvas: Canvas) -> None:
+        """Test Branch.checkout() from a branch with no commits."""
+        # Create an empty branch
+        empty_branch = canvas.checkout(name="empty", create_if_not_exists=True)
+        assert empty_branch.head_node_id is None
+
+        # Create new branch from empty branch
+        new_branch = empty_branch.checkout("from-empty", create_if_not_exists=True)
+
+        # Should create branch with no HEAD (same as empty branch)
+        assert new_branch.head_node_id is None
+
+        # Verify we can add messages to the new branch
+        first_msg = new_branch.commit_message({"content": "First in new branch", "role": "user"})
+        assert new_branch.head_node_id == first_msg["id"]
+        assert first_msg["parent_id"] is None
+
+    def test_branch_checkout_preserves_branch_independence(self, canvas: Canvas) -> None:
+        """Test that branches created via Branch.checkout() are independent."""
+        # Create initial branch with messages
+        main_branch = canvas.checkout(name="main", create_if_not_exists=True)
+        shared_msg = main_branch.commit_message({"content": "Shared message", "role": "user"})
+
+        # Create two branches from main using branch.checkout()
+        branch1 = main_branch.checkout("branch1", create_if_not_exists=True)
+        branch2 = main_branch.checkout("branch2", create_if_not_exists=True)
+
+        # Both should start from the same point
+        assert branch1.head_node_id == shared_msg["id"]
+        assert branch2.head_node_id == shared_msg["id"]
+
+        # Add different messages to each branch
+        msg1 = branch1.commit_message({"content": "Branch 1 message", "role": "assistant"})
+        msg2 = branch2.commit_message({"content": "Branch 2 message", "role": "assistant"})
+
+        # Verify independence
+        assert branch1.head_node_id == msg1["id"]
+        assert branch2.head_node_id == msg2["id"]
+        assert main_branch.head_node_id == shared_msg["id"]  # Main unchanged
+
+        # Verify parent relationships
+        assert msg1["parent_id"] == shared_msg["id"]
+        assert msg2["parent_id"] == shared_msg["id"]
+
+    def test_branch_checkout_with_description(self, canvas: Canvas) -> None:
+        """Test Branch.checkout() with custom description."""
+        main_branch = canvas.checkout(name="main", create_if_not_exists=True)
+        main_branch.commit_message({"content": "Main content", "role": "user"})
+
+        # Create branch with custom description
+        custom_description = "This is a custom description for the new branch"
+        new_branch = main_branch.checkout("custom", description=custom_description, create_if_not_exists=True)
+
+        assert new_branch.description == custom_description
+
+        # Verify in branch list
+        branches = canvas.list_branches()
+        custom_branch_info = next(b for b in branches if b["name"] == "custom")
+        assert custom_branch_info["description"] == custom_description
+
+    def test_branch_checkout_method_calls_canvas_checkout(self, canvas: Canvas) -> None:
+        """Test that Branch.checkout() properly delegates to Canvas.checkout() with correct parameters."""
+        # Create a branch with a message
+        main_branch = canvas.checkout(name="main", create_if_not_exists=True)
+        head_msg = main_branch.commit_message({"content": "Head message", "role": "user"})
+
+        # Use branch.checkout() to create a new branch
+        new_branch = main_branch.checkout("test-branch", description="Test description", create_if_not_exists=True)
+
+        # Verify that the canvas checkout was called with the correct commit_message (current branch's HEAD)
+        assert new_branch.head_node_id == head_msg["id"]
+
+        # Verify the branch was created with correct properties
+        branches = canvas.list_branches()
+        test_branch_info = next(b for b in branches if b["name"] == "test-branch")
+        assert test_branch_info["description"] == "Test description"
+        assert test_branch_info["head_node_id"] == head_msg["id"]

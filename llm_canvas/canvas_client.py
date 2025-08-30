@@ -8,7 +8,7 @@ This module provides a simplified, one-stop solution for users to:
 """
 
 # ruff: noqa: BLE001
-# ruff: noqa: TRY301, TRY300
+# ruff: noqa: TRY301
 
 from __future__ import annotations
 
