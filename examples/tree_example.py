@@ -13,55 +13,6 @@ from examples.shared_client import get_canvas_client
 from llm_canvas.canvas import Branch, Canvas
 
 
-def draw_binary_tree(canvas: Canvas, branch_name: str, depth: int = 0) -> None:
-    """
-    Draw a binary tree structure in the Canvas.
-
-    Args:
-        canvas: The Canvas object to draw on
-        value: The value to display at the current node
-        depth: The current depth in the tree (used for indentation)
-    """
-    current_branch = canvas.checkout(name=branch_name, create_if_not_exists=True)
-    # commit message
-
-    time.sleep(0.1)
-    current_branch.commit_message(
-        {
-            "role": "user",
-            "content": current_branch.name,
-        }
-    )
-
-    if depth <= 0:
-        return
-
-    left_branch_name = f"{branch_name}-left"
-    canvas.checkout(name=left_branch_name, create_if_not_exists=True)
-    draw_binary_tree(canvas, left_branch_name, depth - 1)
-    canvas.checkout(name=branch_name)
-
-    right_branch_name = f"{current_branch.name}-right"
-    canvas.checkout(name=right_branch_name, create_if_not_exists=True)
-    draw_binary_tree(canvas, right_branch_name, depth - 1)
-
-    # restore back to the previous branch
-    canvas.checkout(name=current_branch.name)
-
-
-async def draw_branch_async(canvas: Canvas, branch_name: str, depth: int) -> None:
-    """
-    Async helper function to draw a single branch.
-
-    Args:
-        canvas: The Canvas object to draw on
-        branch_name: Name of the branch to create and draw
-        depth: The depth to draw to
-    """
-    loop = asyncio.get_event_loop()
-    await loop.run_in_executor(None, draw_binary_tree, canvas, branch_name, depth)
-
-
 async def draw_binary_tree_async(canvas: Canvas, current_branch: Branch, depth: int = 0) -> None:
     """
     Draw a binary tree structure in the Canvas with async parallel branch creation.
@@ -82,13 +33,9 @@ async def draw_binary_tree_async(canvas: Canvas, current_branch: Branch, depth: 
         return
 
     left_branch_name = f"{current_branch.name}-left"
-    left_branch = canvas.checkout(
-        name=left_branch_name, create_if_not_exists=True, commit_message=current_branch.get_head_node()
-    )
+    left_branch = current_branch.checkout(name=left_branch_name, create_if_not_exists=True)
     right_branch_name = f"{current_branch.name}-right"
-    right_branch = canvas.checkout(
-        name=right_branch_name, create_if_not_exists=True, commit_message=current_branch.get_head_node()
-    )
+    right_branch = current_branch.checkout(name=right_branch_name, create_if_not_exists=True)
     await asyncio.sleep(0.5)
 
     await asyncio.gather(

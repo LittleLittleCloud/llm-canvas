@@ -101,6 +101,34 @@ class Branch:
             return self._canvas.get_node(self._branch_info["head_node_id"])
         return None
 
+    def checkout(self, name: str, description: Union[str, None] = None, create_if_not_exists: bool = False) -> Branch:
+        """
+        A convenient method to checkout a branch from this branch's canvas.
+
+        The new branch will be created based on the HEAD of the current branch if create_if_not_exists=True and the branch doesn't exist.
+        Otherwise, the existing branch will be checked out.
+
+        When create_if_not_exists=True and the branch doesn't exist:
+            Before:
+                this_branch:     A ── B ── C (HEAD, current branch)
+
+            After checkout("feature", create_if_not_exists=True):
+                this_branch:     A ── B ── C (HEAD)
+                                            │
+                new_branch:                 └── (HEAD, starts from this_branch's HEAD)
+
+        Args:
+            name: The name of the branch to checkout
+            description: The description of the branch
+            create_if_not_exists: Whether to create the branch if it doesn't exist
+
+        Returns:
+            The checked out Branch
+        """  # noqa: E501
+        return self._canvas.checkout(
+            name, description=description, create_if_not_exists=create_if_not_exists, commit_message=self.get_head_node()
+        )
+
     def merge_from(
         self,
         source_branch_names: Union[str, list[str]],
@@ -181,6 +209,11 @@ class Canvas:
     def current_branch(self) -> Branch:
         """Get the current branch."""
         return Branch(self, self._branches[self._current_branch])
+
+    @property
+    def branches(self) -> list[Branch]:
+        """Get a list of all branches."""
+        return [Branch(self, info) for info in self._branches.values()]
 
     # ---- Public API ----
     def commit_message(self, message: Message, meta: Union[dict[str, Any], None] = None) -> MessageNode:

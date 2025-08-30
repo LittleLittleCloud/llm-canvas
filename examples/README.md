@@ -9,7 +9,7 @@ Examples demonstrating Canvas API features: basic conversations, branching paths
 - `hello_example.py` (basic)
 - `weather_tool_example.py` (tools)
 - `vacation_planning_example.py` (branching)
+- `tree_example.py` (tree visualization)
 - `investment_decision_example.py` (advanced)
-- `pressure_test_example.py` (performance testing with 100 branches and 1000+ messages)
 
 **Claude Examples:** Claude examples can be found under `examples/claude/` folder.
