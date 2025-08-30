@@ -176,6 +176,12 @@ class Canvas:
         for listener in listeners:
             listener(event)
 
+    # ---- Property Access ----
+    @property
+    def current_branch(self) -> Branch:
+        """Get the current branch."""
+        return Branch(self, self._branches[self._current_branch])
+
     # ---- Public API ----
     def commit_message(self, message: Message, meta: Union[dict[str, Any], None] = None) -> MessageNode:
         """

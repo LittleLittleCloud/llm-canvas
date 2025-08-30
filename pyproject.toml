@@ -143,6 +143,7 @@ ignore = [
     "G004",    # Logging statement uses f-string
     "T201",    # `print` found
     "TRY003",  # Avoid specifying long messages outside the exception class
+    "TRY300",
     "PLR0915",  # too-many-statements
     "TC001",
     "TC002",

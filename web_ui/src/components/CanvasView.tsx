@@ -189,22 +189,19 @@ const CustomMessageNode = React.memo(
           }`}
         />
         {/* Node content */}
-        {/* Target handle - only show if node has parent */}
-        {hasParent && (
-          <Handle
-            type="target"
-            position={isVertical ? Position.Top : Position.Left}
-            id="target"
-            style={{
-              background: "linear-gradient(135deg, #6366f1, #8b5cf6)",
-              border: "2px solid white",
-              width: "12px",
-              height: "12px",
-              borderRadius: "50%",
-            }}
-            isConnectable={false}
-          />
-        )}
+        <Handle
+          type="target"
+          position={isVertical ? Position.Top : Position.Left}
+          id="target"
+          style={{
+            background: "linear-gradient(135deg, #6366f1, #8b5cf6)",
+            border: "2px solid white",
+            width: "12px",
+            height: "12px",
+            borderRadius: "50%",
+          }}
+          isConnectable={false}
+        />
         <div className="p-1">
           <MessageNodeComponent node={data} />
         </div>
@@ -213,21 +210,18 @@ const CustomMessageNode = React.memo(
             selected ? "opacity-100" : "opacity-0"
           }`}
         />
-        {/* Source handle - only show if node has children */}
-        {hasChildren && (
-          <Handle
-            type="source"
-            position={isVertical ? Position.Bottom : Position.Right}
-            id="source"
-            style={{
-              background: "linear-gradient(135deg, #6366f1, #8b5cf6)",
-              border: "2px solid white",
-              width: "12px",
-              height: "12px",
-            }}
-            isConnectable={false}
-          />
-        )}
+        <Handle
+          type="source"
+          position={isVertical ? Position.Bottom : Position.Right}
+          id="source"
+          style={{
+            background: "linear-gradient(135deg, #6366f1, #8b5cf6)",
+            border: "2px solid white",
+            width: "12px",
+            height: "12px",
+          }}
+          isConnectable={false}
+        />
       </div>
     );
   }
@@ -292,7 +286,7 @@ const getLayoutedElements = (
     const nodeWithPosition = dagreGraph.node(node.id);
     node.targetPosition = isVertical ? Position.Top : Position.Left;
     node.sourcePosition = isVertical ? Position.Bottom : Position.Right;
-
+    const direction: "TB" | "LR" = isVertical ? "TB" : "LR";
     const newNode = {
       ...node,
       position: {
@@ -301,21 +295,14 @@ const getLayoutedElements = (
       },
       data: {
         ...node.data,
-        direction: isVertical ? "TB" : "LR",
+        direction,
       },
     };
 
     return newNode;
   });
 
-  // Update edges with correct handle IDs
-  const updatedEdges = edges.map(edge => ({
-    ...edge,
-    sourceHandle: "source",
-    targetHandle: "target",
-  }));
-
-  return { nodes: updatedNodes, edges: updatedEdges };
+  return { nodes: updatedNodes };
 };
 
 export const CanvasView: React.FC<CanvasViewProps> = ({
@@ -386,7 +373,6 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({
       return;
     }
     const nodes: Node<CanvasNodeType>[] = [];
-    const edges: Edge[] = [];
 
     // Create nodes with parent/children information
     Object.entries(localCanvas.nodes).forEach(([nodeId, node]) => {
@@ -409,34 +395,6 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({
       });
     });
 
-    // Create edges
-    Object.entries(localCanvas.nodes).forEach(([nodeId, node]) => {
-      // check if child node.parent_id is equal to the current nodeId
-      node.child_ids.forEach(childId => {
-        const is_parent = localCanvas.nodes[childId]?.parent_id === nodeId;
-        edges.push({
-          id: `${nodeId}-${childId}`, // from -> to
-          source: nodeId,
-          target: childId,
-          sourceHandle: "source",
-          targetHandle: "target",
-          type: "simplebezier",
-          animated: false,
-          style: {
-            stroke: "#6366f1",
-            strokeWidth: 3,
-            strokeDasharray: is_parent ? undefined : "5,5",
-          },
-          markerEnd: {
-            type: MarkerType.Arrow,
-            width: 15,
-            height: 15,
-            color: "#6366f1",
-          },
-        });
-      });
-    });
-
     setNodes(prev_nodes => {
       return nodes.map(node => {
         const prev_node = prev_nodes.find(n => n.id === node.id);
@@ -444,15 +402,6 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({
           ...(prev_node ?? {}),
           ...node,
           position: prev_node?.position || node.position,
-        };
-      });
-    });
-    setEdges(prev_edges => {
-      return edges.map(edge => {
-        const prev_edge = prev_edges.find(e => e.id === edge.id);
-        return {
-          ...edge,
-          ...(prev_edge ?? {}),
         };
       });
     });
@@ -469,25 +418,63 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({
           node.measured?.width !== undefined &&
           node.measured?.height !== undefined
       );
-    console.log(
-      "All nodes measured:",
-      nodes.every(node => node.measured)
-    );
     if (needsLayout) {
       // Use setTimeout to ensure nodes are rendered before layout
       // Get current direction from the first node, default based on mobile state
       const currentDirection =
         nodes[0]?.data?.direction || (isMobile ? "TB" : "LR");
-      const { nodes: layoutedNodes, edges: layoutedEdges } =
-        getLayoutedElements(nodes, edges, currentDirection);
 
-      console.log("Layouted nodes:", layoutedNodes);
+      const edges: Edge[] = [];
+
+      // Create edges
+      Object.entries(nodes).forEach(([nodeId, node]) => {
+        // check if child node.parent_id is equal to the current nodeId
+        node.data.child_ids.forEach(childId => {
+          const is_parent =
+            nodes.find(n => n.data.id === childId)?.data.parent_id ===
+            node.data.id;
+          edges.push({
+            id: `${node.data.id}-${childId}`, // from -> to
+            source: node.data.id,
+            target: childId,
+            sourceHandle: "source",
+            targetHandle: "target",
+            type: "simplebezier",
+            animated: false,
+            style: {
+              stroke: "#6366f1",
+              strokeWidth: 3,
+              strokeDasharray: is_parent ? undefined : "5,5",
+            },
+            markerEnd: {
+              type: MarkerType.Arrow,
+              width: 15,
+              height: 15,
+              color: "#6366f1",
+            },
+          });
+        });
+      });
+
+      const { nodes: layoutedNodes } = getLayoutedElements(
+        nodes,
+        edges,
+        currentDirection
+      );
 
       setNodes([...layoutedNodes]);
-      setEdges([...layoutedEdges]);
 
       // Fit view to show all nodes with some padding
       setTimeout(() => {
+        setEdges(prev_edges => {
+          return edges.map(edge => {
+            const prev_edge = prev_edges.find(e => e.id === edge.id);
+            return {
+              ...edge,
+              ...(prev_edge ?? {}),
+            };
+          });
+        });
         reactFlowInstance.fitView({
           padding: 0.1,
           duration: 800,
@@ -496,7 +483,7 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({
         });
       }, 150);
     }
-  }, [nodes, edges, isMobile, localCanvas]); // Only trigger when nodes.length changes and we have data
+  }, [nodes, isMobile, localCanvas]); // Only trigger when nodes.length changes and we have data
 
   // Node navigation functions
   const shakeNode = useCallback((nodeId: string) => {
