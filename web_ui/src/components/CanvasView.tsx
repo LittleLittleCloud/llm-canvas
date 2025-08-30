@@ -1,7 +1,4 @@
-import dagre from "dagre";
-import { ArrowDown, ArrowRight, RotateCcw } from "lucide-react";
-import React, { useCallback, useEffect, useRef } from "react";
-import ReactFlow, {
+import {
   ConnectionMode,
   Controls,
   Edge,
@@ -11,13 +8,17 @@ import ReactFlow, {
   Node,
   Panel,
   Position,
+  ReactFlow,
   ReactFlowProvider,
   useEdgesState,
   useNodesState,
   useReactFlow,
   useUpdateNodeInternals,
-} from "reactflow";
-import "reactflow/dist/style.css";
+} from "@xyflow/react";
+import "@xyflow/react/dist/style.css";
+import dagre from "dagre";
+import { ArrowDown, ArrowRight, RotateCcw } from "lucide-react";
+import React, { useCallback, useEffect, useRef } from "react";
 import { canvasService } from "../api/canvasService";
 import { config } from "../config";
 import { useIsGithubPages, useIsMobile } from "../hooks";
@@ -29,6 +30,12 @@ import {
   SSEMessageUpdatedEvent,
 } from "../types";
 import { MessageNodeComponent } from "./MessageNode";
+
+export type CanvasNodeType = MessageNode & {
+  hasParent: boolean;
+  hasChildren: boolean;
+  direction: "TB" | "LR";
+};
 
 // Define the Canvas type based on the structure used in the store
 // Props interface for the CanvasView component
@@ -233,11 +240,13 @@ const nodeTypes = {
   messageNode: CustomMessageNode,
 };
 const dagreGraph = new dagre.graphlib.Graph();
+
 dagreGraph.setDefaultEdgeLabel(() => ({}));
+
 const getLayoutedElements = (
-  nodes: Node[],
+  nodes: Node<CanvasNodeType>[],
   edges: Edge[],
-  direction = "LR"
+  direction: "TB" | "LR" = "LR"
 ) => {
   const isVertical = direction === "TB";
   // Dagre layout configuration
@@ -245,10 +254,15 @@ const getLayoutedElements = (
   // Function to get node dimensions with fallbacks
   const getNodeDimensions = (node: Node) => {
     // Try to use existing width/height from node
-    if (node.width && node.height && node.width > 0 && node.height > 0) {
+    if (
+      node.measured?.width &&
+      node.measured?.height &&
+      node.measured?.width > 0 &&
+      node.measured?.height > 0
+    ) {
       return {
-        width: node.width,
-        height: node.height,
+        width: node.measured.width,
+        height: node.measured.height,
       };
     }
 
@@ -273,21 +287,25 @@ const getLayoutedElements = (
 
   dagre.layout(dagreGraph);
 
-  nodes.forEach(node => {
+  const updatedNodes = nodes.map(node => {
     // Now we're guaranteed to have width and height
     const nodeWithPosition = dagreGraph.node(node.id);
     node.targetPosition = isVertical ? Position.Top : Position.Left;
     node.sourcePosition = isVertical ? Position.Bottom : Position.Right;
-    node.position = {
-      x: nodeWithPosition.x - node.width! / 2,
-      y: nodeWithPosition.y - node.height! / 2,
+
+    const newNode = {
+      ...node,
+      position: {
+        x: nodeWithPosition.x - node.measured?.width! / 2,
+        y: nodeWithPosition.y - node.measured?.height! / 2,
+      },
+      data: {
+        ...node.data,
+        direction: isVertical ? "TB" : "LR",
+      },
     };
 
-    // Update node data with handle information
-    node.data = {
-      ...node.data,
-      direction,
-    };
+    return newNode;
   });
 
   // Update edges with correct handle IDs
@@ -297,7 +315,7 @@ const getLayoutedElements = (
     targetHandle: "target",
   }));
 
-  return { nodes, edges: updatedEdges };
+  return { nodes: updatedNodes, edges: updatedEdges };
 };
 
 export const CanvasView: React.FC<CanvasViewProps> = ({
@@ -327,8 +345,10 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({
   showPanel = true,
 }) => {
   const reactFlowInstance = useReactFlow();
-  const [nodes, setNodes, onNodesChange] = useNodesState([]);
-  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+  const [nodes, setNodes, onNodesChange] = useNodesState<Node<CanvasNodeType>>(
+    []
+  );
+  const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
   const [viewport, setViewport] = React.useState({ x: 0, y: 0, zoom: 1 });
   const [isFocused, setIsFocused] = React.useState(false);
   const [localCanvas, setLocalCanvas] = React.useState<CanvasData | undefined>(
@@ -365,7 +385,7 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({
       setEdges([]);
       return;
     }
-    const nodes: Node[] = [];
+    const nodes: Node<CanvasNodeType>[] = [];
     const edges: Edge[] = [];
 
     // Create nodes with parent/children information
@@ -436,8 +456,6 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({
         };
       });
     });
-
-    updateNodeInternals(nodes.map(n => n.id));
   }, [localCanvas, setNodes, setEdges, isMobile]);
 
   // Separate effect to trigger re-layout after nodes are set
@@ -447,8 +465,14 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({
       localCanvas &&
       nodes.some(node => node.position.x === 0 && node.position.y === 0) &&
       nodes.every(
-        node => node.height !== undefined && node.width !== undefined
+        node =>
+          node.measured?.width !== undefined &&
+          node.measured?.height !== undefined
       );
+    console.log(
+      "All nodes measured:",
+      nodes.every(node => node.measured)
+    );
     if (needsLayout) {
       // Use setTimeout to ensure nodes are rendered before layout
       // Get current direction from the first node, default based on mobile state
@@ -457,10 +481,10 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({
       const { nodes: layoutedNodes, edges: layoutedEdges } =
         getLayoutedElements(nodes, edges, currentDirection);
 
+      console.log("Layouted nodes:", layoutedNodes);
+
       setNodes([...layoutedNodes]);
       setEdges([...layoutedEdges]);
-
-      updateNodeInternals([...layoutedNodes.map(n => n.id)]);
 
       // Fit view to show all nodes with some padding
       setTimeout(() => {
@@ -726,7 +750,7 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({
 
   // Enhanced layout function that can use React Flow's getNodes for actual dimensions
   const onLayout = useCallback(
-    (direction: string) => {
+    (direction: "TB" | "LR") => {
       if (!localCanvas) return;
 
       // Update nodes with new direction information
